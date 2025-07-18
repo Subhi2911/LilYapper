@@ -1,5 +1,5 @@
 import { createContext } from "react";
 
-const NoteContext = createContext();
+const ChatContext = createContext();
 
-export default NoteContext;
+export default ChatContext;

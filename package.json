@@ -11,6 +11,7 @@
     "concurrently": "^9.2.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
+    "emoji-picker-react": "^4.13.2",
     "express": "^5.1.0",
     "express-validator": "^7.2.1",
     "jsonwebtoken": "^9.0.2",
@@ -20,17 +21,17 @@
     "react-router-dom": "^7.7.0",
     "react-scripts": "5.0.1",
     "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-  "start": "react-scripts start",
-  "client": "react-scripts start",
-  "backend": "cd backend && npm run dev",
-  "both": "concurrently \"npm run backend\" \"npm run client\"",
-  "build": "react-scripts build",
-  "test": "react-scripts test",
-  "eject": "react-scripts eject"
-
+    "start": "react-scripts start",
+    "client": "react-scripts start",
+    "backend": "cd backend && npm run dev",
+    "both": "concurrently \"npm run backend\" \"npm run client\"",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
