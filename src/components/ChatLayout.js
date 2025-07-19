@@ -1,26 +1,201 @@
-import React, { useState, useEffect } from 'react';
-import Navbar from './Navbar';
-import chatBg from '../images/ChatBg.png';
-import UserBar from './UserBar';
-import Keyboard from './Keyboard';
-import MessageBox from './MessageBox';
-import ChatReceiver from './ChatReceiver';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import ChatSidebar from './ChatSidebar';
+import ChatWindow from './ChatWindow';
 
-const ChatLayout = (props) => {
+
+const ChatLayout = ({ chatList }) => {
+    const location = useLocation(); // ← Fix: get location from React Router
+
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [selectedChat, setSelectedChat] = useState(null);
-    const messages = [
-        { type: 'received', text: 'Hello! 👋 How are you today?' },
-        { type: 'sent', text: 'I am good, thanks! Just working on some React code.' },
-        { type: 'received', text: 'That’s awesome! React is pretty cool.' },
-        { type: 'sent', text: 'Yeah, totally. Have you tried hooks yet?' },
-        { type: 'received', text: 'Yes, I love useState and useEffect.' },
-        { type: 'sent', text: 'Great! Here’s a longer message to test how text wraps and if the box grows properly when typing a large message. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vehicula.' },
-        { type: 'received', text: 'Looks like it’s working perfectly!' },
-        { type: 'sent', text: 'Awesome! 🎉' },
-        { type: 'received', text: 'Catch up later, bye!' },
-        { type: 'sent', text: 'Bye 👋' },
-    ];
+    const token = localStorage.getItem('token');
+    const host = process.env.REACT_APP_BACKEND_URL
+    const [sentRequests, setSentRequests] = useState(new Set());
+    const [pendingRequests, setPendingRequests] = useState(new Set());
+    const [friends, setFriends] = useState(new Set());
+    const [users, setUsers] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const navigate = useNavigate();
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [loading, setLoading] = useState(false);
+    // eslint-disable-next-line no-unused-vars
+    const [requests, setRequests] = useState([]);
+
+    useEffect(() => {
+        if (!token) navigate('/login');
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [token, navigate]);
+
+    const fetchUsers = useCallback(async () => {
+        if (loading || !hasMore) return;
+        setLoading(true);
+        try {
+            const response = await fetch(`${host}/api/auth/allusers?page=${page}&limit=10`, {
+                headers: { 'auth-token': token },
+            });
+            const data = await response.json();
+            if (!data.success || !Array.isArray(data.users)) {
+                setHasMore(false);
+                return;
+            }
+            setUsers(prev => {
+                const existingIds = new Set(prev.map(u => u._id));
+                const newUsers = data.users.filter(u => !existingIds.has(u._id));
+                if (newUsers.length === 0) setHasMore(false);
+                return [...prev, ...newUsers];
+            });
+            if (page >= data.pagination?.totalPages || data.users.length === 0) {
+                setHasMore(false);
+            } else {
+                setPage(prev => prev + 1);
+            }
+        } catch (e) {
+            console.error("Error fetching users:", e);
+            setHasMore(false);
+        }
+        setLoading(false);
+    }, [host, page, token, loading, hasMore]);
+
+
+    const fetchRequestsAndFriends = useCallback(async () => {
+        try {
+            const pendingRes = await fetch(`${host}/api/auth/friendrequests`, {
+                headers: { 'auth-token': token },
+            });
+            const pendingData = await pendingRes.json();
+            setPendingRequests(new Set(pendingData.pendingRequests?.map(u => u._id) || []));
+
+            const sentRes = await fetch(`${host}/api/auth/sent-requests`, {
+                headers: { 'auth-token': token },
+            });
+            const sentData = await sentRes.json();
+            setSentRequests(new Set(sentData.sentRequests || []));
+
+            const userRes = await fetch(`${host}/api/auth/getuser`, {
+                method: 'POST',
+                headers: { 'auth-token': token },
+            });
+            const userData = await userRes.json();
+            setFriends(new Set(userData?.user?.friends?.map(id => id.toString()) || []));
+        } catch (error) {
+            console.error("Error fetching request data:", error);
+        }
+    }, [host, token]);
+    const handleAccept = async (user) => {
+        try {
+            const res = await fetch(`${host}/api/auth/accept-request/${user._id}`, {
+                method: 'POST',
+                headers: { 'auth-token': token },
+            });
+            if (res.ok) {
+                alert('Friend request accepted!');
+                fetchRequestsAndFriends(); // refresh requests and friends lists
+            } else {
+                alert('Failed to accept request');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error accepting request');
+        }
+    };
+
+    const handleReject = async (user) => {
+        try {
+            const res = await fetch(`${host}/api/auth/reject-request/${user._id}`, {
+                method: 'POST',
+                headers: { 'auth-token': token },
+            });
+            if (res.ok) {
+                alert('Friend request rejected!');
+                fetchRequestsAndFriends();
+            } else {
+                alert('Failed to reject request');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error rejecting request');
+        }
+    };
+
+
+    useEffect(() => {
+        fetchUsers();
+    }, [fetchUsers]);
+
+    useEffect(() => {
+        fetchRequestsAndFriends();
+    }, [fetchRequestsAndFriends]);
+
+    const handleClick = async (user) => {
+        try {
+            const response = await fetch(`${host}/api/auth/send-request/${user._id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'auth-token': token,
+                }
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setSentRequests(prev => new Set(prev).add(user._id));
+                alert("Request sent successfully!");
+                fetchRequestsAndFriends();
+            } else {
+                alert(data.error || "Failed to send request");
+            }
+        } catch (error) {
+            console.error('Send request error:', error);
+            alert("Something went wrong");
+        }
+    };
+
+    const cancelRequest = async (user) => {
+        try {
+            const response = await fetch(`${host}/api/auth/cancel-request/${user._id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'auth-token': token,
+                }
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setSentRequests(prev => new Set([...prev].filter(id => id !== user._id)));
+                alert("Request cancelled successfully!");
+                fetchRequestsAndFriends();
+            } else {
+                alert(data.error || "Failed to cancel request");
+            }
+        } catch (error) {
+            console.error('Cancel request error:', error);
+            alert("Something went wrong");
+        }
+    };
+
+    useEffect(() => {
+        const fetchRequests = async () => {
+            try {
+                const response = await fetch(`${host}/api/auth/friendrequests`, {
+                    headers: { 'auth-token': token },
+                });
+                const data = await response.json();
+                if (response.ok && data.pendingRequests) {
+                    setRequests(data.pendingRequests);
+                } else {
+                    console.error(data.error || 'Failed to fetch requests');
+                }
+            } catch (error) {
+                console.error('Error fetching friend requests:', error);
+            }
+        };
+
+        fetchRequests();
+    }, [host, token]);
+
 
 
     useEffect(() => {
@@ -29,20 +204,29 @@ const ChatLayout = (props) => {
             setIsMobile(mobile);
             if (!mobile) setSelectedChat(null);
         };
-
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const chatList = ["Alice", "Bob", "Charlie", "David", "Eve"];
-    const verticalNavbarWidth = 50;
+    useEffect(() => {
+        const savedChatId = localStorage.getItem('selectedChatId');
+        if (savedChatId && chatList.length > 0) {
+            const match = chatList.find((c) => c._id === savedChatId);
+            if (match) setSelectedChat(match);
+        }
+    }, [chatList]);
+
+    const messages = [
+        { type: 'received', text: 'Hello! 👋 How are you today?' },
+        { type: 'sent', text: 'I am good, thanks! Just working on some React code.' },
+    ];
 
     return (
         <div
             className="d-flex"
             style={{
                 position: 'absolute',
-                left: isMobile ? 0 : `${verticalNavbarWidth}px`,
+                left: isMobile ? 0 : 50,
                 top: 0,
                 right: 0,
                 bottom: 0,
@@ -51,78 +235,67 @@ const ChatLayout = (props) => {
                 backgroundColor: '#f8f9fa',
             }}
         >
-            {/* Left Sidebar */}
-            {(!isMobile || !selectedChat) && (
-                <div style={{
-                    width: isMobile ? '100%' : '350px',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    borderRight: isMobile ? 'none' : '1px solid #ccc',
-                    backgroundColor: '#5459AC',
-                }}>
-                    <Navbar />
-                    <div className="p-3 overflow-auto" style={{ flex: 1 }}>
-                        <h5 className="text-white mb-3">Chats</h5>
-                        <ul className="list-group">
-                            {chatList.map(name => (
-                                <li
-                                    key={name}
-                                    className="list-group-item  my-2"
-                                    onClick={() => isMobile ? setSelectedChat(name) : null}
-                                    style={{ cursor: 'pointer', borderRadius:'inherit' }}
-                                >
-                                    <ChatReceiver name={name}/>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                </div>
+            {location.pathname === '/' && (
+                <>
+                    <ChatSidebar
+                        chatList={chatList}
+                        isMobile={isMobile}
+                        selectedChat={selectedChat}
+                        setSelectedChat={setSelectedChat}
+                    />
+                    <ChatWindow
+                        selectedChat={selectedChat}
+                        setSelectedChat={setSelectedChat}
+                        messages={messages}
+                        isMobile={isMobile}
+                    />
+                </>
             )}
+            {location.pathname === '/friends' && (
+                <>
+                    <ChatSidebar
+                        users={users}
+                        sentRequests={sentRequests}
+                        pendingRequests={pendingRequests}   // FIXED prop name here
+                        friends={friends}
+                        setSelectedUser={setSelectedUser}
+                        handleClick={handleClick}
+                        cancelRequest={cancelRequest}
+                        fetchUsers={fetchUsers}
+                        hasMore={hasMore}
+                        isMobile={isMobile}
+                    />
 
-            {/* Right Chat Area */}
-            {(!isMobile || selectedChat) && (
-                <div
-                    className="flex-grow-1 d-flex flex-column"
-                    style={{
-                        backgroundImage: `url(${chatBg})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        width: isMobile ? '100%' : 'auto',
-                    }}
-                >
-                    {/* 👇 Clean UserBar - no wrapper frame */}
+                    <ChatWindow
+                        selectedChat={selectedUser}
+                        setSelectedChat={setSelectedUser}
+                        messages={messages}
+                        isMobile={isMobile}
+                    />
+                </>
+            )}
+            {location.pathname === '/arrequest' && (
+                <>
+                    <ChatSidebar
+                        users={users}
+                        pendingRequests={pendingRequests}
+                        setSelectedUser={setSelectedUser}
+                        handleClick={handleClick}
+                        fetchUsers={fetchUsers}
+                        hasMore={hasMore}
+                        isMobile={isMobile}
+                        handleAccept={handleAccept}
+                        handleReject={handleReject}
+                        setSelectedChat={setSelectedChat}
+                    />
 
-
-                    {isMobile && selectedChat && (
-                        <div className="px-3 mt-2">
-                            <button
-                                className="btn btn-sm btn-light"
-                                onClick={() => setSelectedChat(null)}
-                            >
-                                ← Back to chats
-                            </button>
-                        </div>
-                    )}
-                    <UserBar name={props.name}/>
-                    {/* Chat Content */}
-                    <div className="flex-grow-1 overflow-auto hide-scrollbar" style={{ padding: '1rem', height: 'calc(100vh - 150px)' }}>
-                        <div style={{ backgroundColor: 'transparent', padding: '1rem', borderRadius: '8px' }}>
-                            <MessageBox messages={messages} />
-                        </div>
-                    </div>
-                    <div style={{
-                        //backgroundColor: '#e1e7f0',
-                        padding: '10px 16px',
-                        //borderTop: '1px solid #ccc',
-                        position: 'relative',
-                        zIndex: 10,
-                    }}>
-                        <Keyboard />
-                    </div>
-
-                </div>
+                    <ChatWindow
+                        selectedChat={selectedUser}
+                        setSelectedChat={setSelectedUser}
+                        messages={messages}
+                        isMobile={isMobile}
+                    />
+                </>
             )}
 
         </div>

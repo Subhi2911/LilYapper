@@ -6,7 +6,8 @@ export default function Avatar({
   width = 11,
   height = 11,
   theme = "light",
-  src = ""
+  src = "",
+  isOnline = false,
 }) {
   const initials = name
     .trim()
@@ -18,7 +19,7 @@ export default function Avatar({
   const background = theme === 'light' ? '#0B1D51' : '#F1E7E7';
   const color = theme === 'light' ? '#F1E7E7' : '#0B1D51';
 
-  const commonStyle = {
+  const containerStyle = {
     width: `${width}rem`,
     height: `${height}rem`,
     borderRadius: '50%',
@@ -31,11 +32,12 @@ export default function Avatar({
     userSelect: 'none',
     overflow: 'hidden',
     backgroundColor: background,
-    color: color
+    color: color,
+    border: `3px solid ${isOnline ? '#4CAF50' : '#E57373'}`, // green/red border
   };
 
   return (
-    <div style={commonStyle}>
+    <div style={containerStyle}>
       {src ? (
         <img
           src={src}
@@ -44,6 +46,7 @@ export default function Avatar({
             width: '100%',
             height: '100%',
             objectFit: 'cover',
+            borderRadius: '50%',
           }}
         />
       ) : (

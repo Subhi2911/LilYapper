@@ -21,6 +21,7 @@ const ChooseAvatar = () => {
     const host = process.env.REACT_APP_BACKEND_URL;
     const token = localStorage.getItem('token');
     const navigate = useNavigate();
+    // eslint-disable-next-line no-unused-vars
     const [user, setUser] = useState(null);
     const [selectedAvatar, setSelectedAvatar] = useState(avatarList[0]);
     const [showOptions, setShowOptions] = useState(false);
@@ -30,9 +31,9 @@ const ChooseAvatar = () => {
         return () => document.body.classList.remove('signup-body');
     }, []);
 
-    const handleNext =()=>{
-        navigate('/requests')
-    }
+    const handleNext = () => {
+        navigate('/requests');
+    };
 
     const editAvatar = async (avatar) => {
         try {
@@ -65,11 +66,40 @@ const ChooseAvatar = () => {
 
             <div style={{ position: 'relative', marginBottom: '3rem' }}>
                 <Avatar src={selectedAvatar} />
-                <i
-                    className="fa-solid fa-camera camera-icon"
+
+                {/* Camera icon inside black circular background */}
+                <div
                     onClick={() => setShowOptions(!showOptions)}
-                    style={{ position: 'absolute', bottom: 0, right: 0, cursor: 'pointer' }}
-                ></i>
+                    style={{
+                        position: 'absolute',
+                        bottom: 4,
+                        right: 4,
+                        width: '32px',
+                        height: '32px',
+                        backgroundColor: 'black',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        boxShadow: '0 0 6px rgba(0,0,0,0.6)',
+                        transition: 'background-color 0.2s ease',
+                    }}
+                    aria-label="Change avatar"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setShowOptions(!showOptions);
+                        }
+                    }}
+                >
+                    <i
+                        className="fa-solid fa-camera"
+                        style={{ color: 'white', fontSize: '16px' }}
+                    ></i>
+                </div>
 
                 {showOptions && (
                     <div
@@ -110,8 +140,16 @@ const ChooseAvatar = () => {
 
             <div>
                 <UserInfo />
+                <button
+                    type="button"
+                    className="btn btn-warning my-3"
+                    onClick={handleNext}
+                    style={{ marginLeft: '1.5rem', width: '90%' }}
+                >
+                    Next
+                </button>
             </div>
-            <button type="button" className="btn btn-outline-light my-3" onClick={handleNext}>Next</button>
+
         </div>
     );
 };

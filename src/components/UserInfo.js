@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 const UserInfo = () => {
     const host = process.env.REACT_APP_BACKEND_URL;
-    
+    const location=useLocation()
     const [user, setUser] = useState({
         username: '',
         bio: '',
@@ -23,19 +23,21 @@ const UserInfo = () => {
                         'auth-token': localStorage.getItem('token')
                     }
                 });
+                
                 const data = await res.json();
+                console.log(data)
                 setUser({
-                    username: data.username,
-                    bio: data.bio,
-                    dateOfJoining: data.date
-                        ? new Date(data.date).toLocaleDateString('en-GB', {
+                    username: data.user.username,
+                    bio: data.user.bio,
+                    dateOfJoining: data.user.date
+                        ? new Date(data.user.date).toLocaleDateString('en-GB', {
                             day: 'numeric',
                             month: 'long',
                             year: 'numeric'
                         })
                         : 'N/A'
                 });
-                setFormData({ username: data.username, bio: data.bio });
+                setFormData({ username: data.user.username, bio: data.user.bio });
             } catch (error) {
                 console.error('Failed to fetch user:', error);
             }
@@ -79,7 +81,7 @@ const UserInfo = () => {
                 style={{
                     width: '100%',
                     maxWidth: '500px',
-                    minWidth: '500px',  // fixed width - keeps width constant even on small edits
+                    minWidth: '350px',  // fixed width - keeps width constant even on small edits
                     borderRadius: '1rem',
                     backgroundColor: '#5459AC',
                     boxSizing: 'border-box',
@@ -130,10 +132,13 @@ const UserInfo = () => {
                     {editMode ? (
                         <>
                             <button className="btn btn-success me-2 px-4" onClick={handleSave}>💾 Save</button>
-                            <button className="btn btn-outline-light px-4" onClick={() => setEditMode(false)}>Cancel</button>
+                            <button className="btn btn-outline-dark  px-4" onClick={() => setEditMode(false)}>Cancel</button>
                         </>
                     ) : (
-                        <button className="btn btn-warning text-dark px-4" onClick={() => setEditMode(true)}>✏️ Edit</button>
+                        location.pathname==='/chooseavatar' || location.pathname==='/profile'?(
+                        <button className="btn btn-outline-light  px-4" onClick={() => setEditMode(true)}>✏️ Edit</button>):(
+                            null
+                        )
                     )}
                 
                 </div>

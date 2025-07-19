@@ -1,25 +1,42 @@
-import React, { useEffect } from 'react'
-import ChatLayout from './ChatLayout'
-import { useNavigate } from 'react-router-dom'
+import React, { useContext, useEffect, useState } from 'react';
+import ChatLayout from './ChatLayout';
+import { useNavigate } from 'react-router-dom';
+import ChatContext from '../context/chats/ChatContext';
+import NewChatModal from './NewChatModal';
 
 const Home = () => {
-    const navigate=useNavigate();
-    const token=localStorage.getItem('token');
+	const navigate = useNavigate();
+	const token = localStorage.getItem('token');
+	const { fetchConnections } = useContext(ChatContext);
+	const [chatList, setChatList] = useState([]);
 
-    useEffect(()=>{
-        if (!token || token === 'undefined' || token === 'null') {
-        navigate('/login');
-        return;
-      }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    },[token])
+	useEffect(() => {
+		const savedToken = token;
+		if (!savedToken) {
+			navigate('/login');
+			return;
+		}
 
-  return (
-    <div>
-        
-      <ChatLayout/>
-    </div>
-  )
-}
+		const getConnections = async () => {
+			try {
+				const data = await fetchConnections();
+				if (data) {
+					setChatList(data);
+				}
+			} catch (error) {
+				console.error("Error fetching connections:", error);
+			}
+		};
 
-export default Home
+		getConnections();
+	}, [navigate, token, fetchConnections]);
+
+	return (
+		<div>
+			<ChatLayout chatList={chatList} />
+			<NewChatModal />
+		</div>
+	);
+};
+
+export default Home;

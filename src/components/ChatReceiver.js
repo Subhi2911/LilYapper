@@ -6,11 +6,13 @@ const ChatReceiver = (props) => {
         <div>
             <div className="d-flex align-items-center justify-content-between">
                 <div className="d-flex align-items-center">
-                    <Avatar name={props.name} width="2" height="2" size="12" />
-                    <p className="mx-2 mb-0">{props.name}</p>
+                    <Avatar src={props.avatar} width="2" height="2" size="12" isOnline={props.isOnline} />
+                    <p className="mx-3 mb-0">{props.name}</p>
+                    
                 </div>
                 <span className="badge text-bg-secondary">4</span>
             </div>
+            <span className='mx-5'>{props.latestMessage}</span>
         </div>
     )
 }

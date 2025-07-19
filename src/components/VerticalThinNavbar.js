@@ -1,17 +1,59 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Avatar from "./Avatar";
 
 export default function VerticalThinNavbar() {
     const location = useLocation();
     const token = localStorage.getItem('token');
+    const host=process.env.REACT_APP_BACKEND_URL
     
     const links = [
         { to: "/", icon: <i className="fa-solid fa-message"></i>, label: "Home" },
         { to: "/groups", icon: <i className="fa-solid fa-user-group"></i>, label: "Groups" },
-        { to: "/requests", icon: <i className="fa-solid fa-user-plus"></i>, label: "Requests" },
+        { to: "/arrequest", icon: <i className="fa-solid fa-user-plus"></i>, label: "Requests" },
         { to: "/friends", icon: <i className="fa-solid fa-handshake"></i>, label: "Friends" }
     ];
+
+     const [user, setUser] = useState({ 
+            avatar:'',
+            username: '',
+            bio: '',
+            dateOfJoining: ''
+        });
+    useEffect(()=>{
+        const fetchUser = async () => {
+            try {
+                const res = await fetch(`${host}/api/auth/getuser`, {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'auth-token': localStorage.getItem('token')
+                    }
+                });
+                
+                const data = await res.json();
+                console.log(data)
+                setUser({
+                    avatar:data.user.avatar,
+                    username: data.user.username,
+                    bio: data.user.bio,
+                    dateOfJoining: data.user.date
+                        ? new Date(data.user.date).toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                        })
+                        : 'N/A'
+                });
+                
+            } catch (error) {
+                console.error('Failed to fetch user:', error);
+            }
+        };
+
+        fetchUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    },[])
 
     if (!token) {
         links.push({
@@ -104,7 +146,7 @@ export default function VerticalThinNavbar() {
                     textDecoration: "none",
                 }}
             >
-                <Avatar name="Nikki Pandey" width="2" height="2" size="12"/>
+                <Avatar src={user.avatar} width="2" height="2" size="12"/>
             </Link>
         </nav>
     );
