@@ -3,7 +3,7 @@ import Navbar from './Navbar';
 import ChatReceiver from './ChatReceiver';
 import { useLocation } from 'react-router-dom';
 import RequestSidebar from './RequestSidebar';
-import AcceptRejectRequests from './AcceptRequest';
+import AcceptRequest from './AcceptRequest';
 
 const ChatSidebar = ({
     chatList,
@@ -88,7 +88,7 @@ const ChatSidebar = ({
                 )}
                 {location.pathname === '/arrequest' && (
                     <>
-                        <AcceptRejectRequests
+                        <AcceptRequest
                             receivedRequests={Array.isArray(pendingRequests) ? pendingRequests : Array.from(pendingRequests)}
                             users={users}
                             setSelectedUser={setSelectedUser}

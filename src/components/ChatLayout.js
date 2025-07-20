@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ChatSidebar from './ChatSidebar';
 import ChatWindow from './ChatWindow';
+//import ChatWindow from './ChatWindow';
 
 
 const ChatLayout = ({ chatList }) => {
@@ -291,9 +292,10 @@ const ChatLayout = ({ chatList }) => {
 
                     <ChatWindow
                         selectedChat={selectedUser}
-                        setSelectedChat={setSelectedUser}
+                        
                         messages={messages}
                         isMobile={isMobile}
+                        setSelectedUser={setSelectedUser}
                     />
                 </>
             )}

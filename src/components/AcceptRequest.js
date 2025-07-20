@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Avatar from './Avatar';
 
-const AcceptRejectRequests = ({
+const AcceptRequest= ({
     receivedRequests = [],
     users = [],
     handleAccept,
@@ -102,4 +102,4 @@ const AcceptRejectRequests = ({
     );
 };
 
-export default AcceptRejectRequests;
+export default AcceptRequest;

@@ -5,6 +5,7 @@ import MessageBox from './MessageBox';
 import Keyboard from './Keyboard';
 import { useLocation } from 'react-router-dom';
 import RequestWindow from './RequestWindow';
+import AcceptRequestWindow from './AcceptRequestWindow';
 
 const ChatWindow = ({
     selectedChat,
@@ -17,7 +18,9 @@ const ChatWindow = ({
     friends,
     handleSkip,
     selectedUser,
-    setSelectedUser
+    setSelectedUser,
+    handleAccept,
+    handleReject,
 }) => {
     const location = useLocation();
 
@@ -70,7 +73,7 @@ const ChatWindow = ({
                     </>
                 )}
 
-                {(location.pathname === '/friends' || location.pathname === '/arrequest') && (
+                {location.pathname === '/friends'  && (
                     <RequestWindow
                         selectedUser={selectedChat}
                         setSelectedUser={setSelectedChat}
@@ -82,6 +85,16 @@ const ChatWindow = ({
                         isMobile={isMobile}
                         setSelectedChat={setSelectedChat} 
                     />
+                )}
+                {location.pathname==='/arrequest' &&(
+                    <>
+                    <AcceptRequestWindow
+                    selectedUser={selectedUser}
+                    handleAccept={handleAccept}
+                    handleReject={handleReject}
+                    handleBack={() => setSelectedUser(null)}
+                    />
+                    </>
                 )}
 
                 {location.pathname !== '/' &&
