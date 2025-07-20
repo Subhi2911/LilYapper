@@ -1,10 +1,10 @@
 import React from 'react'
 import EmojiInput from './EmojiInput'
 
-const Keyboard = () => { 
+const Keyboard = ({onSend}) => { 
     
     return (
-        <EmojiInput/>
+        <EmojiInput onSend={onSend}/>
     )
 }
 

@@ -4,6 +4,8 @@ import AnotherUser from './AnotherUser';
 import { useLocation } from 'react-router-dom';
 
 const RequestWindow = ({
+    handleAccept,
+    handleReject,
     selectedUser,
     isMobile,
     handleBack,
@@ -11,7 +13,7 @@ const RequestWindow = ({
     pendingRequests = new Set(),
     handleSkip
 }) => {
-    const location =useLocation();
+    const location = useLocation();
     const getButtonState = (userId) => {
         if (sentRequests.has(userId)) return { text: 'Sent', disabled: true };
         if (pendingRequests.has(userId)) return { text: 'Pending', disabled: true };
@@ -26,7 +28,7 @@ const RequestWindow = ({
         <div
             style={{
                 flex: '1 1 60%',
-                backgroundImage: location.pathname==='/requests'?`url(${require('../images/LoginBg.png')})`:'',
+                backgroundImage: location.pathname === '/requests' ? `url(${require('../images/LoginBg.png')})` : '',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 borderRadius: '1rem',
@@ -40,7 +42,7 @@ const RequestWindow = ({
             }}
         >
             {isMobile && selectedUser && (
-                <button className="btn btn-secondary mb-3" onClick={handleBack}>
+                <button className="btn btn-light mb-3" onClick={handleBack} style={{ width: '6rem' }}>
                     ← Back
                 </button>
             )}
@@ -68,7 +70,8 @@ const RequestWindow = ({
                 </div>
             )}
 
-            {!isMobile && location.pathname==='/requests'&&(
+            {!isMobile && location.pathname === '/requests' && (
+
                 <button
                     onClick={handleSkip}
                     className="btn btn-warning"
@@ -81,9 +84,32 @@ const RequestWindow = ({
                         zIndex: 10,
                     }}
                 >
-                    { selectedUser && sentRequests.size > 0 ? 'Next →' : 'Skip →'}
+                    {selectedUser && sentRequests.size > 0 ? 'Next →' : 'Skip →'}
                 </button>
             )}
+            {isMobile && location.pathname === '/friends' && selectedUser && (
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                    <button
+                        className="btn btn-success px-3"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleAccept(selectedUser);
+                        }}
+                    >
+                        ✅ Accept
+                    </button>
+                    <button
+                        className="btn btn-danger px-3"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleReject(selectedUser);
+                        }}
+                    >
+                        ❌ Reject
+                    </button>
+                </div>
+            )}
+
         </div>
     );
 };

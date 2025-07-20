@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import EmojiPicker from 'emoji-picker-react';
 
-const EmojiInput = () => {
+const EmojiInput = ({ onSend }) => {
   const [input, setInput] = useState('');
   const [showPicker, setShowPicker] = useState(false);
   const [hovered, setHovered] = useState(false);
   const textareaRef = useRef(null);
+  const pickerRef = useRef(null);
+  const emojiButtonRef = useRef(null);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -14,16 +16,45 @@ const EmojiInput = () => {
     }
   }, [input]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        pickerRef.current &&
+        !pickerRef.current.contains(event.target) &&
+        emojiButtonRef.current &&
+        !emojiButtonRef.current.contains(event.target)
+      ) {
+        setShowPicker(false);
+      }
+    };
+
+    if (showPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showPicker]);
+
   const onEmojiClick = (emojiData) => {
-    setInput(prevInput => prevInput + emojiData.emoji);
-    setShowPicker(false);
+    setInput((prevInput) => prevInput + emojiData.emoji);
     textareaRef.current.focus();
   };
 
   const sendMessage = () => {
     if (input.trim()) {
-      console.log('Send:', input);
+      if (typeof onSend === 'function') {
+        onSend(input.trim());
+      }
       setInput('');
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
     }
   };
 
@@ -43,7 +74,8 @@ const EmojiInput = () => {
       }}
     >
       <button
-        onClick={() => setShowPicker(val => !val)}
+        ref={emojiButtonRef}
+        onClick={() => setShowPicker((val) => !val)}
         style={{
           fontSize: '1.4rem',
           background: 'none',
@@ -63,8 +95,9 @@ const EmojiInput = () => {
         rows={1}
         value={input}
         onChange={(e) => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onClick={() => setShowPicker(false)} // 👈 Close picker when textarea is clicked
         placeholder="Type your message..."
-        onFocus={() => setShowPicker(false)}
         style={{
           flexGrow: 1,
           fontSize: '1rem',
@@ -81,7 +114,6 @@ const EmojiInput = () => {
         }}
       />
 
-      {/* Send Button with Hover and Tooltip */}
       <button
         type="button"
         title="Send"
@@ -103,14 +135,12 @@ const EmojiInput = () => {
           transition: 'background-color 0.2s ease-in-out',
         }}
       >
-        <i
-          className="fa-solid fa-paper-plane"
-          style={{ fontSize: '1rem' }}
-        ></i>
+        <i className="fa-solid fa-paper-plane" style={{ fontSize: '1rem' }} />
       </button>
 
       {showPicker && (
         <div
+          ref={pickerRef}
           style={{
             position: 'absolute',
             bottom: '50px',

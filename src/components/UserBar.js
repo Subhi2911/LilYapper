@@ -42,7 +42,7 @@ const UserBar = ({ name, avatar, setSelectedChat, isOnline }) => {
                 </Link>
 
                 <p className="navbar-brand my-1" style={{ color: 'white' }}>
-                    {name} <span class='small' style={{ fontSize: '0.8rem', color: isOnline ? '#4CAF50' : '#E57373' }}>{isOnline ? 'Online' : 'Offline'}</span>
+                    {name} <span className='small' style={{ fontSize: '0.8rem', color: isOnline ? '#4CAF50' : '#E57373' }}>{isOnline ? 'Online' : 'Offline'}</span>
                 </p>
 
                 <div className="d-flex align-items-center ms-auto gap-5" id="navbarSupportedContent">

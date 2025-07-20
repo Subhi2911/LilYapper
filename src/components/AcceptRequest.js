@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+//import { useNavigate } from 'react-router-dom';
 import Avatar from './Avatar';
 
 const AcceptRequest= ({
@@ -8,7 +8,7 @@ const AcceptRequest= ({
     handleAccept,
     handleReject,
     setSelectedUser,
-    isMobile = false,
+    isMobile,
     setSelectedChat,
 }) => {
     //const navigate = useNavigate();

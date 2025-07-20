@@ -7,6 +7,7 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 import ChooseAvatar from './components/ChooseAvatar';
 import Requests from './components/Requests';
+import Notifications from './components/Notifications';
 
 //import ChatContext from './context/chats/ChatContext';
 //import VerticalThinNavbar from './components/VerticalThinNavbar';
@@ -21,6 +22,7 @@ function App() {
                     
                     <Routes>
                         <Route path='/' element={<Home/>}/>
+                        <Route path='/groups' element={<Home/>}/>
                         <Route path='/friends' element={<Home/>}/>
                         <Route path='/arrequest' element={<Home/>}/>
                         <Route path='/login' element={<Login />} />
@@ -28,6 +30,7 @@ function App() {
                         <Route path='/ChooseAvatar' element={<ChooseAvatar />} />
                         <Route path='/requests' element={<Requests />} />
                     </Routes>
+                    <Notifications/>
                 </Router>
             </ChatState>
         </>

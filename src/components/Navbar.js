@@ -3,21 +3,43 @@ import lilyapper from '../images/lilyapper.png';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import VerticalThinNavbar from './VerticalThinNavbar';
 import NewChatModal from './NewChatModal';
+import ThreeDotsMenu from './ThreeDotsMenu';
+import NewGroupModal from './NewGroupModal';
 
-const Navbar = () => {
+const Navbar = ({refreshGroups}) => {
     const offcanvasLeftRef = useRef();
     const location = useLocation();
     const token = localStorage.getItem('token');
     const navigate = useNavigate();
     const [showModal, setShowModal] = useState(false);
+    const [showGroupModal, setShowGroupModal] = useState(false);
+    // eslint-disable-next-line no-unused-vars
+    const [groups, setGroups] = useState([]);
+    const handleGroupCreated = (newGroup) => {
+        setGroups((prev) => [newGroup, ...prev]);
+        // optionally navigate or refresh UI
+    };
+    const options = [
+        { label: 'New Group', action: () => setShowGroupModal(true) },
+        { label: 'Settings', action: () => navigate('/settings') },
+        {
+            label: 'Logout', action: () => {
+                localStorage.removeItem('token');
+                navigate('/login');
+            }
+        },
+    ];
 
+    const handleSelect = (option) => {
+        if (option.action) option.action();
+    };
     const closeOffcanvasleft = () => {
         const bsOffcanvas = window.bootstrap.Offcanvas.getInstance(offcanvasLeftRef.current);
         if (bsOffcanvas) bsOffcanvas.hide();
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('token','useInfo');
+        localStorage.removeItem('token', 'useId');
         navigate('/login');
     };
 
@@ -69,14 +91,7 @@ const Navbar = () => {
 
 
                             {/* More Options */}
-                            <Link
-                                to="/more"
-                                className="text-decoration-none"
-                                style={{ color: location.pathname === '/more' ? '#B2D8CE' : 'white' }}
-                                aria-label="More Options"
-                            >
-                                <i className="fa-solid fa-ellipsis-vertical mx-1" style={{ fontSize: '1.3rem' }}></i>
-                            </Link>
+                            <ThreeDotsMenu options={options} onSelect={handleSelect} />
                         </div>
                     </div>
                 </nav>
@@ -130,6 +145,13 @@ const Navbar = () => {
 
             {/* New Chat Modal */}
             <NewChatModal isOpen={showModal} onClose={() => setShowModal(false)} />
+            <NewGroupModal
+                isOpen={showGroupModal}
+                onClose={() => setShowGroupModal(false)}
+                onGroupCreated={handleGroupCreated}
+                refreshGroups={refreshGroups}
+                //setSelectedChat={setSelectedChat}
+            />
         </>
     );
 };

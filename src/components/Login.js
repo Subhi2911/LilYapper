@@ -30,10 +30,13 @@ const Login = (props) => {
         const json = await response.json();
         if (json.success) {
             localStorage.setItem('token', json.authToken);
-            localStorage.setItem('userInfo', JSON.stringify(json.user)); // ✅ Store user info
-            navigate('/chooseavatar');
+            localStorage.setItem('userId', json.user._id);
+            localStorage.setItem('user', JSON.stringify(json.user));  
+
+            navigate('/');
         }
     };
+
 
     return (
         <div className="container-fluid d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
