@@ -39,7 +39,7 @@ const Signup = (props) => {
             if (response.ok && json.success) {
                 localStorage.setItem("token", json.authToken);
                 navigate("/chooseavatar");
-                props.showAlert("Account Created Successfully!", "success");
+                //props.showAlert("Account Created Successfully!", "success");
             }
         } catch (err) {
             console.error("Network error:", err);

@@ -7,9 +7,8 @@ import ChatContext from '../context/chats/ChatContext';
 const ChatLayout = ({ chatList }) => {
     const location = useLocation();
     const navigate = useNavigate();
-
     const { fetchGroups } = useContext(ChatContext);
-
+    const [showChatInfo, setShowChatInfo] = useState(false);
     const token = localStorage.getItem('token');
     const host = process.env.REACT_APP_BACKEND_URL;
 
@@ -29,6 +28,8 @@ const ChatLayout = ({ chatList }) => {
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [selectedChat, setSelectedChat] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
+    // eslint-disable-next-line no-unused-vars
+    const [localChatList, setLocalChatList] = useState(chatList || []);
 
     // Friend request related sets
     const [sentRequests, setSentRequests] = useState(new Set());
@@ -37,6 +38,55 @@ const ChatLayout = ({ chatList }) => {
 
     const initialized = useRef(false); // prevent multiple initial calls
 
+    //set local chatlist to pass it as a prop
+    useEffect(() => {
+        setLocalChatList(chatList || []);
+    }, [chatList]);
+
+    //update localchatlist what chat is selected
+    const handleSelectChat = (chat) => {
+        setSelectedChat(chat);
+        // Mark messages as read
+        markMessagesAsRead(chat._id);
+
+        // Update unreadCount to 0 locally for this chat
+        setLocalChatList(prev =>
+            prev.map(c =>
+                c._id === chat._id ? { ...c, unreadCount: 0 } : c
+            )
+        );
+    };
+
+    // Create groups 
+    const handleGroupCreated = (newGroup) => {
+        setGroups(prev => [newGroup, ...prev]);
+    };
+
+    // eslint-disable-next-line no-unused-vars
+    const [chats, setChats] = useState([]); // your chats state
+
+
+    // Handle delete chat function
+    const handleDeleteChat = async (chatId) => {
+        try {
+            const res = await fetch(`${host}/api/chat/deletechat/${chatId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'auth-token': localStorage.getItem('token')
+                }
+            });
+            if (res.ok) {
+                setSelectedChat(null); // close the chat
+
+                //  Remove from UI immediately
+                setLocalChatList(prev => prev.filter(chat => chat._id !== chatId));
+                setGroups(prev => prev.filter(group => group._id !== chatId));
+            }
+        } catch (error) {
+            console.error('Error deleting chat:', error);
+        }
+    };
     // Fetch groups paginated and append
     const loadMoreGroups = useCallback(async () => {
         if (groupsLoading || !groupsHasMore) return;
@@ -59,13 +109,39 @@ const ChatLayout = ({ chatList }) => {
         }
     }, [fetchGroups, groupsHasMore, groupsLoading, groupsPage]);
 
-    // fetch grp after it is created
-    const refreshGroups = async () => {
-        setGroups([]);
-        setGroupsPage(1);
-        setGroupsHasMore(true);
-        await loadMoreGroups(); // reload first page
+    // Mark messages as read after viewed by the user & update badge immediately
+    const markMessagesAsRead = async (chatId) => {
+        if (!chatId) return;
+        try {
+            await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/message/markRead/${chatId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'auth-token': localStorage.getItem('token'),
+                },
+            });
+
+            // Immediately update unreadCount for the group/chat to 0 to hide badge
+            setGroups((prevGroups) =>
+                prevGroups.map((group) =>
+                    group._id === chatId
+                        ? { ...group, unreadCount: 0 }
+                        : group
+                )
+            );
+
+            // If you want to update chatList (non-groups), do it here similarly (not shown)
+
+        } catch (error) {
+            console.error('Failed to mark messages as read:', error);
+        }
     };
+
+    useEffect(() => {
+        if (selectedChat?._id) {
+            markMessagesAsRead(selectedChat._id);
+        }
+    }, [selectedChat]);
 
     // Fetch users paginated and append
     const loadMoreUsers = useCallback(async () => {
@@ -161,7 +237,7 @@ const ChatLayout = ({ chatList }) => {
         }
     };
 
-    // Friend request handlers (same as you had)
+    // Friend request handlers 
     const handleClick = async (user) => {
         try {
             const response = await fetch(`${host}/api/auth/send-request/${user._id}`, {
@@ -182,7 +258,6 @@ const ChatLayout = ({ chatList }) => {
             console.error('Send request error:', error);
         }
     };
-
 
     const cancelRequest = async (user) => {
         try {
@@ -229,7 +304,6 @@ const ChatLayout = ({ chatList }) => {
         }
     };
 
-
     return (
         <div
             className="d-flex"
@@ -247,21 +321,25 @@ const ChatLayout = ({ chatList }) => {
             {(location.pathname === '/' || location.pathname === '/groups') && (
                 <>
                     <ChatSidebar
-                        chatList={chatList}
+                        chatList={localChatList}
                         groups={groups}
                         isMobile={isMobile}
                         selectedChat={selectedChat}
-                        setSelectedChat={setSelectedChat}
-                        refreshGroups={refreshGroups}
+                        setSelectedChat={handleSelectChat}
                         // Pass group scroll handler and loading/hasMore for infinite scroll
                         onGroupsScroll={onGroupsScroll}
                         groupsLoading={groupsLoading}
                         groupsHasMore={groupsHasMore}
+                        refreshGroups={fetchGroups}
+                        onGroupCreated={handleGroupCreated}
                     />
                     <ChatWindow
                         selectedChat={selectedChat}
                         setSelectedChat={setSelectedChat}
                         isMobile={isMobile}
+                        onDeleteChat={handleDeleteChat}
+                        showChatInfo={showChatInfo}
+                        setShowChatInfo={setShowChatInfo}
                     />
                 </>
             )}

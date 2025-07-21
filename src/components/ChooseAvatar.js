@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Avatar from './Avatar';
 import UserInfo from './UserInfo';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const avatarList = [
     '/avatars/laughing.png',
@@ -17,18 +17,29 @@ const avatarList = [
     '/avatars/rude.png',
 ];
 
-const ChooseAvatar = () => {
+const ChooseAvatar = ({ onAvatarSelect, userAvatar }) => {
     const host = process.env.REACT_APP_BACKEND_URL;
     const token = localStorage.getItem('token');
     const navigate = useNavigate();
+    const location = useLocation();
     // eslint-disable-next-line no-unused-vars
     const [user, setUser] = useState(null);
-    const [selectedAvatar, setSelectedAvatar] = useState(avatarList[0]);
+
+    const [selectedAvatar, setSelectedAvatar] = useState(userAvatar || avatarList[0]);
     const [showOptions, setShowOptions] = useState(false);
+    useEffect(() => {
+        if (userAvatar) {
+            setSelectedAvatar(userAvatar);
+        }
+    }, [userAvatar]);
 
     useEffect(() => {
-        document.body.classList.add('signup-body');
-        return () => document.body.classList.remove('signup-body');
+        if (location.pathname === '/chooseavatar') {
+            document.body.classList.add('signup-body');
+            return () => document.body.classList.remove('signup-body');
+        }
+        console.log(userAvatar)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleNext = () => {
@@ -57,7 +68,11 @@ const ChooseAvatar = () => {
 
     const handleAvatarClick = (avatar) => {
         setSelectedAvatar(avatar);
-        editAvatar(avatar); // Save to backend
+        if (typeof onAvatarSelect === 'function') {
+            onAvatarSelect(avatar);
+        } else {
+            editAvatar(avatar || '/avatars/laughing.png');
+        }
         setShowOptions(false);
     };
 
@@ -138,17 +153,18 @@ const ChooseAvatar = () => {
                 )}
             </div>
 
-            <div>
-                <UserInfo />
-                <button
-                    type="button"
-                    className="btn btn-warning my-3"
-                    onClick={handleNext}
-                    style={{ marginLeft: '1.5rem', width: '90%' }}
-                >
-                    Next
-                </button>
-            </div>
+            {location.pathname === '/chooseavatar' && (
+                <div>
+                    <UserInfo />
+                    <button
+                        type="button"
+                        className="btn btn-warning my-3"
+                        onClick={handleNext}
+                        style={{ marginLeft: '1.5rem', width: '90%' }}
+                    >
+                        Next
+                    </button>
+                </div>)}
 
         </div>
     );

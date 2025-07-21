@@ -1,24 +1,23 @@
 import React, { useRef, useState } from 'react';
 import lilyapper from '../images/lilyapper.png';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import VerticalThinNavbar from './VerticalThinNavbar';
 import NewChatModal from './NewChatModal';
 import ThreeDotsMenu from './ThreeDotsMenu';
 import NewGroupModal from './NewGroupModal';
+import NotificationBell from './NotificationBell';
+import OffCanvasNavbar from './OffCanvasNavbar';
 
-const Navbar = ({refreshGroups}) => {
+const Navbar = ({refreshGroups, onGroupCreated}) => {
     const offcanvasLeftRef = useRef();
     const location = useLocation();
-    const token = localStorage.getItem('token');
+    //const token = localStorage.getItem('token');
     const navigate = useNavigate();
     const [showModal, setShowModal] = useState(false);
     const [showGroupModal, setShowGroupModal] = useState(false);
     // eslint-disable-next-line no-unused-vars
     const [groups, setGroups] = useState([]);
-    const handleGroupCreated = (newGroup) => {
-        setGroups((prev) => [newGroup, ...prev]);
-        // optionally navigate or refresh UI
-    };
+
     const options = [
         { label: 'New Group', action: () => setShowGroupModal(true) },
         { label: 'Settings', action: () => navigate('/settings') },
@@ -39,7 +38,9 @@ const Navbar = ({refreshGroups}) => {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('token', 'useId');
+        localStorage.removeItem('token');
+        localStorage.removeItem('useId');
+        localStorage.removeItem('user');
         navigate('/login');
     };
 
@@ -69,14 +70,7 @@ const Navbar = ({refreshGroups}) => {
 
                         <div className="d-flex align-items-center ms-auto gap-4" id="navbarSupportedContent">
                             {/* Notification Icon */}
-                            <Link
-                                to="/notification"
-                                className="text-decoration-none"
-                                style={{ color: location.pathname === '/notification' ? '#B2D8CE' : 'white' }}
-                                aria-label="Notification"
-                            >
-                                <i className="fa-solid fa-bell" style={{ fontSize: '1.3rem' }}></i>
-                            </Link>
+                            <NotificationBell/>
 
                             {/* New Chat Modal Trigger */}
                             <button
@@ -97,49 +91,10 @@ const Navbar = ({refreshGroups}) => {
                 </nav>
 
                 {/* Left Sidebar Offcanvas */}
-                <div className="offcanvas offcanvas-start" tabIndex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel" ref={offcanvasLeftRef} style={{ backgroundColor: '#648DB3' }}>
-                    <div className="offcanvas-header">
-                        <i className="fa-solid fa-bars fs-5 mx-3" style={{ cursor: 'pointer' }} onClick={closeOffcanvasleft}></i>
-                        <h5 className="offcanvas-title" id="offcanvasExampleLabel">LilYapper</h5>
-                        <button type="button" className="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                    </div>
-                    <div className="offcanvas-body">
-                        <ul className="list-group">
-                            <li className="list-group-item border-top my-2">
-                                <i className="fa-solid fa-message mx-3"></i>
-                                <Link onClick={closeOffcanvasleft} to="/" className="text-decoration-none text-dark">Home</Link>
-                            </li>
-                            <li className="list-group-item border-top my-2">
-                                <i className="fa-solid fa-user-group mx-3"></i>
-                                <Link onClick={closeOffcanvasleft} to="/groups" className="text-decoration-none text-dark">Groups</Link>
-                            </li>
-                            <li className="list-group-item border-top my-2">
-                                <i className="fa-solid fa-user-plus mx-3"></i>
-                                <Link onClick={closeOffcanvasleft} to="/arrequest" className="text-decoration-none text-dark">Requests</Link>
-                            </li>
-                            <li className="list-group-item border-top my-2">
-                                <i className="fa-solid fa-handshake mx-3"></i>
-                                <Link onClick={closeOffcanvasleft} to="/friends" className="text-decoration-none text-dark">Friends</Link>
-                            </li>
+                <OffCanvasNavbar handleLogout={handleLogout}  closeOffcanvasleft={closeOffcanvasleft} offcanvasLeftRef={offcanvasLeftRef} />
 
-                            {(!token || token === undefined || token === null) ? (
-                                <li className="list-group-item border-top my-2">
-                                    <i className="fa-solid fa-right-to-bracket mx-3"></i>
-                                    <Link onClick={closeOffcanvasleft} to="/login" className="text-decoration-none text-dark">Login</Link>
-                                </li>
-                            ) : (
-                                <li className="list-group-item border-top my-2">
-                                    <i className="fa-solid fa-right-from-bracket mx-3"></i>
-                                    <button type="button" onClick={() => { handleLogout(); closeOffcanvasleft(); }} className="text-dark text-decoration-none" style={{ border: 'none', backgroundColor: 'transparent', padding: '0' }}>Logout</button>
-                                </li>
-                            )}
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            {/* Thin Navbar on large screens */}
-            <div className="d-none d-lg-flex flex-column align-items-center">
+            {/* Thin Navbar on large and medium screens */}
+            <div className="d-none d-md-block d-lg-flex flex-column align-items-center">
                 <VerticalThinNavbar />
             </div>
 
@@ -148,10 +103,11 @@ const Navbar = ({refreshGroups}) => {
             <NewGroupModal
                 isOpen={showGroupModal}
                 onClose={() => setShowGroupModal(false)}
-                onGroupCreated={handleGroupCreated}
+                onGroupCreated={onGroupCreated}
                 refreshGroups={refreshGroups}
                 //setSelectedChat={setSelectedChat}
             />
+            </div>
         </>
     );
 };

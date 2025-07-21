@@ -62,4 +62,19 @@ body {
     width: auto;
   }
 }
+@media (max-width: 768px) {
+  body {
+    background-image: url('./images/LoginBg.png'); /* adjust path */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+}
+
+@media (min-width: 769px) {
+  body {
+    background-image: none;
+  }
+}
+
 

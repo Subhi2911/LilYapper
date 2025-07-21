@@ -1,11 +1,8 @@
-import React from 'react'
-import EmojiInput from './EmojiInput'
+import React from 'react';
+import EmojiInput from './EmojiInput';
 
-const Keyboard = ({onSend}) => { 
-    
-    return (
-        <EmojiInput onSend={onSend}/>
-    )
-}
+const Keyboard = ({ onSend, onTyping }) => {
+  return <EmojiInput onSend={onSend} onTyping={onTyping} />;
+};
 
-export default Keyboard
+export default Keyboard;

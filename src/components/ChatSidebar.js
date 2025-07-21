@@ -6,123 +6,165 @@ import RequestSidebar from './RequestSidebar';
 import AcceptRequest from './AcceptRequest';
 
 const ChatSidebar = ({
-  refreshGroups,
-  chatList = [],
-  groups = [],
-  isMobile,
-  selectedChat,
-  setSelectedChat,
-  users = [],
-  sentRequests = new Set(),
-  pendingRequests = new Set(),
-  friends = new Set(),
-  setSelectedUser,
-  handleClick,
-  cancelRequest,
-  fetchUsers,
-  hasMore,
-  handleSkip,
-  handleAccept,
-  handleReject,
-  user,
+    refreshGroups,
+    onGroupCreated,
+    chatList = [],
+    groups = [],
+    isMobile,
+    selectedChat,
+    setSelectedChat,
+    users = [],
+    sentRequests = new Set(),
+    pendingRequests = new Set(),
+    friends = new Set(),
+    setSelectedUser,
+    handleClick,
+    cancelRequest,
+    fetchUsers,
+    hasMore,
+    handleSkip,
+    handleAccept,
+    handleReject,
+    user,
 }) => {
-  const location = useLocation();
+    const location = useLocation();
 
-  const safeChatList = Array.isArray(chatList) ? chatList : [];
-  const safeGroups = Array.isArray(groups) ? groups : [];
+    const safeChatList = Array.isArray(chatList) ? chatList : [];
+    const safeGroups = Array.isArray(groups) ? groups : [];
 
-  let displayChats = [];
-  if (location.pathname === '/') {
-    displayChats = [...safeChatList, ...safeGroups];
-  } else if (location.pathname === '/groups') {
-    displayChats = safeGroups;
-  }
+    let displayChats = [];
 
-  const pendingRequestsArray = Array.isArray(pendingRequests)
-    ? pendingRequests
-    : Array.from(pendingRequests);
+    if (location.pathname === '/') {
+        displayChats = [...safeChatList, ...safeGroups];
+    } else if (location.pathname === '/groups') {
+        displayChats = safeGroups;
+    }
 
-  return (
-    (!isMobile || !selectedChat) && (
-      <div
-        style={{
-          width: isMobile ? '100vw' : '350px',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          borderRight: isMobile ? 'none' : '1px solid #ccc',
-          backgroundColor: '#5459AC',
-        }}
-      >
-        <Navbar refreshGroups={refreshGroups} setSelectedChat={setSelectedChat}/>
+    if (selectedChat?.deletedFor?.includes?.(user._id)) {
+        displayChats = displayChats.filter(chat => chat._id !== selectedChat._id);
+    }
 
-        {(location.pathname === '/' || location.pathname === '/groups') && (
-          <div className="p-3 overflow-auto" style={{ flex: 1 }}>
-            <h5 className="text-white mb-3">Chats</h5>
-            <ul className="list-group">
-              {displayChats.map((item) => (
-                <li
-                  key={item._id}
-                  className="list-group-item my-2"
-                  onClick={() => {
-                    console.log("Clicked chat:", item);
-                    setSelectedChat(item);
-                  }}
-                  style={{ cursor: 'pointer', borderRadius: 'inherit' }}
-                >
-                  {console.log("item", item)}
-                  <ChatReceiver
-                    avatar={
-                      item.isGroupChat
-                        ? item.avatar || '/avatars/hugging.png'
-                        : item.avatar || '/avatars/laughing.png'
-                    }
-                    name={item.isGroupChat ? item.chatName : item.username}
-                    latestMessage={
-                      item.latestMessage?.content ||
-                      (item.isGroupChat ? 'Group chat' : 'Tap to start chat')
-                    }
-                  />
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+    // Sort chats by latestMessage timestamp (descending)
+    displayChats.sort((a, b) => {
+        const timeA = new Date(a.latestMessage?.createdAt || a.updatedAt || 0).getTime();
+        const timeB = new Date(b.latestMessage?.createdAt || b.updatedAt || 0).getTime();
+        return timeB - timeA;
+    });
 
-        {location.pathname === '/arrequest' && (
-          <RequestSidebar
-            users={users}
-            sentRequests={sentRequests}
-            pendingRequests={pendingRequests}
-            friends={friends}
-            setSelectedUser={setSelectedUser}
-            handleClick={handleClick}
-            cancelRequest={cancelRequest}
-            fetchUsers={fetchUsers}
-            hasMore={hasMore}
-            isMobile={isMobile}
-            handleSkip={handleSkip}
-          />
-        )}
+    const pendingRequestsArray = Array.isArray(pendingRequests)
+        ? pendingRequests
+        : Array.from(pendingRequests);
 
-        {location.pathname === '/friends' && (
-          <AcceptRequest
-            receivedRequests={pendingRequestsArray}
-            users={users}
-            setSelectedUser={setSelectedUser}
-            handleClick={handleClick}
-            fetchUsers={fetchUsers}
-            hasMore={hasMore}
-            isMobile={isMobile}
-            handleSkip={handleSkip}
-            handleAccept={handleAccept}
-            handleReject={handleReject}
-            setSelectedChat={setSelectedChat}
-          />
-        )}
-      </div>
-    )
-  );
+    return (
+        (!isMobile || !selectedChat) && (
+            <div
+                style={{
+                    width: isMobile ? '100vw' : '350px',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderRight: isMobile ? 'none' : '1px solid #ccc',
+                    backgroundColor: '#5459AC',
+                }}
+
+            >
+                <Navbar refreshGroups={refreshGroups}
+                    onGroupCreated={onGroupCreated} />
+
+                {(location.pathname === '/' || location.pathname === '/groups') && (
+                    <div
+                        className="p-3"
+                        style={{
+                            flex: 1,
+                            overflowY: 'auto',
+                            scrollbarWidth: 'none',
+                            msOverflowStyle: 'none',
+                        }}
+                    >
+                        <style>
+                            {`
+                                div::-webkit-scrollbar {
+                                    display: none;
+                                }
+                            `}
+                        </style>
+
+                        <h5 className="text-white mb-3">Chats</h5>
+                        <ul className="list-group">
+                            {console.log(displayChats)}
+                            {displayChats.map((item) => (
+                                <li
+                                    key={item._id}
+                                    className="list-group-item my-2"
+                                    onClick={() => {
+                                        setSelectedChat(item);
+                                    }}
+                                    style={{ cursor: 'pointer', borderRadius: 'inherit' }}
+                                >
+                                    {console.log(item.latestMessage)}
+                                    <ChatReceiver
+                                        isGroup={item.isGroupChat}
+                                        lastMessageTime={item.latestMessage?.createdAt || ''}
+                                        sent={
+                                            localStorage.getItem('userId') === item.latestMessage?.sender?._id
+                                                ? 'You :'
+                                                : item.latestMessage?.sender?.username
+                                                    ? `${item.latestMessage.sender.username} :`
+                                                    : ''
+                                        }
+                                        avatar={
+                                            item.isGroupChat
+                                                ? item.avatar || '/avatars/hugging.png'
+                                                : item.avatar || '/avatars/laughing.png'
+                                        }
+                                        name={item.isGroupChat ? item.chatName : item.username}
+                                        latestMessage={
+                                            item.latestMessage?.content ||
+                                            (item.isGroupChat ? 'Group chat' : 'Tap to start chat')
+                                        }
+                                        unreadCount={item.unreadCount || 0}
+                                    />
+
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {location.pathname === '/arrequest' && (
+                    <RequestSidebar
+                        users={users}
+                        sentRequests={sentRequests}
+                        pendingRequests={pendingRequests}
+                        friends={friends}
+                        setSelectedUser={setSelectedUser}
+                        handleClick={handleClick}
+                        cancelRequest={cancelRequest}
+                        fetchUsers={fetchUsers}
+                        hasMore={hasMore}
+                        isMobile={isMobile}
+                        handleSkip={handleSkip}
+                    />
+                )}
+
+                {location.pathname === '/friends' && (
+                    <AcceptRequest
+                        receivedRequests={pendingRequestsArray}
+                        users={users}
+                        setSelectedUser={setSelectedUser}
+                        handleClick={handleClick}
+                        fetchUsers={fetchUsers}
+                        hasMore={hasMore}
+                        isMobile={isMobile}
+                        handleSkip={handleSkip}
+                        handleAccept={handleAccept}
+                        handleReject={handleReject}
+                        setSelectedChat={setSelectedChat}
+                    />
+                )}
+            </div>
+        )
+    );
 };
 
 export default ChatSidebar;

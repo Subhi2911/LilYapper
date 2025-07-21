@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import ChooseAvatar from './ChooseAvatar';
+import LoginBg from '../images/LoginBg.png';
 
-const NewGroupModal = ({ isOpen, onClose, onGroupCreated ,refreshGroups}) => {
+const NewGroupModal = ({ isOpen, onClose, onGroupCreated, refreshGroups }) => {
     const [friends, setFriends] = useState([]);
     const [selectedFriends, setSelectedFriends] = useState([]);
     const [groupName, setGroupName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-
+    const [avatar, setAvatar] = useState('/avatars/hugging.png'); // default
     const host = process.env.REACT_APP_BACKEND_URL;
 
     useEffect(() => {
@@ -67,6 +69,7 @@ const NewGroupModal = ({ isOpen, onClose, onGroupCreated ,refreshGroups}) => {
                 body: JSON.stringify({
                     chatName: groupName.trim(),
                     userIds: selectedFriends,
+                    avatar: avatar,
                 }),
             });
 
@@ -74,12 +77,11 @@ const NewGroupModal = ({ isOpen, onClose, onGroupCreated ,refreshGroups}) => {
 
             if (response.ok) {
                 if (onGroupCreated) onGroupCreated(data);
-
-                refreshGroups(); // Refresh groups in ChatLayout
-  
                 setGroupName('');
                 setSelectedFriends([]);
+                refreshGroups(); // Refresh groups in ChatLayout
                 onClose();
+                //refreshGroups(); // Refresh groups in ChatLayout
             } else {
                 setError(data.error || (data.errors && data.errors[0]?.msg) || 'Failed to create group');
             }
@@ -115,8 +117,12 @@ const NewGroupModal = ({ isOpen, onClose, onGroupCreated ,refreshGroups}) => {
                 <div className="modal-dialog modal-dialog-centered" role="document">
                     <div className="modal-content">
                         {/* Modal header */}
-                        <div className="modal-header">
-                            <h5 className="modal-title">Create New Group</h5>
+                        <div className="modal-header" style={{
+                            backgroundImage: `url(${LoginBg})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center'
+                        }}>
+                            <h5 className="modal-title" style={{ color: 'white' }}>Create New Group</h5>
                             <button
                                 type="button"
                                 className="btn-close"
@@ -127,8 +133,13 @@ const NewGroupModal = ({ isOpen, onClose, onGroupCreated ,refreshGroups}) => {
                         </div>
 
                         {/* Modal body */}
-                        <div className="modal-body">
+                        <div className="modal-body" style={{
+                            backgroundImage: `url(${LoginBg})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center'
+                        }}>
                             {error && <div className="alert alert-danger">{error}</div>}
+                            <ChooseAvatar onAvatarSelect={(value) => setAvatar(value)} />
                             <input
                                 type="text"
                                 placeholder="Group Name"
@@ -138,7 +149,7 @@ const NewGroupModal = ({ isOpen, onClose, onGroupCreated ,refreshGroups}) => {
                                 disabled={loading}
                                 autoFocus
                             />
-                            {console.log(friends)}
+
                             {friends.length === 0 ? (
                                 <p>No friends to add.</p>
                             ) : (
@@ -150,11 +161,14 @@ const NewGroupModal = ({ isOpen, onClose, onGroupCreated ,refreshGroups}) => {
                                         <li
                                             key={friend._id}
                                             className="list-group-item d-flex justify-content-between align-items-center"
+                                            onClick={() => toggleFriend(friend._id)}
+                                            style={{ cursor: 'pointer' }}
                                         >
                                             <span>{friend.username}</span>
                                             <input
                                                 type="checkbox"
                                                 checked={selectedFriends.includes(friend._id)}
+                                                style={{ transform: 'scale(1.5)' }}
                                                 onChange={() => toggleFriend(friend._id)}
                                                 disabled={loading}
                                             />
@@ -165,7 +179,11 @@ const NewGroupModal = ({ isOpen, onClose, onGroupCreated ,refreshGroups}) => {
                         </div>
 
                         {/* Modal footer */}
-                        <div className="modal-footer">
+                        <div className="modal-footer" style={{
+                            backgroundImage: `url(${LoginBg})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center'
+                        }}>
                             <button
                                 type="button"
                                 className="btn btn-secondary"
@@ -176,7 +194,7 @@ const NewGroupModal = ({ isOpen, onClose, onGroupCreated ,refreshGroups}) => {
                             </button>
                             <button
                                 type="button"
-                                className="btn btn-primary"
+                                className="btn btn-warning"
                                 onClick={handleSubmit}
                                 disabled={loading || !groupName.trim() || selectedFriends.length < 2}
                             >

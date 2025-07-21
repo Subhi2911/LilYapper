@@ -12,7 +12,7 @@ const Notifications = () => {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await fetch(`${host}/api/notification/`, {
+        const res = await fetch(`${host}/api/notifications/notifications`, {
           headers: {
             'auth-token': token
           }
@@ -53,7 +53,8 @@ const Notifications = () => {
       top: 10,
       right: 10,
       maxWidth: 300,
-      zIndex: 1000
+      zIndex: 1000,
+      
     }}>
       {notifications.map((note, i) => (
         <div key={i} style={{
@@ -61,7 +62,8 @@ const Notifications = () => {
           color: '#fff',
           padding: '10px',
           marginBottom: '5px',
-          borderRadius: '5px'
+          borderRadius: '5px',
+          backgroundColor:'white'
         }}>
           {note.type === 'friend_request' && (
             <>👤 Friend request from <b>{note.senderUsername}</b></>

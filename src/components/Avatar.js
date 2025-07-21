@@ -8,6 +8,8 @@ export default function Avatar({
   theme = "light",
   src = "",
   isOnline = false,
+  isGroup,
+  hideBorder = false 
 }) {
   const initials = name
     .trim()
@@ -18,6 +20,12 @@ export default function Avatar({
 
   const background = theme === 'light' ? '#0B1D51' : '#F1E7E7';
   const color = theme === 'light' ? '#F1E7E7' : '#0B1D51';
+  console.log('isgroup=',isGroup)
+  const borderColor = isGroup
+    ? 'transparent'
+    : isOnline
+      ? '#4CAF50'     // green
+      : '#E57373';    // red
 
   const containerStyle = {
     width: `${width}rem`,
@@ -33,7 +41,11 @@ export default function Avatar({
     overflow: 'hidden',
     backgroundColor: background,
     color: color,
-    border: `3px solid ${isOnline ? '#4CAF50' : '#E57373'}`, // green/red border
+    border: hideBorder
+      ? 'none'
+      : !isGroup
+        ? `3px solid ${borderColor}`
+        : `1.5px solid ${borderColor}`,
   };
 
   return (

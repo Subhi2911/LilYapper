@@ -8,6 +8,11 @@ import Signup from './components/Signup';
 import ChooseAvatar from './components/ChooseAvatar';
 import Requests from './components/Requests';
 import Notifications from './components/Notifications';
+import Settings from './components/Settings';
+import Help from './components/Help';
+import Privacy from './components/Privacy';
+import NotifySettings from './components/NotifySettings';
+import Profile from './components/Profile';
 
 //import ChatContext from './context/chats/ChatContext';
 //import VerticalThinNavbar from './components/VerticalThinNavbar';
@@ -29,6 +34,12 @@ function App() {
                         <Route path='/signup' element={<Signup />} />
                         <Route path='/ChooseAvatar' element={<ChooseAvatar />} />
                         <Route path='/requests' element={<Requests />} />
+                        <Route path='/settings' element={<Settings/>}/>
+                        <Route path='/help' element={<Help/>}/> 
+                        <Route path='/privacy' element={<Privacy/>}/> 
+                        <Route path='/notifysettings' element={<NotifySettings/>}/> 
+                        <Route path='/profile' element={<Profile/>}/> 
+                        
                     </Routes>
                     <Notifications/>
                 </Router>

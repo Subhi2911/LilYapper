@@ -146,7 +146,7 @@ export default function VerticalThinNavbar() {
                     textDecoration: "none",
                 }}
             >
-                <Avatar src={user.avatar} width="2" height="2" size="12"/>
+                <Avatar src={user.avatar} width="2" height="2" size="12" hideBorder={true}/>
             </Link>
         </nav>
     );

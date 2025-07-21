@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import EmojiPicker from 'emoji-picker-react';
 
-const EmojiInput = ({ onSend }) => {
+const EmojiInput = ({ onSend, onTyping }) => {
   const [input, setInput] = useState('');
   const [showPicker, setShowPicker] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -40,6 +40,7 @@ const EmojiInput = ({ onSend }) => {
   const onEmojiClick = (emojiData) => {
     setInput((prevInput) => prevInput + emojiData.emoji);
     textareaRef.current.focus();
+    if (onTyping) onTyping(); // Notify typing on emoji click
   };
 
   const sendMessage = () => {
@@ -56,6 +57,11 @@ const EmojiInput = ({ onSend }) => {
       e.preventDefault();
       sendMessage();
     }
+  };
+
+  const handleChange = (e) => {
+    setInput(e.target.value);
+    if (onTyping) onTyping(); // Notify typing on input change
   };
 
   return (
@@ -94,9 +100,9 @@ const EmojiInput = ({ onSend }) => {
         ref={textareaRef}
         rows={1}
         value={input}
-        onChange={(e) => setInput(e.target.value)}
+        onChange={handleChange}
         onKeyDown={handleKeyDown}
-        onClick={() => setShowPicker(false)} // 👈 Close picker when textarea is clicked
+        onClick={() => setShowPicker(false)} // Close picker when textarea clicked
         placeholder="Type your message..."
         style={{
           flexGrow: 1,
