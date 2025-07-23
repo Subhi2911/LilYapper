@@ -1,8 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import EmojiPicker from 'emoji-picker-react';
 
-const EmojiInput = ({ onSend, onTyping }) => {
-  const [input, setInput] = useState('');
+const EmojiInput = ({ 
+  onSend, 
+  onTyping, 
+  isDisabled,
+  value = '',         // Controlled input value from parent
+  onChange = () => {}, // Change handler from parent
+  isEditing = false   // Flag if editing mode
+}) => {
   const [showPicker, setShowPicker] = useState(false);
   const [hovered, setHovered] = useState(false);
   const textareaRef = useRef(null);
@@ -14,7 +20,7 @@ const EmojiInput = ({ onSend, onTyping }) => {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
     }
-  }, [input]);
+  }, [value]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -38,17 +44,19 @@ const EmojiInput = ({ onSend, onTyping }) => {
   }, [showPicker]);
 
   const onEmojiClick = (emojiData) => {
-    setInput((prevInput) => prevInput + emojiData.emoji);
+    onChange(value + emojiData.emoji);
     textareaRef.current.focus();
     if (onTyping) onTyping(); // Notify typing on emoji click
   };
 
   const sendMessage = () => {
-    if (input.trim()) {
+    if (value.trim() && !isDisabled) {
       if (typeof onSend === 'function') {
-        onSend(input.trim());
+        onSend(value.trim());
       }
-      setInput('');
+      if (!isEditing) {
+        onChange(''); // Clear only if NOT editing
+      }
     }
   };
 
@@ -60,7 +68,7 @@ const EmojiInput = ({ onSend, onTyping }) => {
   };
 
   const handleChange = (e) => {
-    setInput(e.target.value);
+    onChange(e.target.value);
     if (onTyping) onTyping(); // Notify typing on input change
   };
 
@@ -99,11 +107,15 @@ const EmojiInput = ({ onSend, onTyping }) => {
       <textarea
         ref={textareaRef}
         rows={1}
-        value={input}
+        value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         onClick={() => setShowPicker(false)} // Close picker when textarea clicked
-        placeholder="Type your message..."
+        placeholder={isDisabled 
+          ? "You must be friends first..." 
+          : isEditing 
+            ? "Edit your message..." 
+            : "Type a message..."}
         style={{
           flexGrow: 1,
           fontSize: '1rem',
@@ -118,15 +130,17 @@ const EmojiInput = ({ onSend, onTyping }) => {
           color: '#333',
           fontFamily: 'inherit',
         }}
+        disabled={isDisabled}
       />
 
       <button
         type="button"
-        title="Send"
-        aria-label="Send Message"
+        title={isEditing ? "Update Message" : "Send"}
+        aria-label={isEditing ? "Update Message" : "Send Message"}
         onClick={sendMessage}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
+        disabled={isDisabled}
         style={{
           backgroundColor: hovered ? '#3d4189' : '#5459AC',
           border: 'none',

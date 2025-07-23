@@ -13,9 +13,9 @@ const ChatReceiver = ({
   sent,
 }) => {
   return (
-    <div className="p-2 border-bottom">
-      <div className="d-flex justify-content-between align-items-center mb-1">
-        <div className="d-flex align-items-center">
+    <div className="p-2 border-bottom" >
+      <div className="d-flex justify-content-between align-items-center mb-1" >
+        <div className="d-flex align-items-center" >
           <Avatar
             src={avatar}
             width="2"

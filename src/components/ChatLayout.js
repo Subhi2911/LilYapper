@@ -11,6 +11,13 @@ const ChatLayout = ({ chatList }) => {
     const [showChatInfo, setShowChatInfo] = useState(false);
     const token = localStorage.getItem('token');
     const host = process.env.REACT_APP_BACKEND_URL;
+    const [inspectedUser, setInspectedUser] = useState(null);
+    // eslint-disable-next-line no-unused-vars
+    const [showAddMembersModal, setShowAddMembersModal] = useState(false);
+
+    //const [groupUsers, setGroupUsers] = useState([]);
+    // eslint-disable-next-line no-unused-vars
+    const [messages, setMessages] = useState([]);
 
     // States for groups
     const [groups, setGroups] = useState([]);
@@ -35,13 +42,31 @@ const ChatLayout = ({ chatList }) => {
     const [sentRequests, setSentRequests] = useState(new Set());
     const [pendingRequests, setPendingRequests] = useState(new Set());
     const [friends, setFriends] = useState(new Set());
-
     const initialized = useRef(false); // prevent multiple initial calls
 
     //set local chatlist to pass it as a prop
     useEffect(() => {
         setLocalChatList(chatList || []);
     }, [chatList]);
+
+    //handelers
+    const handleAddMembers = (newUsers) => {
+        // update selectedChat.users if needed
+        setSelectedChat((prev) => ({
+            ...prev,
+            users: [...prev.users, ...newUsers]
+        }));
+    };
+
+
+    const onAddSystemMessage = (messageText) => {
+        const systemMessage = {
+            isSystem: true,
+            content: messageText,
+            _id: Date.now(), // dummy unique ID
+        };
+        setMessages((prev) => [...prev, systemMessage]);
+    };
 
     //update localchatlist what chat is selected
     const handleSelectChat = (chat) => {
@@ -62,9 +87,143 @@ const ChatLayout = ({ chatList }) => {
         setGroups(prev => [newGroup, ...prev]);
     };
 
+    const updateGroupLatestMessage = (chatId, newMessage) => {
+        setGroups(prevGroups =>
+            prevGroups.map(group =>
+                group._id === chatId
+                    ? {
+                        ...group,
+                        latestMessage: {
+                            content: newMessage.content || newMessage.text || '',
+                            createdAt: newMessage.createdAt || new Date().toISOString(),
+                            sender: newMessage.sender || {},
+                        },
+                        unreadCount: 0, // reset or keep as needed
+                    }
+                    : group
+            )
+        );
+    };
+
+
     // eslint-disable-next-line no-unused-vars
     const [chats, setChats] = useState([]); // your chats state
 
+    //handle remove friend
+    const removeFriend = async (toRemoveId, chatId) => {
+        try {
+            const response = await fetch(`${host}/api/auth/removefriends/${toRemoveId}`, {
+                method: "POST",
+                headers: {
+                    'auth-token': localStorage.getItem('token')
+                }
+            });
+
+            if (response.ok) {
+                setSelectedChat(null); // close the chat
+
+                //  Remove from UI immediately
+                setLocalChatList(prev => prev.filter(chat => chat._id !== chatId));
+                setGroups(prev => prev.filter(group => group._id !== chatId));
+
+            }
+        } catch (error) {
+            console.error("Error sending messages:", error);
+            return null;
+        }
+    }
+
+    //remove from group
+    const removeFromGroup = async (chatId, userIds) => {
+        try {
+            const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/chat/group-remove/${chatId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'auth-token': token,
+                },
+                body: JSON.stringify({ userIds }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error || 'Failed to remove users');
+
+            // Update selectedChat's user list
+            if (Array.isArray(data.users)) {
+                setSelectedChat(prev => ({
+                    ...prev,
+                    users: data.users,
+                }));
+            }
+
+            // Append system message
+            if (data.systemMessage) {
+                setMessages(prev => [
+                    ...prev,
+                    {
+                        _id: Date.now().toString(),
+                        content: data.systemMessage,
+                        type: 'system',
+                        isSystem: true,
+                        createdAt: new Date().toISOString()
+                    }
+                ]);
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Error removing from group:', error.message);
+            throw error;
+        }
+    };
+
+
+    //Add to group
+    const addToGroup = async (chatId, userIds) => {
+        try {
+            const res = await fetch(`${host}/api/chat/group-add/${chatId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'auth-token': localStorage.getItem('token')
+                },
+                body: JSON.stringify({ userIds })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert('Members added successfully');
+
+                if (Array.isArray(data.users)) {
+                    setSelectedChat(prev => ({
+                        ...prev,
+                        users: data.users // overwrite with full updated user list
+                    }));
+
+                    // Add system message to the messages state if applicable
+                    if (data.systemMessage) {
+                        setMessages(prev => [
+                            ...prev,
+                            {
+                                _id: Date.now().toString(), // Temporary ID
+                                content: data.systemMessage,
+                                type: 'system', // You can handle this in MessageBox styling
+                                createdAt: new Date().toISOString()
+                            }
+                        ]);
+                    }
+                }
+
+                fetchGroups(); // Optional refresh
+            } else {
+                alert(data.error || 'Failed to add members');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Something went wrong');
+        }
+    };
 
     // Handle delete chat function
     const handleDeleteChat = async (chatId) => {
@@ -175,6 +334,8 @@ const ChatLayout = ({ chatList }) => {
         }
     }, [host, token, users, usersPage, usersHasMore, usersLoading]);
 
+
+
     // Fetch friend requests and friends
     const fetchRequestsAndFriends = useCallback(async () => {
         try {
@@ -198,6 +359,10 @@ const ChatLayout = ({ chatList }) => {
             console.error('Error fetching request data:', error);
         }
     }, [host, token]);
+
+    useEffect(() => {
+        fetchRequestsAndFriends();
+    }, [fetchRequestsAndFriends]);
 
     // Initialization on mount
     useEffect(() => {
@@ -326,20 +491,32 @@ const ChatLayout = ({ chatList }) => {
                         isMobile={isMobile}
                         selectedChat={selectedChat}
                         setSelectedChat={handleSelectChat}
-                        // Pass group scroll handler and loading/hasMore for infinite scroll
                         onGroupsScroll={onGroupsScroll}
                         groupsLoading={groupsLoading}
                         groupsHasMore={groupsHasMore}
                         refreshGroups={fetchGroups}
                         onGroupCreated={handleGroupCreated}
+                        setShowChatInfo={setShowChatInfo}
                     />
                     <ChatWindow
                         selectedChat={selectedChat}
+                        selectedUser={selectedUser}
                         setSelectedChat={setSelectedChat}
                         isMobile={isMobile}
                         onDeleteChat={handleDeleteChat}
                         showChatInfo={showChatInfo}
+                        friends={friends}
                         setShowChatInfo={setShowChatInfo}
+                        onRemoveFriend={removeFriend}
+                        inspectedUser={inspectedUser}
+                        setInspectedUser={setInspectedUser}
+                        removeFromGroup={removeFromGroup}
+                        addToGroup={addToGroup}
+                        setShowAddMembersModal={setShowAddMembersModal}
+                        showAddMembersModal={showAddMembersModal}
+                        handleAddMembers={handleAddMembers}
+                        onAddSystemMessage={onAddSystemMessage}
+                        updateGroupLatestMessage={updateGroupLatestMessage}
                     />
                 </>
             )}

@@ -101,7 +101,7 @@ const ChatState = (props) => {
         }
     };
 
-    // Add this inside ChatState
+
 
     const fetchConnections = async () => {
         try {
@@ -120,6 +120,7 @@ const ChatState = (props) => {
             return [];
         }
     };
+
     //Fetch messages
     const fetchMessages = async (chatId) => {
         console.log("Calling fetchMessages with chatId:", chatId); //
@@ -133,12 +134,25 @@ const ChatState = (props) => {
 
             const data = await response.json();
             const currentUserId = localStorage.getItem('userId');
+            
 
-            const formattedMessages = data.map(msg => ({
-                ...msg,
-                type: msg.sender._id === currentUserId ? 'sent' : 'received',
-                text: msg.content,
-            }));
+            const formattedMessages = data.map(msg => {
+                if (!msg.sender) {
+                    return {
+                        ...msg,
+                        type: 'system',
+                        text: msg.content,
+                        replyTo: msg.replyTo, 
+                    };
+                }
+
+                return {
+                    ...msg,
+                    type: msg.sender._id === currentUserId ? 'sent' : 'received',
+                    text: msg.content,
+                };
+            });
+
 
             console.log("formatted", formattedMessages)
             return formattedMessages;
@@ -150,16 +164,20 @@ const ChatState = (props) => {
     };
 
     //Send a new msg
-    const sendmessage = async (content, chatId) => {
+    const sendmessage = async (content, chatId, replyToId = null) => {
         try {
+            const payload = { content, chatId };
+            if (replyToId) payload.replyTo = replyToId;  // only add if not null
+
             const response = await fetch(`${host}/api/message/`, {
-                method: "POST",
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'auth-token': localStorage.getItem('token'),
                 },
-                body: JSON.stringify({ content, chatId })
+                body: JSON.stringify(payload),
             });
+
 
             const data = await response.json();
 
@@ -178,8 +196,10 @@ const ChatState = (props) => {
             return null;
         }
     };
-    
-    
+
+
+
+
 
     return (
         <ChatContext.Provider

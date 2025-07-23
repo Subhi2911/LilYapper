@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 
+
 const ThreeDotChatMenu = ({
   isGroup,
   onDeleteChat,
@@ -10,9 +11,11 @@ const ThreeDotChatMenu = ({
   onLeaveGroup,
   onGroupInfo,
   selectedChat,
+  setShowWallpaperModal
 }) => {
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
+
 
   // Close menu on outside click
   useEffect(() => {
@@ -52,13 +55,20 @@ const ThreeDotChatMenu = ({
             padding: '8px 0',
             margin: 0,
             listStyle: 'none',
-            minWidth: '160px',
+            minWidth: '200px',
             zIndex: 1000,
           }}
         >
           {!isGroup ? (
             <>
-            
+            <li
+                onClick={() => { setOpen(false); setShowWallpaperModal(true) }}
+                style={menuItemStyle}
+                tabIndex={0}
+                onKeyDown={e => {if (e.key === 'Enter' || e.key === ' ') {setShowWallpaperModal(true);setOpen(false);}}}
+              >
+                Change Wallpaper
+              </li>
               <li
                 onClick={() => { onDeleteChat(selectedChat._id); setOpen(false); }}
                 style={menuItemStyle}
@@ -84,7 +94,7 @@ const ThreeDotChatMenu = ({
                 Close Chat
               </li>
               <li
-                onClick={() => { onRemoveFriend(); setOpen(false); }}
+                onClick={() => { onRemoveFriend(selectedChat.otherUserId, selectedChat._id); setOpen(false); }}
                 style={{ ...menuItemStyle, color: 'red' }}
                 tabIndex={0}
                 onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && (onRemoveFriend(), setOpen(false))}
@@ -130,6 +140,7 @@ const ThreeDotChatMenu = ({
           )}
         </ul>
       )}
+      
     </div>
   );
 };

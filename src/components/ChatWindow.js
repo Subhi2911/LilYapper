@@ -10,6 +10,9 @@ import GroupMessageBox from './GroupMessageBox';
 import Spinner from './Spinner';
 import { useSocket } from '../context/chats/socket/SocketContext';
 import ChatInfo from './ChatInfo';
+import UserDetails from './UserDetails';
+import AddMembersModal from './AddMembersModal';
+import WallpaperSelectorModal from './WallpaperSelectorModal';
 
 const ChatWindow = ({
     selectedChat,
@@ -26,14 +29,73 @@ const ChatWindow = ({
     setSelectedUser,
     handleAccept,
     handleReject,
-    onDeleteChat
+    onDeleteChat,
+    onRemoveFriend,
+    inspectedUser,
+    setInspectedUser,
+    handleMakeAdmin,
+    handleRemoveUser,
+    removeFromGroup,
+    addToGroup,
+    setShowAddMembersModal,
+    showAddMembersModal,
+    handleAddMembers,
+    onAddSystemMessage,
+    updateGroupLatestMessage
 }) => {
     const location = useLocation();
+    const host = process.env.REACT_APP_BACKEND_URL;
     const { fetchMessages, sendmessage, currentUser } = useContext(ChatContext);
     const socket = useSocket();
     const messagesEndRef = useRef(null);
     const [messages, setMessages] = useState([]);
     const [typingUsers, setTypingUsers] = useState(new Set());
+    const [isFriend, setIsFriend] = useState(true);
+    const [replyTo, setReplyTo] = useState(null);
+    const [editingMessageId, setEditingMessageId] = useState(null);
+    const [editingText, setEditingText] = useState('');
+    const wallpaperUrl = selectedChat?.wallpaper?.url || chatBg;
+    // eslint-disable-next-line no-unused-vars
+    const [showWallpaperModal, setShowWallpaperModal] = useState(false);
+
+    const handleReply = (msg) => {
+        setReplyTo(msg);
+    };
+
+    const cancelReply = () => {
+        setReplyTo(null);
+    };
+
+
+    useEffect(() => {
+        console.log('hgdg',selectedChat)
+        if (selectedChat && !isMobile) {
+            const checkFriendship = async () => {
+                if (!selectedChat || selectedChat.isGroupChat) {
+                    setIsFriend(true);
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${host}/api/auth/friends`, {
+                        headers: {
+                            'auth-token': localStorage.getItem('token'),
+                        },
+                    });
+
+                    const data = await response.json();
+                    const friendIds = data.map(friend => friend._id);
+                    setIsFriend(friendIds.includes(selectedChat.otherUserId));
+                } catch (error) {
+                    console.error('Error checking friendship:', error);
+                    setIsFriend(false);
+                }
+            };
+
+            checkFriendship();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedChat, isMobile]);
 
     useEffect(() => {
         const loadMessages = async () => {
@@ -43,12 +105,13 @@ const ChatWindow = ({
             }
 
             try {
-                const fetchedMessages = await fetchMessages(selectedChat._id);
+                const fetchedMessages = await fetchMessages(selectedChat?._id);
 
                 const typedMessages = (fetchedMessages || []).map((msg) => ({
                     ...msg,
-                    type: msg.sender._id === currentUser._id ? 'sent' : 'received',
-                    text: msg.content,
+                    type: msg.sender?._id === currentUser._id ? 'sent' : 'received',
+                    text: msg?.content,
+                    replyTo: msg.replyTo,
                 }));
 
                 setMessages(typedMessages);
@@ -61,7 +124,7 @@ const ChatWindow = ({
         if (selectedChat?._id && currentUser?._id) {
             loadMessages();
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedChat?._id, currentUser?._id]);
 
     useEffect(() => {
@@ -113,19 +176,36 @@ const ChatWindow = ({
     };
 
     const handleSend = async (newText) => {
+
         if (!newText.trim() || !selectedChat?._id) return;
 
         try {
-            const newMessage = await sendmessage(newText, selectedChat._id);
+            const newMessage = await sendmessage(newText, selectedChat._id, replyTo?._id || null);
 
-            if (newMessage) {
+            if (newMessage && newMessage.sender && newMessage.content) {
                 const typedMessage = {
                     ...newMessage,
                     type: newMessage.sender._id === currentUser._id ? 'sent' : 'received',
                     text: newMessage.content,
+                    replyTo: newMessage.replyTo ? {
+                        _id: newMessage.replyTo._id,
+                        text: newMessage.replyTo.content || '[deleted]',
+                        sender: newMessage.replyTo.sender || { _id: '', username: 'Unknown' }
+                    } : null,
                 };
+                console.log('New message returned:', newMessage);
+
 
                 setMessages((prev) => [...prev, typedMessage]);
+                setReplyTo(null);
+
+                // Update latest message for groups immediately
+                if (selectedChat.isGroupChat && typeof updateGroupLatestMessage === 'function') {
+                    updateGroupLatestMessage(selectedChat._id, typedMessage);
+                }
+
+            } else {
+                console.warn('Empty or invalid message returned', newMessage);
             }
 
             if (socket) {
@@ -137,6 +217,78 @@ const ChatWindow = ({
             console.error('Error sending message:', error);
         }
     };
+
+    //edit messages
+    const handleEditMessage = async (id, newText) => {
+        try {
+            const res = await fetch(`${host}/api/message/edit/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'auth-token': localStorage.getItem('token'),
+                },
+                body: JSON.stringify({ newText }),
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                console.error('Edit failed:', error.error);
+                return;
+            }
+
+            // eslint-disable-next-line no-unused-vars
+            const data = await res.json();
+            setMessages(prev =>
+                prev.map(msg => (msg._id === id ? { ...msg, text: newText } : msg))
+            );
+        } catch (err) {
+            console.error('Edit message error:', err.message);
+        }
+    };
+
+
+    //Delete Message
+    const handleDeleteMessage = async (messageId) => {
+        try {
+            const response = await fetch(`${host}/api/message/delete/${messageId}`, {
+                method: 'DELETE',
+                headers: {
+                    'auth-token': localStorage.getItem('token'),
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Remove deleted message from local messages state
+                setMessages((prevMessages) => prevMessages.filter(msg => msg._id !== messageId));
+
+                // If deleted message was the latest message in the chat, update latest message accordingly
+                if (selectedChat.latestMessage?._id === messageId) {
+                    // Find the new latest message after deletion (last message in messages)
+                    const newLatestMessage = messages
+                        .filter(msg => msg._id !== messageId)
+                        .slice(-1)[0] || null;
+
+                    // Update latestMessage in selectedChat state and optionally global chat list
+                    setSelectedChat(prevChat => ({
+                        ...prevChat,
+                        latestMessage: newLatestMessage,
+                    }));
+
+                    // Also call a function to update the chat list/global state if you have one
+                    if (typeof updateGroupLatestMessage === 'function') {
+                        updateGroupLatestMessage(selectedChat._id, newLatestMessage);
+                    }
+                }
+            } else {
+                console.warn('Failed to delete message:', data.error);
+            }
+        } catch (err) {
+            console.error('Error deleting message:', err);
+        }
+    }
 
     const typingUsernames = Array.from(typingUsers)
         .filter((id) => id !== currentUser._id)
@@ -154,7 +306,7 @@ const ChatWindow = ({
         <div
             className="flex-grow-1 d-flex flex-column"
             style={{
-                backgroundImage: `url(${chatBg})`,
+                backgroundImage: `url(${wallpaperUrl})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 width: isMobile ? '100vw' : 'auto',
@@ -162,69 +314,192 @@ const ChatWindow = ({
         >
             {(location.pathname === '/' || location.pathname === '/groups') && selectedChat && (
                 <>
-                    {!showChatInfo  && (<UserBar
-                        name={selectedChat.isGroupChat ? selectedChat.chatName : selectedChat.username}
-                        isGroup={selectedChat.isGroupChat}
-                        avatar={selectedChat?.avatar || '/avatars/laughing.png'}
-                        setSelectedChat={setSelectedChat}
-                        hideBorder={true}
-                        selectedChat={selectedChat}
-                        onDeleteChat={onDeleteChat}
-                        setShowChatInfo={setShowChatInfo}
-                    />)}
+                    {/* Main Chat UI */}
+                    <>
+                        <UserBar
+                            name={selectedChat.isGroupChat ? selectedChat.chatName : selectedChat.username}
+                            isGroup={selectedChat.isGroupChat}
+                            avatar={selectedChat?.avatar || '/avatars/laughing.png'}
+                            setSelectedChat={setSelectedChat}
+                            hideBorder={true}
+                            selectedChat={selectedChat}
+                            onDeleteChat={onDeleteChat}
+                            setShowChatInfo={setShowChatInfo}
+                            onRemoveFriend={onRemoveFriend}
+                            setInspectedUser={setInspectedUser}
+                            setShowWallpaperModal={setShowWallpaperModal}
+                        />
 
-                    {/* Chat Info View */}
-                    {showChatInfo ? (
-                        <ChatInfo selectedChat={selectedChat} onBack={()=>setShowChatInfo(false)}/>
-                        
-                    ) : (
-                        <>
-                            <div
-                                className="flex-grow-1 overflow-auto hide-scrollbar w-100"
-                                style={{ padding: '1rem', height: 'calc(100vh - 180px)' }}
-                            >
-                                <div style={{ padding: '1rem', borderRadius: '8px' }}>
-                                    {selectedChat?.isGroupChat ? (
-                                        <GroupMessageBox messages={messages} currentUser={currentUser} />
-                                    ) : (
-                                        <MessageBox messages={messages} currentUser={currentUser} />
-                                    )}
-                                    <div ref={messagesEndRef} />
-                                </div>
+                        <div
+                            className="flex-grow-1 overflow-auto hide-scrollbar w-100"
+                            style={{ padding: '1rem', height: 'calc(100vh - 180px)' }}
+                        >
+                            <div style={{ padding: '1rem', borderRadius: '8px' }}>
+                                {selectedChat?.isGroupChat ? (
+                                    <GroupMessageBox messages={messages} currentUser={currentUser} onReply={handleReply} onDeleteMessage={handleDeleteMessage} onEditMessage={handleEditMessage} setEditingMessageId={setEditingMessageId} setEditingText={setEditingText} />
+                                ) : (
+                                    <MessageBox messages={messages} currentUser={currentUser} onReply={handleReply} onDeleteMessage={handleDeleteMessage} onEditMessage={handleEditMessage} setEditingMessageId={setEditingMessageId} setEditingText={setEditingText} selectedChat={selectedChat}/>
+                                )}
+
+                                <div ref={messagesEndRef} />
                             </div>
+                        </div>
 
-                            <div
-                                className="px-3"
-                                style={{
-                                    minHeight: '24px',
-                                    fontSize: '0.9rem',
-                                    color: '#666',
-                                    fontStyle: 'italic',
-                                    marginBottom: '4px',
-                                    height: '24px',
-                                    overflow: 'hidden',
-                                }}
-                            >
-                                {typingUsernames.length === 1
-                                    ? `${typingUsernames[0]} is typing...`
-                                    : typingUsernames.length > 1
+                        <div
+                            className="px-3"
+                            style={{
+                                minHeight: '24px',
+                                fontSize: '0.9rem',
+                                color: '#666',
+                                fontStyle: 'italic',
+                                marginBottom: '4px',
+                                height: '24px',
+                                overflow: 'hidden',
+                            }}
+                        >
+                            {typingUsernames.length === 1
+                                ? `${typingUsernames[0]} is typing...`
+                                : typingUsernames.length > 1
                                     ? `${typingUsernames.join(', ')} are typing...`
                                     : ''}
-                            </div>
-
+                        </div>
+                        {replyTo && (
                             <div
                                 style={{
-                                    padding: '10px 16px',
-                                    position: 'relative',
-                                    zIndex: 10,
-                                    width: '100%',
+                                    backgroundColor: '#ddd',
+                                    padding: '8px 12px',
+                                    marginBottom: '8px',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
                                 }}
                             >
-                                <Keyboard onSend={handleSend} onTyping={handleUserTyping} />
+                                <div style={{ flex: 1, fontSize: '0.9rem' }}>
+                                    Replying to: <strong>{replyTo.text}</strong>
+                                </div>
+                                <button
+                                    onClick={cancelReply}
+                                    style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        fontSize: '1.2rem',
+                                        color: '#555',
+                                    }}
+                                    title="Cancel reply"
+                                >
+                                    &times;
+                                </button>
                             </div>
-                        </>
+                        )}
+
+                        <div
+                            style={{
+                                padding: '10px 16px',
+                                position: 'relative',
+                                zIndex: 10,
+                                width: '100%',
+                            }}
+                        >
+                            <Keyboard onSend={(text) => {
+                                if (editingMessageId) {
+                                    handleEditMessage(editingMessageId, text);  // edit existing
+                                    setEditingMessageId(null);
+                                    setEditingText('');
+                                } else {
+                                    handleSend(text);  // regular send
+                                }
+                            }}
+                                editingText={editingText}
+                                setEditingText={setEditingText}
+                                isEditing={!!editingMessageId}
+                                onTyping={handleUserTyping}
+                                isDisabled={!isFriend} />
+                        </div>
+                    </>
+
+                    {/* MODAL OVERLAY */}
+                    {showChatInfo && (
+                        <div
+                            className="modal show d-block"
+                            tabIndex="-1"
+
+                        >
+                            <div className="modal-dialog modal-dialog-centered modal-fullscreen-sm-down modal-lg">
+                                <div className="modal-content bg-dark text-white position-relative">
+                                    <button
+                                        type="button"
+                                        className="btn-close btn-close-white position-absolute top-0 end-0 m-3"
+                                        aria-label="Close"
+                                        onClick={() => setShowChatInfo(false)}
+                                    ></button>
+
+                                    <div className="modal-body p-4" style={{ backgroundColor: '#648DB3', padding: '5px' }}>
+                                        <div style={{ border: '1px solid white' }}>
+                                            {inspectedUser ? (
+                                                <UserDetails
+                                                    user={inspectedUser}
+                                                    currentUser={currentUser} // From auth or context
+                                                    groupAdmin={selectedChat.groupAdmin}
+                                                    onMakeAdmin={handleMakeAdmin}
+                                                    onRemove={handleRemoveUser}
+                                                    onClose={() => setInspectedUser(null)}
+                                                    removeFromGroup={removeFromGroup}
+                                                    selectedChat={selectedChat}
+                                                />
+                                            ) : (
+                                                <>
+                                                    <ChatInfo
+                                                        selectedChat={selectedChat}
+                                                        onBack={() => setShowChatInfo(false)}
+                                                        selectedUser={selectedUser}
+                                                        setInspectedUser={setInspectedUser}
+                                                        removeFromGroup={removeFromGroup}
+                                                        onAddMembers={() => setShowAddMembersModal(true)}
+                                                        currentUserId={currentUser._id}
+                                                        addToGroup={addToGroup}
+                                                    />
+                                                    {showAddMembersModal && (
+                                                        <AddMembersModal
+                                                            show={showAddMembersModal}
+                                                            onClose={() => setShowAddMembersModal(false)}
+                                                            friendsList={[...friends]}
+                                                            existingUserIds={selectedChat?.users?.map(u => u._id) || []}
+                                                            chatId={selectedChat._id}
+                                                            friends={friends}
+                                                            onSubmit={addToGroup}
+                                                            onAddSystemMessage={onAddSystemMessage}
+                                                        />
+                                                    )}
+
+                                                </>
+                                            )}
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     )}
+                    {showWallpaperModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+                            <div className="bg-white p-4 rounded shadow-lg max-w-md w-full">
+                                <WallpaperSelectorModal
+                                    chatId={selectedChat._id}
+                                    onClose={()=>setShowWallpaperModal(false)}
+                                    selectedChat={selectedChat}
+                                    setSelectedChat={setSelectedChat}
+                                    
+
+                                />
+                            </div>
+                        </div>
+                    )}
+
                 </>
+
+
             )}
 
             {(location.pathname === '/friends' || location.pathname === '/arrequest') && (

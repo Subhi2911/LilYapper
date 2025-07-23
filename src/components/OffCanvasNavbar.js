@@ -31,7 +31,7 @@ const OffCanvasNavbar = ({ handleLogout, closeOffcanvasleft, offcanvasLeftRef, u
                             <Link onClick={closeOffcanvasleft} to="/friends" className="text-decoration-none text-dark">Friends</Link>
                         </li>
                         <li className="list-group-item border-top my-2">
-                            <i class="fa-solid fa-circle-user mx-3"></i>
+                            <i className="fa-solid fa-circle-user mx-3"></i>
                             <Link onClick={closeOffcanvasleft} to="/profile" className="text-decoration-none text-dark">Profile</Link>
                         </li>
 

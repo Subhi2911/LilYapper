@@ -20,7 +20,7 @@ export default function Avatar({
 
   const background = theme === 'light' ? '#0B1D51' : '#F1E7E7';
   const color = theme === 'light' ? '#F1E7E7' : '#0B1D51';
-  console.log('isgroup=',isGroup)
+  
   const borderColor = isGroup
     ? 'transparent'
     : isOnline

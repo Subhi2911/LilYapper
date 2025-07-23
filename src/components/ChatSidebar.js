@@ -26,6 +26,7 @@ const ChatSidebar = ({
     handleAccept,
     handleReject,
     user,
+    setShowChatInfo,
 }) => {
     const location = useLocation();
 
@@ -41,7 +42,7 @@ const ChatSidebar = ({
     }
 
     if (selectedChat?.deletedFor?.includes?.(user._id)) {
-        displayChats = displayChats.filter(chat => chat._id !== selectedChat._id);
+        displayChats = displayChats.filter(chat => chat._id !== selectedChat?._id);
     }
 
     // Sort chats by latestMessage timestamp (descending)
@@ -60,11 +61,13 @@ const ChatSidebar = ({
             <div
                 style={{
                     width: isMobile ? '100vw' : '350px',
+                    maxWidth: isMobile ? '100vw' : '350px',
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
                     borderRight: isMobile ? 'none' : '1px solid #ccc',
                     backgroundColor: '#5459AC',
+                    boxSizing: 'border-box',
                 }}
 
             >
@@ -91,17 +94,18 @@ const ChatSidebar = ({
 
                         <h5 className="text-white mb-3">Chats</h5>
                         <ul className="list-group">
-                            {console.log(displayChats)}
+
                             {displayChats.map((item) => (
                                 <li
                                     key={item._id}
                                     className="list-group-item my-2"
                                     onClick={() => {
                                         setSelectedChat(item);
+                                        if (isMobile) setShowChatInfo(false); // <- close modal when clicking a chat
                                     }}
                                     style={{ cursor: 'pointer', borderRadius: 'inherit' }}
                                 >
-                                    {console.log(item.latestMessage)}
+
                                     <ChatReceiver
                                         isGroup={item.isGroupChat}
                                         lastMessageTime={item.latestMessage?.createdAt || ''}

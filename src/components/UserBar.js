@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import Avatar from './Avatar';
 import ThreeDotChatMenu from './ThreeDotChatMenu';
 
-const UserBar = ({ name, avatar, setSelectedChat, isOnline, isGroup, hideBorder, selectedChat, onDeleteChat, setShowChatInfo }) => {
+const UserBar = ({ name, avatar, setSelectedChat, isOnline, isGroup, hideBorder, selectedChat, onDeleteChat, setShowChatInfo, onRemoveFriend, setInspectedUser, setShowWallpaperModal }) => {
     const location = useLocation();
     //const navigate= useNavigate()
     const handleClick = () => {
@@ -66,17 +66,18 @@ const UserBar = ({ name, avatar, setSelectedChat, isOnline, isGroup, hideBorder,
                             style={{ fontSize: '1.4rem', color: location.pathname === '/search' ? '#B2D8CE' : 'white' }}
                         ></i>
                     </Link>
-                    {console.log("Deleting chat with ID:", selectedChat._id)}
                     <ThreeDotChatMenu
                         isGroup={selectedChat.isGroupChat}
                         selectedChat={selectedChat}
                         onDeleteChat={onDeleteChat}
-                        onContactInfo={() => console.log('Contact info')}
+                        onContactInfo={() => setShowChatInfo(true)}
                         onCloseChat={() => setSelectedChat(null)}
-                        onRemoveFriend={() => console.log('Remove friend')}
+                        onRemoveFriend={onRemoveFriend}
                         onDeleteGroup={onDeleteChat}
                         onLeaveGroup={() => console.log('Leave group')}
-                        onGroupInfo={() => console.log('Group info')}
+                        onGroupInfo={() => setShowChatInfo(true)}
+                        setInspectedUser={setInspectedUser}
+                        setShowWallpaperModal={setShowWallpaperModal}
                     />
                 </div>
             </div>
