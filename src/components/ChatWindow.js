@@ -299,6 +299,7 @@ const ChatWindow = ({
 
     const showLilyapperWelcome =
         !selectedChat && !['/friends', '/arrequest', '/groups'].includes(location.pathname);
+        console.log('currentUser:', currentUser);
 
     if (!currentUser?._id) return <Spinner />;
 
