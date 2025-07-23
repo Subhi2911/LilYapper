@@ -38,8 +38,8 @@ const Signup = (props) => {
 
             if (response.ok && json.success) {
                 localStorage.setItem('token', json.authToken);
-            localStorage.setItem('userId', json.user._id);
-            localStorage.setItem('user', JSON.stringify(json.user)); 
+                localStorage.setItem('userId', json.user._id);
+                localStorage.setItem('user', JSON.stringify(json.user)); 
                 navigate("/chooseavatar");
                 //props.showAlert("Account Created Successfully!", "success");
             }
