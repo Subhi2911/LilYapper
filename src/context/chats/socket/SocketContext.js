@@ -7,6 +7,7 @@ const SocketContext = createContext(null);
 // Provider component
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
+  const host = process.env.REACT_APP_BACKEND_URL
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -15,7 +16,7 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    const newSocket = io('http://localhost:5000', {
+    const newSocket = io(host, {
       auth: {
         token,
       },
