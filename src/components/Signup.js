@@ -31,9 +31,9 @@ const Signup = (props) => {
                     password: credentials.password
                 }),
             });
-
-            const text = await response.text();
             let json = {};
+            const text = await response.text();
+            
             try { json = JSON.parse(text); } catch { }
 
             if (response.ok && json.success) {

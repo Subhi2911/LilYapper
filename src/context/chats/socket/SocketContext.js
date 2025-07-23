@@ -1,18 +1,18 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 
-// Create the Context
 const SocketContext = createContext(null);
 
-// Provider component
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
-  const host = process.env.REACT_APP_BACKEND_URL
+  const host = process.env.REACT_APP_BACKEND_URL;
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) {
-      console.warn("No token found, socket not initialized.");
+    const user = JSON.parse(localStorage.getItem('user'));
+
+    if (!token || !user?._id) {
+      console.warn("No token or user found, socket not initialized.");
       return;
     }
 
@@ -20,14 +20,15 @@ export const SocketProvider = ({ children }) => {
       auth: {
         token,
       },
-      transports: ['websocket'], // enforce websocket
-      reconnection: true,        // optional: enables auto-reconnect
+      transports: ['websocket'],
+      reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     });
 
     newSocket.on('connect', () => {
       console.log("✅ Socket connected:", newSocket.id);
+      newSocket.emit('add-user', user._id); // 👈 Emit user ID on connect
     });
 
     newSocket.on('connect_error', (err) => {
@@ -49,7 +50,4 @@ export const SocketProvider = ({ children }) => {
   );
 };
 
-// Hook to use socket
-export const useSocket = () => {
-  return useContext(SocketContext);
-};
+export const useSocket = () => useContext(SocketContext);

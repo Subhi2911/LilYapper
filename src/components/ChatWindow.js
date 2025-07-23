@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import chatBg from '../images/ChatBg.png';
 import UserBar from './UserBar';
 import MessageBox from './MessageBox';
 import Keyboard from './Keyboard';
@@ -54,7 +53,7 @@ const ChatWindow = ({
     const [replyTo, setReplyTo] = useState(null);
     const [editingMessageId, setEditingMessageId] = useState(null);
     const [editingText, setEditingText] = useState('');
-    const wallpaperUrl = selectedChat?.wallpaper?.url || chatBg;
+    const wallpaperUrl = selectedChat?.wallpaper?.url;
     // eslint-disable-next-line no-unused-vars
     const [showWallpaperModal, setShowWallpaperModal] = useState(false);
 
@@ -68,7 +67,7 @@ const ChatWindow = ({
 
 
     useEffect(() => {
-        console.log('hgdg',selectedChat)
+        console.log('hgdg', selectedChat)
         if (selectedChat && !isMobile) {
             const checkFriendship = async () => {
                 if (!selectedChat || selectedChat.isGroupChat) {
@@ -130,6 +129,30 @@ const ChatWindow = ({
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
     }, [messages]);
+
+    useEffect(() => {
+        if (!socket || !selectedChat) return;
+
+        const handleNewMessage = (msg) => {
+            if (msg.chat._id !== selectedChat._id) return; // Only show messages for current chat
+
+            const incomingMessage = {
+                ...msg,
+                type: msg.sender._id === currentUser._id ? 'sent' : 'received',
+                text: msg.content,
+                replyTo: msg.replyTo,
+            };
+
+            setMessages(prev => [...prev, incomingMessage]);
+        };
+
+        socket.on('new message', handleNewMessage);
+
+        return () => {
+            socket.off('new message', handleNewMessage);
+        };
+    }, [socket, selectedChat, currentUser]);
+
 
     useEffect(() => {
         if (!socket) return;
@@ -299,7 +322,7 @@ const ChatWindow = ({
 
     const showLilyapperWelcome =
         !selectedChat && !['/friends', '/arrequest', '/groups'].includes(location.pathname);
-        console.log('currentUser:', currentUser);
+    console.log('currentUser:', currentUser);
 
     if (!currentUser?._id) return <Spinner />;
 
@@ -307,7 +330,8 @@ const ChatWindow = ({
         <div
             className="flex-grow-1 d-flex flex-column"
             style={{
-                backgroundImage: `url(${wallpaperUrl})`,
+                backgroundImage: wallpaperUrl ? `url(${wallpaperUrl})` : '',
+                backgroundColor: '#5459AC',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 width: isMobile ? '100vw' : 'auto',
@@ -339,7 +363,7 @@ const ChatWindow = ({
                                 {selectedChat?.isGroupChat ? (
                                     <GroupMessageBox messages={messages} currentUser={currentUser} onReply={handleReply} onDeleteMessage={handleDeleteMessage} onEditMessage={handleEditMessage} setEditingMessageId={setEditingMessageId} setEditingText={setEditingText} />
                                 ) : (
-                                    <MessageBox messages={messages} currentUser={currentUser} onReply={handleReply} onDeleteMessage={handleDeleteMessage} onEditMessage={handleEditMessage} setEditingMessageId={setEditingMessageId} setEditingText={setEditingText} selectedChat={selectedChat}/>
+                                    <MessageBox messages={messages} currentUser={currentUser} onReply={handleReply} onDeleteMessage={handleDeleteMessage} onEditMessage={handleEditMessage} setEditingMessageId={setEditingMessageId} setEditingText={setEditingText} selectedChat={selectedChat} />
                                 )}
 
                                 <div ref={messagesEndRef} />
@@ -488,10 +512,10 @@ const ChatWindow = ({
                             <div className="bg-white p-4 rounded shadow-lg max-w-md w-full">
                                 <WallpaperSelectorModal
                                     chatId={selectedChat._id}
-                                    onClose={()=>setShowWallpaperModal(false)}
+                                    onClose={() => setShowWallpaperModal(false)}
                                     selectedChat={selectedChat}
                                     setSelectedChat={setSelectedChat}
-                                    
+
 
                                 />
                             </div>
