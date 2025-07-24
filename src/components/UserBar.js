@@ -94,6 +94,7 @@ const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBord
                         onGroupInfo={() => setShowChatInfo(true)}
                         setInspectedUser={setInspectedUser}
                         setShowWallpaperModal={setShowWallpaperModal}
+                        isOnline={isOnline}
                     />
                 </div>
             </div>

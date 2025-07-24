@@ -69,7 +69,7 @@ const ChatWindow = ({
 
     useEffect(() => {
         if (!socket || !currentUser) return;
-        console.log('currentUser',currentUser)
+        
         socket.emit('join', currentUser._id);
     }, [socket, currentUser]);
 
@@ -100,7 +100,7 @@ const ChatWindow = ({
     }, [socket]);
 
     useEffect(() => {
-        console.log('hgdg', selectedChat);
+        
         if (selectedChat && !isMobile) {
             const checkFriendship = async () => {
                 if (!selectedChat || selectedChat.isGroupChat) {
@@ -220,33 +220,25 @@ const ChatWindow = ({
     }, [socket, selectedChat, currentUser]);
 
     useEffect(() => {
-        console.log('potty');
         if (!socket) return;
-        console.log('poop');
 
-        const handleTyping = ({ chatId, userId }) => {
-            console.log('Received typing event:', { chatId, userId });
-            if (userId === currentUser._id) return;
+        const handleTyping = ({ chatId, user }) => {
+            if (user === currentUser._id) return; // ignore own typing events
             if (chatId !== selectedChat?._id) return;
 
             setTypingUsers(prev => {
-                console.log('Before adding typing user:', [...prev]);
                 const updated = new Set(prev);
-                updated.add(userId);
-                console.log('After adding typing user:', [...updated]);
+                updated.add(user);
                 return updated;
             });
         };
 
-        const handleStopTyping = ({ chatId, userId }) => {
-            console.log('Received stop typing event:', { chatId, userId });
+        const handleStopTyping = ({ chatId, user }) => {
             if (chatId !== selectedChat?._id) return;
 
             setTypingUsers(prev => {
-                console.log('Before removing typing user:', [...prev]);
                 const updated = new Set(prev);
-                updated.delete(userId);
-                console.log('After removing typing user:', [...updated]);
+                updated.delete(user);
                 return updated;
             });
         };
@@ -264,29 +256,31 @@ const ChatWindow = ({
     const typingStartedRef = useRef(false);
 
     const handleUserTyping = () => {
-        console.log('hagguq')
+
         if (!socket || !selectedChat) return;
-        console.log('hagguqj')
+
         if (!typingStartedRef.current) {
             typingStartedRef.current = true;
 
             socket.emit('typing', {
                 chatId: selectedChat._id,
-                userId: currentUser._id,
-                
+                // userId not sent here — server knows from socket auth
             });
-            console.log('dkdk')
+
+            // Optionally start a timer to send stop typing after inactivity
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = setTimeout(() => {
+                typingStartedRef.current = false;
+                socket.emit('stop typing', { chatId: selectedChat._id });
+            }, 3000);  // e.g. 3 seconds of no typing stops typing
+        } else {
+            // reset the timeout while user keeps typing
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = setTimeout(() => {
+                typingStartedRef.current = false;
+                socket.emit('stop typing', { chatId: selectedChat._id });
+            }, 3000);
         }
-
-        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-
-        typingTimeoutRef.current = setTimeout(() => {
-            typingStartedRef.current = false;
-            socket.emit('stop typing', {
-                chatId: selectedChat._id,
-                userId: currentUser._id,
-            });
-        }, 2000);
     };
 
     const handleSend = async (newText) => {
@@ -325,7 +319,7 @@ const ChatWindow = ({
                 typingStartedRef.current = false;
                 socket.emit('stop typing', {
                     chatId: selectedChat._id,
-                    userId: currentUser._id,
+                    user: currentUser._id,
                 });
                 if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
             }
@@ -398,7 +392,6 @@ const ChatWindow = ({
         }
     };
 
-    console.log('ggg', typingUsers);
     const typingUsernames = Array.from(typingUsers)
         .filter(id => id !== currentUser._id)
         .map(id => {
@@ -417,7 +410,7 @@ const ChatWindow = ({
     const showLilyapperWelcome =
         !selectedChat && !['/friends', '/arrequest', '/groups'].includes(location.pathname);
 
-    console.log('currentUser:', currentUser);
+
 
     if (loadingUser) return <Spinner />;
     if (!currentUser?._id) {
@@ -482,7 +475,7 @@ const ChatWindow = ({
                                 overflow: 'hidden',
                             }}
                         >
-                            {console.log(typingUsernames)}
+                           
                             {typingUsernames.length === 1
                                 ? `${typingUsernames[0]} is typing...`
                                 : typingUsernames.length > 1
@@ -585,6 +578,7 @@ const ChatWindow = ({
                                                         onAddMembers={() => setShowAddMembersModal(true)}
                                                         currentUserId={currentUser._id}
                                                         addToGroup={addToGroup}
+                                                        onlineUsers={onlineUsers}
                                                     />
                                                     {showAddMembersModal && (
                                                         <AddMembersModal

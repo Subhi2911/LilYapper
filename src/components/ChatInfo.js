@@ -12,9 +12,9 @@ const ChatInfo = ({
 }) => {
     if (!selectedChat) return null;
 
-    const { avatar, username, bio, date, isGroupChat, chatName, groupAdmin } = selectedChat;
+    const { avatar, username, bio, date, isGroupChat, chatName, groupAdmin,onlineUsers } = selectedChat;
     const isAdmin= groupAdmin?._id===localStorage.getItem('userId');
-
+    
     const formatDate = (dateStr) => {
         if (!dateStr) return 'N/A';
         const date = new Date(dateStr);
@@ -87,7 +87,7 @@ const ChatInfo = ({
                                         }}
                                         onClick={() => setInspectedUser(u)}
                                     >
-                                        <Avatar src={u.avatar} width="4" height="4" size="14" isGroup={false} />
+                                        <Avatar src={u.avatar} width="4" height="4" size="14" isGroup={false} isOnline={onlineUsers.has(u._id)?true:false}/>
                                         <span>{u.username}</span>
                                     </div>
                                     {isAdmin && selectedChat.groupAdmin?._id !== u._id && (

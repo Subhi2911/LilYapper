@@ -120,7 +120,7 @@ const ChatSidebar = ({
                                     }}
                                     style={{ cursor: 'pointer', borderRadius: 'inherit' }}
                                 >
-                                    {console.log('item',item)}
+                                    
                                     <ChatReceiver
                                         isGroup={item.isGroupChat}
                                         lastMessageTime={item.latestMessage?.createdAt || ''}
