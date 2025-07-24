@@ -21,18 +21,6 @@ const ChatState = (props) => {
     }, [currentUser]);
 
     useEffect(() => {
-        const userData = localStorage.getItem('user');
-        if (userData) {
-            try {
-                setCurrentUser(JSON.parse(userData));
-            } catch (error) {
-                console.error("Failed to parse user:", error);
-            }
-        }
-        setLoadingUser(false); // ✅ After parsing
-    }, []);
-
-    useEffect(() => {
         if (socket && currentUser?._id) {
             socket.emit('join', currentUser._id);
             console.log('Socket joined user room:', currentUser._id);

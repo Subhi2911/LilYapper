@@ -178,8 +178,6 @@ const ChatWindow = ({
         if (selectedChat?._id && currentUser?._id) {
             loadMessages();
         }
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedChat?._id, currentUser?._id, fetchMessages]);
 
     useEffect(() => {
