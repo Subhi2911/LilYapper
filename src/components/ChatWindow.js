@@ -66,28 +66,24 @@ const ChatWindow = ({
     const cancelReply = () => {
         setReplyTo(null);
     };
+
+    useEffect(() => {
+        if (!socket || !currentUser) return;
+        console.log('currentUser',currentUser)
+        socket.emit('join', currentUser._id);
+    }, [socket, currentUser]);
+
+    useEffect(() => {
+        if (socket && selectedChat?._id) {
+            socket.emit("join chat", selectedChat._id);
+        }
+    }, [socket, selectedChat?._id]);
+
     useEffect(() => {
         if (selectedChat && socket) {
             socket.emit('join chat', selectedChat._id);
         }
     }, [selectedChat, socket]);
-
-    useEffect(() => {
-        if (!socket) return;
-
-        const handleMessageReceived = (newMessage) => {
-            // Only add if it's for the selected chat
-            if (newMessage.chat._id === selectedChat?._id) {
-                setMessages(prev => [...prev, newMessage]);
-            }
-        };
-
-        socket.on('message received', handleMessageReceived);
-
-        return () => {
-            socket.off('message received', handleMessageReceived);
-        };
-    }, [socket, selectedChat?._id]);
 
     useEffect(() => {
         if (!socket) return;
@@ -104,7 +100,7 @@ const ChatWindow = ({
     }, [socket]);
 
     useEffect(() => {
-        console.log('hgdg', selectedChat)
+        console.log('hgdg', selectedChat);
         if (selectedChat && !isMobile) {
             const checkFriendship = async () => {
                 if (!selectedChat || selectedChat.isGroupChat) {
@@ -132,24 +128,6 @@ const ChatWindow = ({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedChat, isMobile]);
-
-    useEffect(() => {
-        if (!socket) return;
-
-        socket.on('newMessage', (newMsg) => {
-            // Check if it's for the currently selected chat
-            if (selectedChat && selectedChat._id === newMsg.chat._id) {
-                setMessages(prev => [...prev, newMsg]);
-            } else {
-                // Optionally show notification or unread indicator
-            }
-        });
-
-        return () => {
-            socket.off('new-message');
-        };
-    }, [socket, selectedChat]);
-
 
     useEffect(() => {
         const loadMessages = async () => {
@@ -180,11 +158,43 @@ const ChatWindow = ({
         }
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedChat?._id, currentUser?._id, fetchMessages,]);
+    }, [selectedChat?._id, currentUser?._id, fetchMessages]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
     }, [messages]);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleMessageReceived = (newMessage) => {
+            if (newMessage.chat._id === selectedChat?._id) {
+                setMessages(prev => [...prev, newMessage]);
+            }
+        };
+
+        socket.on('message received', handleMessageReceived);
+
+        return () => {
+            socket.off('message received', handleMessageReceived);
+        };
+    }, [socket, selectedChat?._id]);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on('newMessage', (newMsg) => {
+            if (selectedChat && selectedChat._id === newMsg.chat._id) {
+                setMessages(prev => [...prev, newMsg]);
+            } else {
+                // Optionally show notification or unread indicator
+            }
+        });
+
+        return () => {
+            socket.off('newMessage');
+        };
+    }, [socket, selectedChat]);
 
     useEffect(() => {
         if (!socket) return;
@@ -210,35 +220,36 @@ const ChatWindow = ({
     }, [socket, selectedChat, currentUser]);
 
     useEffect(() => {
-        if (!socket || !currentUser) return;
-        socket.emit('join', currentUser._id);
-    }, [socket, currentUser]);
-
-    useEffect(() => {
-        if (socket && selectedChat?._id) {
-            socket.emit("join chat", selectedChat._id);
-        }
-    }, [socket, selectedChat?._id]);
-
-
-    useEffect(() => {
+        console.log('potty');
         if (!socket) return;
+        console.log('poop');
 
         const handleTyping = ({ chatId, userId }) => {
+            console.log('Received typing event:', { chatId, userId });
             if (userId === currentUser._id) return;
             if (chatId !== selectedChat?._id) return;
-            setTypingUsers(prev => new Set([...prev, userId]));
-        };
 
-        const handleStopTyping = ({ chatId, userId }) => {
-            if (chatId !== selectedChat?._id) return;
             setTypingUsers(prev => {
+                console.log('Before adding typing user:', [...prev]);
                 const updated = new Set(prev);
-                updated.delete(userId);
+                updated.add(userId);
+                console.log('After adding typing user:', [...updated]);
                 return updated;
             });
         };
 
+        const handleStopTyping = ({ chatId, userId }) => {
+            console.log('Received stop typing event:', { chatId, userId });
+            if (chatId !== selectedChat?._id) return;
+
+            setTypingUsers(prev => {
+                console.log('Before removing typing user:', [...prev]);
+                const updated = new Set(prev);
+                updated.delete(userId);
+                console.log('After removing typing user:', [...updated]);
+                return updated;
+            });
+        };
 
         socket.on('typing', handleTyping);
         socket.on('stop typing', handleStopTyping);
@@ -247,23 +258,24 @@ const ChatWindow = ({
             socket.off('typing', handleTyping);
             socket.off('stop typing', handleStopTyping);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [socket, currentUser?._id]);
+    }, [socket, currentUser?._id, selectedChat?._id]);
 
     const typingTimeoutRef = useRef(null);
     const typingStartedRef = useRef(false);
 
     const handleUserTyping = () => {
+        console.log('hagguq')
         if (!socket || !selectedChat) return;
-
+        console.log('hagguqj')
         if (!typingStartedRef.current) {
             typingStartedRef.current = true;
 
             socket.emit('typing', {
                 chatId: selectedChat._id,
                 userId: currentUser._id,
+                
             });
-
+            console.log('dkdk')
         }
 
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
@@ -274,12 +286,10 @@ const ChatWindow = ({
                 chatId: selectedChat._id,
                 userId: currentUser._id,
             });
-
         }, 2000);
     };
 
     const handleSend = async (newText) => {
-
         if (!newText.trim() || !selectedChat?._id) return;
 
         try {
@@ -297,19 +307,16 @@ const ChatWindow = ({
                     } : null,
                 };
 
-
                 setMessages((prev) => [...prev, typedMessage]);
                 setReplyTo(null);
 
-                // Update latest message for groups immediately
                 if (selectedChat.isGroupChat && typeof updateGroupLatestMessage === 'function') {
                     updateGroupLatestMessage(selectedChat._id, typedMessage);
                 }
-
             } else {
                 console.warn('Empty or invalid message returned', newMessage);
             }
-            // Emit the message through socket after updating UI
+
             if (socket) {
                 socket.emit('send-message', newMessage);
             }
@@ -325,10 +332,8 @@ const ChatWindow = ({
         } catch (error) {
             console.error('Error sending message:', error);
         }
-
     };
 
-    //edit messages
     const handleEditMessage = async (id, newText) => {
         try {
             const res = await fetch(`${host}/api/message/edit/${id}`, {
@@ -356,8 +361,6 @@ const ChatWindow = ({
         }
     };
 
-
-    //Delete Message
     const handleDeleteMessage = async (messageId) => {
         try {
             const response = await fetch(`${host}/api/message/delete/${messageId}`, {
@@ -371,23 +374,18 @@ const ChatWindow = ({
             const data = await response.json();
 
             if (data.success) {
-                // Remove deleted message from local messages state
                 setMessages((prevMessages) => prevMessages.filter(msg => msg._id !== messageId));
 
-                // If deleted message was the latest message in the chat, update latest message accordingly
                 if (selectedChat.latestMessage?._id === messageId) {
-                    // Find the new latest message after deletion (last message in messages)
                     const newLatestMessage = messages
                         .filter(msg => msg._id !== messageId)
                         .slice(-1)[0] || null;
 
-                    // Update latestMessage in selectedChat state and optionally global chat list
                     setSelectedChat(prevChat => ({
                         ...prevChat,
                         latestMessage: newLatestMessage,
                     }));
 
-                    // Also call a function to update the chat list/global state if you have one
                     if (typeof updateGroupLatestMessage === 'function') {
                         updateGroupLatestMessage(selectedChat._id, newLatestMessage);
                     }
@@ -398,37 +396,34 @@ const ChatWindow = ({
         } catch (err) {
             console.error('Error deleting message:', err);
         }
-    }
+    };
 
-    console.log(typingUsers)
+    console.log('ggg', typingUsers);
     const typingUsernames = Array.from(typingUsers)
         .filter(id => id !== currentUser._id)
         .map(id => {
             if (selectedChat?.isGroupChat) {
-                // For groups: find user in users array
                 const user = selectedChat.users.find(u => u._id === id);
                 return user?.username || 'Someone';
             } else {
-                // For personal chat: check if id matches otherUserId
                 if (id === selectedChat?.otherUserId) {
-                    // Optionally, get username from friends list or fallback
                     const friend = friends.find(f => f._id === id);
                     return friend?.username || 'Someone';
                 }
-                return 'Someone'; // id doesn't match otherUserId
+                return 'Someone';
             }
         });
 
-
     const showLilyapperWelcome =
         !selectedChat && !['/friends', '/arrequest', '/groups'].includes(location.pathname);
+
     console.log('currentUser:', currentUser);
 
     if (loadingUser) return <Spinner />;
     if (!currentUser?._id) {
-        // optionally redirect to login
         return navigate("/login");
     }
+
     return (
         <div
             className="flex-grow-1 d-flex flex-column"
