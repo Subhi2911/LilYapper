@@ -76,7 +76,7 @@ const ChatSidebar = ({
             <div
                 style={{
                     width: isMobile ? '100vw' : '350px',
-                    maxWidth: isMobile ? '100vw' : '350px',
+                    maxWidth: isMobile ? '100vw' : '400px',
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',

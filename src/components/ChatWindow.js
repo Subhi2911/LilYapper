@@ -455,7 +455,7 @@ const ChatWindow = ({
                                 overflow: 'hidden',
                             }}
                         >
-                            {console.log(typingUsers)}
+                            {console.log(typingUsernames)}
                             {typingUsernames.length === 1
                                 ? `${typingUsernames[0]} is typing...`
                                 : typingUsernames.length > 1
