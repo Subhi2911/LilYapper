@@ -1,6 +1,8 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import ChatContext from './ChatContext';
+import { useSocket } from './socket/SocketContext';
+
 
 const ChatState = (props) => {
     const host = process.env.REACT_APP_BACKEND_URL;
@@ -8,7 +10,7 @@ const ChatState = (props) => {
     const [groups, setGroups] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
     const [loadingUser, setLoadingUser] = useState(true);
-
+    const socket  =useSocket()
     useEffect(() => {
         if (currentUser?._id) {
             fetchChats(1); // fetch first page
@@ -210,6 +212,7 @@ const ChatState = (props) => {
 
 
             const data = await response.json();
+            socket.emit('send-message', data); 
 
             // Update the corresponding chat's latestMessage
             setChats((prevChats) =>

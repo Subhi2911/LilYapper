@@ -391,7 +391,9 @@ const ChatWindow = ({
     const typingUsernames = Array.from(typingUsers)
         .filter((id) => id !== currentUser._id)
         .map((id) => {
-            const user = selectedChat?.users?.find((u) => u._id === id) || friends?.find((f) => f._id === id);
+            const user =
+                selectedChat?.users?.find((u) => u._id === id) ||
+                (Array.isArray(friends) ? friends.find((f) => f._id === id) : null);
             return user?.username || 'Someone';
         });
 
