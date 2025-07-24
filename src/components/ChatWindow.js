@@ -178,9 +178,9 @@ const ChatWindow = ({
         if (selectedChat?._id && currentUser?._id) {
             loadMessages();
         }
-        
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedChat?._id, currentUser?._id ,fetchMessages]);
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedChat?._id, currentUser?._id, fetchMessages]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
@@ -257,7 +257,7 @@ const ChatWindow = ({
             typingStartedRef.current = false;
             socket.emit('stop typing', selectedChat._id);
         }, 2000);
-    }; 
+    };
 
     const handleSend = async (newText) => {
 
@@ -380,13 +380,23 @@ const ChatWindow = ({
 
 
     const typingUsernames = Array.from(typingUsers)
-        .filter((id) => id !== currentUser._id)
-        .map((id) => {
-            const user =
-                selectedChat?.users?.find((u) => u._id === id) ||
-                (Array.isArray(friends) ? friends.find((f) => f._id === id) : null);
-            return user?.username || 'Someone';
+        .filter(id => id !== currentUser._id)
+        .map(id => {
+            if (selectedChat?.isGroupChat) {
+                // For groups: find user in users array
+                const user = selectedChat.users.find(u => u._id === id);
+                return user?.username || 'Someone';
+            } else {
+                // For personal chat: check if id matches otherUserId
+                if (id === selectedChat?.otherUserId) {
+                    // Optionally, get username from friends list or fallback
+                    const friend = friends.find(f => f._id === id);
+                    return friend?.username || 'Someone';
+                }
+                return 'Someone'; // id doesn't match otherUserId
+            }
         });
+
 
     const showLilyapperWelcome =
         !selectedChat && !['/friends', '/arrequest', '/groups'].includes(location.pathname);
