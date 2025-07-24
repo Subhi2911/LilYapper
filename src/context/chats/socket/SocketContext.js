@@ -28,7 +28,7 @@ export const SocketProvider = ({ children }) => {
 
     newSocket.on('connect', () => {
       console.log("✅ Socket connected:", newSocket.id);
-      newSocket.emit('add-user', user._id); // 👈 Emit user ID on connect
+      
     });
 
     newSocket.on('connect_error', (err) => {

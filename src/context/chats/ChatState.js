@@ -7,17 +7,47 @@ const ChatState = (props) => {
     const [chats, setChats] = useState([]);
     const [groups, setGroups] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
+    const [loadingUser, setLoadingUser] = useState(true);
+
+    useEffect(() => {
+        if (currentUser?._id) {
+            fetchChats(1); // fetch first page
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentUser]);
 
     useEffect(() => {
         const userData = localStorage.getItem('user');
         if (userData) {
             try {
-                setCurrentUser(JSON.parse(userData)); // assuming you stored stringified user object
+                setCurrentUser(JSON.parse(userData));
             } catch (error) {
                 console.error("Failed to parse user:", error);
             }
         }
+        setLoadingUser(false); // ✅ After parsing
     }, []);
+
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const res = await fetch('/api/auth/getuser', {
+                        headers: { 'auth-token': token }
+                    });
+                    const data = await res.json();
+                    setCurrentUser(data);
+                } catch (err) {
+                    console.error('Failed to fetch user', err);
+                }
+            }
+            setLoadingUser(false); // ✅ After fetch completes
+        };
+
+        fetchCurrentUser();
+    }, []);
+
 
     // Create new chat
     const createChat = async (userId) => {
@@ -134,7 +164,7 @@ const ChatState = (props) => {
 
             const data = await response.json();
             const currentUserId = localStorage.getItem('userId');
-            
+
 
             const formattedMessages = data.map(msg => {
                 if (!msg.sender) {
@@ -142,7 +172,7 @@ const ChatState = (props) => {
                         ...msg,
                         type: 'system',
                         text: msg.content,
-                        replyTo: msg.replyTo, 
+                        replyTo: msg.replyTo,
                     };
                 }
 
@@ -213,6 +243,7 @@ const ChatState = (props) => {
                 currentUser,
                 chats,
                 groups,
+                loadingUser
             }}
         >
             {props.children}

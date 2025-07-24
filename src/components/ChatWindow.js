@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import UserBar from './UserBar';
 import MessageBox from './MessageBox';
 import Keyboard from './Keyboard';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import RequestWindow from './RequestWindow';
 import ChatContext from '../context/chats/ChatContext';
 import GroupMessageBox from './GroupMessageBox';
@@ -44,7 +44,7 @@ const ChatWindow = ({
 }) => {
     const location = useLocation();
     const host = process.env.REACT_APP_BACKEND_URL;
-    const { fetchMessages, sendmessage, currentUser } = useContext(ChatContext);
+    const { fetchMessages, sendmessage, currentUser, loadingUser } = useContext(ChatContext);
     const socket = useSocket();
     const messagesEndRef = useRef(null);
     const [messages, setMessages] = useState([]);
@@ -56,6 +56,7 @@ const ChatWindow = ({
     const wallpaperUrl = selectedChat?.wallpaper?.url;
     // eslint-disable-next-line no-unused-vars
     const [showWallpaperModal, setShowWallpaperModal] = useState(false);
+    const navigate = useNavigate();
 
     const handleReply = (msg) => {
         setReplyTo(msg);
@@ -146,12 +147,17 @@ const ChatWindow = ({
             setMessages(prev => [...prev, incomingMessage]);
         };
 
-        socket.on('new message', handleNewMessage);
+        socket.on('newMessage', handleNewMessage);
 
         return () => {
-            socket.off('new message', handleNewMessage);
+            socket.off('newMessage', handleNewMessage);
         };
     }, [socket, selectedChat, currentUser]);
+    
+    useEffect(() => {
+        if (!socket || !currentUser) return;
+        socket.emit('join', currentUser._id);
+    }, [socket, currentUser]);
 
 
     useEffect(() => {
@@ -313,6 +319,7 @@ const ChatWindow = ({
         }
     }
 
+
     const typingUsernames = Array.from(typingUsers)
         .filter((id) => id !== currentUser._id)
         .map((id) => {
@@ -324,8 +331,11 @@ const ChatWindow = ({
         !selectedChat && !['/friends', '/arrequest', '/groups'].includes(location.pathname);
     console.log('currentUser:', currentUser);
 
-    if (!currentUser?._id) return <Spinner />;
-
+    if (loadingUser) return <Spinner />;
+    if (!currentUser?._id) {
+        // optionally redirect to login
+        return navigate("/login");
+    }
     return (
         <div
             className="flex-grow-1 d-flex flex-column"
@@ -515,16 +525,12 @@ const ChatWindow = ({
                                     onClose={() => setShowWallpaperModal(false)}
                                     selectedChat={selectedChat}
                                     setSelectedChat={setSelectedChat}
-
-
                                 />
                             </div>
                         </div>
                     )}
 
                 </>
-
-
             )}
 
             {(location.pathname === '/friends' || location.pathname === '/arrequest') && (
