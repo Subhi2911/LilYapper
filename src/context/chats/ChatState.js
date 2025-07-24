@@ -11,7 +11,12 @@ const ChatState = (props) => {
     const [currentUser, setCurrentUser] = useState(null);
     const [loadingUser, setLoadingUser] = useState(true);
     const socket = useSocket()
-
+    useEffect(() => {
+        if (socket && currentUser?._id) {
+            socket.emit('join', currentUser._id);
+            console.log('Socket joined user room:', currentUser._id);
+        }
+    }, [socket, currentUser]);
 
     useEffect(() => {
         if (currentUser?._id) {
@@ -21,11 +26,16 @@ const ChatState = (props) => {
     }, [currentUser]);
 
     useEffect(() => {
-        if (socket && currentUser?._id) {
-            socket.emit('join', currentUser._id);
-            console.log('Socket joined user room:', currentUser._id);
+        const userData = localStorage.getItem('user');
+        if (userData) {
+            try {
+                setCurrentUser(JSON.parse(userData));
+            } catch (error) {
+                console.error("Failed to parse user:", error);
+            }
         }
-    }, [socket, currentUser]);
+        setLoadingUser(false); // ✅ After parsing
+    }, []);
 
     useEffect(() => {
         const fetchCurrentUser = async () => {
@@ -36,19 +46,12 @@ const ChatState = (props) => {
                         headers: { 'auth-token': token }
                     });
                     const data = await res.json();
-
-                    if (data.success && data.user) {
-                        setCurrentUser(data.user);  // <-- set only user object
-                    } else {
-                        console.error('Failed to fetch user: no user data');
-                        setCurrentUser(null);
-                    }
+                    setCurrentUser(data);
                 } catch (err) {
                     console.error('Failed to fetch user', err);
-                    setCurrentUser(null);
                 }
             }
-            setLoadingUser(false);
+            setLoadingUser(false); // ✅ After fetch completes
         };
 
         fetchCurrentUser();

@@ -178,6 +178,8 @@ const ChatWindow = ({
         if (selectedChat?._id && currentUser?._id) {
             loadMessages();
         }
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedChat?._id, currentUser?._id, fetchMessages]);
 
     useEffect(() => {
@@ -216,22 +218,18 @@ const ChatWindow = ({
     useEffect(() => {
         if (!socket) return;
 
-        const handleTyping = ({ chatId, userId }) => {
-            if (chatId !== selectedChat._id) return;
-            
-            setTypingUsers((prev) => new Set(prev).add(userId));
+        const handleTyping = (typingUserId) => {
+            if (typingUserId === currentUser._id) return;
+            setTypingUsers((prev) => new Set(prev).add(typingUserId));
         };
 
-        const handleStopTyping = ({ chatId, userId }) => {
-            if (chatId !== selectedChat?._id) return;
-
+        const handleStopTyping = (typingUserId) => {
             setTypingUsers((prev) => {
                 const copy = new Set(prev);
-                copy.delete(userId);
+                copy.delete(typingUserId);
                 return copy;
             });
         };
-
 
         socket.on('typing', handleTyping);
         socket.on('stop typing', handleStopTyping);
@@ -240,7 +238,7 @@ const ChatWindow = ({
             socket.off('typing', handleTyping);
             socket.off('stop typing', handleStopTyping);
         };
-    }, [socket, currentUser?._id, selectedChat?._id]);
+    }, [socket, currentUser?._id]);
 
     const typingTimeoutRef = useRef(null);
     const typingStartedRef = useRef(false);
@@ -250,20 +248,14 @@ const ChatWindow = ({
 
         if (!typingStartedRef.current) {
             typingStartedRef.current = true;
-            socket.emit('typing', {
-                chatId: selectedChat?._id,
-                userId: currentUser?._id,
-            });
+            socket.emit('typing', selectedChat._id);
         }
 
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
 
         typingTimeoutRef.current = setTimeout(() => {
             typingStartedRef.current = false;
-            socket.emit('stop typing', {
-                chatId: selectedChat?._id,
-                userId: currentUser?._id,
-            });
+            socket.emit('stop typing', selectedChat._id);
         }, 2000);
     };
 
@@ -388,24 +380,22 @@ const ChatWindow = ({
 
     console.log(typingUsers)
     const typingUsernames = Array.from(typingUsers)
-        .map((id) => {
-            // For personal chat, get the username from `otherUserId`
-            if (!selectedChat.isGroupChat) {
-                // For personal chat, selectedChat.otherUserId is the other user
-                if (id === selectedChat.otherUserId) {
-                    return selectedChat.username; // or however you store username
-                }
+        .filter(id => id !== currentUser._id)
+        .map(id => {
+            if (selectedChat?.isGroupChat) {
+                // For groups: find user in users array
+                const user = selectedChat.users.find(u => u._id === id);
+                return user?.username || 'Someone';
             } else {
-                // For groups, search users array for matching _id
-                const user = selectedChat.users?.find((u) => u._id === id);
-                if (user) return user.username;
+                // For personal chat: check if id matches otherUserId
+                if (id === selectedChat?.otherUserId) {
+                    // Optionally, get username from friends list or fallback
+                    const friend = friends.find(f => f._id === id);
+                    return friend?.username || 'Someone';
+                }
+                return 'Someone'; // id doesn't match otherUserId
             }
-
-            // fallback to friends list or 'Someone'
-            const friendUser = friends?.find((f) => f._id === id);
-            return friendUser?.username || 'Someone';
         });
-
 
 
     const showLilyapperWelcome =
