@@ -75,23 +75,19 @@ const ChatWindow = ({
     useEffect(() => {
         if (!socket) return;
 
-        const handleReceiveMessage = (message) => {
-            if (message.chatId === selectedChat?._id) {
-                setMessages((prev) => [...prev, {
-                    ...message,
-                    type: 'received',
-                    text: message.content,
-                }]);
+        const handleMessageReceived = (newMessage) => {
+            // Only add if it's for the selected chat
+            if (newMessage.chat._id === selectedChat?._id) {
+                setMessages(prev => [...prev, newMessage]);
             }
         };
 
-        socket.on('receive-message', handleReceiveMessage);
+        socket.on('message received', handleMessageReceived);
 
         return () => {
-            socket.off('receive-message', handleReceiveMessage);
+            socket.off('message received', handleMessageReceived);
         };
-    }, [socket, selectedChat]);
-
+    }, [socket, selectedChat?._id]);
 
     useEffect(() => {
         if (!socket) return;
@@ -140,7 +136,7 @@ const ChatWindow = ({
     useEffect(() => {
         if (!socket) return;
 
-        socket.on('new-message', (newMsg) => {
+        socket.on('newMessage', (newMsg) => {
             // Check if it's for the currently selected chat
             if (selectedChat && selectedChat._id === newMsg.chat._id) {
                 setMessages(prev => [...prev, newMsg]);
@@ -182,36 +178,36 @@ const ChatWindow = ({
         if (selectedChat?._id && currentUser?._id) {
             loadMessages();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedChat?._id, currentUser?._id]);
+        
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedChat?._id, currentUser?._id ,fetchMessages]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
     }, [messages]);
 
     useEffect(() => {
-        if (!socket || !selectedChat) return;
+        if (!socket) return;
 
         const handleNewMessage = (msg) => {
-            if (msg.chat._id !== selectedChat._id) return;
-
-            const incomingMessage = {
-                ...msg,
-                type: msg.sender._id === currentUser._id ? 'sent' : 'received',
-                text: msg.content,
-                replyTo: msg.replyTo,
-            };
-
-            setMessages(prev => [...prev, incomingMessage]);
+            if (selectedChat && msg.chat._id === selectedChat._id) {
+                setMessages((prev) => [...prev, {
+                    ...msg,
+                    type: msg.sender._id === currentUser._id ? 'sent' : 'received',
+                    text: msg.content,
+                    replyTo: msg.replyTo,
+                }]);
+            } else {
+                //..
+            }
         };
 
-        socket.on('message received', handleNewMessage);
+        socket.on('newMessage', handleNewMessage);
 
         return () => {
-            socket.off('message received', handleNewMessage);
+            socket.off('newMessage', handleNewMessage);
         };
     }, [socket, selectedChat, currentUser]);
-
 
     useEffect(() => {
         if (!socket || !currentUser) return;
@@ -261,7 +257,7 @@ const ChatWindow = ({
             typingStartedRef.current = false;
             socket.emit('stop typing', selectedChat._id);
         }, 2000);
-    };
+    }; 
 
     const handleSend = async (newText) => {
 
@@ -296,12 +292,7 @@ const ChatWindow = ({
             }
             // Emit the message through socket after updating UI
             if (socket) {
-                socket.emit('new message', {
-                    content: newMessage.content,
-                    senderId: currentUser._id,
-                    chatId: selectedChat._id,
-                    isGroup: selectedChat.isGroupChat,
-                });
+                socket.emit('send-message', newMessage);
             }
 
             if (socket) {
@@ -464,6 +455,7 @@ const ChatWindow = ({
                                 overflow: 'hidden',
                             }}
                         >
+                            {console.log(typingUsers)}
                             {typingUsernames.length === 1
                                 ? `${typingUsernames[0]} is typing...`
                                 : typingUsernames.length > 1

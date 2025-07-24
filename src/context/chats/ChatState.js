@@ -10,12 +10,14 @@ const ChatState = (props) => {
     const [groups, setGroups] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
     const [loadingUser, setLoadingUser] = useState(true);
-    const socket  =useSocket()
+    const socket = useSocket()
+
+
     useEffect(() => {
         if (currentUser?._id) {
             fetchChats(1); // fetch first page
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentUser]);
 
     useEffect(() => {
@@ -29,6 +31,13 @@ const ChatState = (props) => {
         }
         setLoadingUser(false); // ✅ After parsing
     }, []);
+
+    useEffect(() => {
+        if (socket && currentUser?._id) {
+            socket.emit('join', currentUser._id);
+            console.log('Socket joined user room:', currentUser._id);
+        }
+    }, [socket, currentUser]);
 
     useEffect(() => {
         const fetchCurrentUser = async () => {
@@ -212,7 +221,7 @@ const ChatState = (props) => {
 
 
             const data = await response.json();
-            socket.emit('send-message', data); 
+            socket.emit('send-message', data);
 
             // Update the corresponding chat's latestMessage
             setChats((prevChats) =>
