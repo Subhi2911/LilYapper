@@ -6,12 +6,18 @@ const ChatReceiver = ({
   avatar,
   name,
   latestMessage,
-  isOnline,
+  onlineUsers,
   unreadCount,
   isGroup,
   lastMessageTime,
   sent,
+  id,
 }) => {
+  let isOnline = false;
+
+    if (!isGroup && id) {
+        isOnline = onlineUsers.has(id);
+    }
   return (
     <div className="p-2 border-bottom" >
       <div className="d-flex justify-content-between align-items-center mb-1" >

@@ -121,6 +121,7 @@ const MessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage, onEd
                       right: '-30px',
                       fontSize: '14px',
                       userSelect: 'none',
+                      color:receiverbubble
                     }}
                     title="Reply to this message"
                   />

@@ -58,7 +58,7 @@ const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBord
                         textDecoration: 'none',
                     }}
                 >
-                    <Avatar src={avatar} width="2" height="2" size="12" isGroup={isGroup} />
+                    <Avatar src={avatar} width="2" height="2" size="12" isGroup={isGroup} isOnline={isOnline} />
 
                 </Link>
 

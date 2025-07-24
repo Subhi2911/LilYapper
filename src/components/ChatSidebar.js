@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from './Navbar';
 import ChatReceiver from './ChatReceiver';
 import { useLocation } from 'react-router-dom';
 import RequestSidebar from './RequestSidebar';
 import AcceptRequest from './AcceptRequest';
+import { useSocket } from '../context/chats/socket/SocketContext';
 
 const ChatSidebar = ({
     refreshGroups,
@@ -29,12 +30,26 @@ const ChatSidebar = ({
     setShowChatInfo,
 }) => {
     const location = useLocation();
-
+    const [onlineUsers, setOnlineUsers] = useState(new Set());
     const safeChatList = Array.isArray(chatList) ? chatList : [];
     const safeGroups = Array.isArray(groups) ? groups : [];
+    const socket = useSocket(); 
 
     let displayChats = [];
 
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleUserOnlineStatus = (onlineUserIds) => {
+            setOnlineUsers(new Set(onlineUserIds));
+        };
+
+        socket.on('user-online-status', handleUserOnlineStatus);
+
+        return () => {
+            socket.off('user-online-status', handleUserOnlineStatus);
+        };
+    }, [socket]);
     if (location.pathname === '/') {
         displayChats = [...safeChatList, ...safeGroups];
     } else if (location.pathname === '/groups') {
@@ -105,7 +120,7 @@ const ChatSidebar = ({
                                     }}
                                     style={{ cursor: 'pointer', borderRadius: 'inherit' }}
                                 >
-
+                                    {console.log('item',item)}
                                     <ChatReceiver
                                         isGroup={item.isGroupChat}
                                         lastMessageTime={item.latestMessage?.createdAt || ''}
@@ -127,6 +142,8 @@ const ChatSidebar = ({
                                             (item.isGroupChat ? 'Group chat' : 'Tap to start chat')
                                         }
                                         unreadCount={item.unreadCount || 0}
+                                        onlineUsers={onlineUsers}
+                                        id={item.otherUserId}
                                     />
 
                                 </li>
