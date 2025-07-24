@@ -220,8 +220,7 @@ const ChatWindow = ({
 
         const handleTyping = ({ chatId, userId }) => {
             if (chatId !== selectedChat._id) return;
-            if (userId !== currentUser?._id) return;
-
+            
             setTypingUsers((prev) => new Set(prev).add(userId));
         };
 
