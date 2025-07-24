@@ -48,12 +48,19 @@ const ChatState = (props) => {
                         headers: { 'auth-token': token }
                     });
                     const data = await res.json();
-                    setCurrentUser(data);
+
+                    if (data.success && data.user) {
+                        setCurrentUser(data.user);  // <-- set only user object
+                    } else {
+                        console.error('Failed to fetch user: no user data');
+                        setCurrentUser(null);
+                    }
                 } catch (err) {
                     console.error('Failed to fetch user', err);
+                    setCurrentUser(null);
                 }
             }
-            setLoadingUser(false); // ✅ After fetch completes
+            setLoadingUser(false);
         };
 
         fetchCurrentUser();
