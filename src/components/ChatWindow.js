@@ -220,13 +220,13 @@ const ChatWindow = ({
 
         const handleTyping = ({ chatId, userId }) => {
             if (chatId !== selectedChat._id) return;
-            if (userId === currentUser._id) return;
+            if (userId === currentUser?._id) return;
 
             setTypingUsers((prev) => new Set(prev).add(userId));
         };
 
         const handleStopTyping = ({ chatId, userId }) => {
-            if (chatId !== selectedChat._id) return;
+            if (chatId !== selectedChat?._id) return;
 
             setTypingUsers((prev) => {
                 const copy = new Set(prev);
@@ -243,7 +243,7 @@ const ChatWindow = ({
             socket.off('typing', handleTyping);
             socket.off('stop typing', handleStopTyping);
         };
-    }, [socket, currentUser?._id, selectedChat._id]);
+    }, [socket, currentUser?._id, selectedChat?._id]);
 
     const typingTimeoutRef = useRef(null);
     const typingStartedRef = useRef(false);
@@ -254,8 +254,8 @@ const ChatWindow = ({
         if (!typingStartedRef.current) {
             typingStartedRef.current = true;
             socket.emit('typing', {
-                chatId: selectedChat._id,
-                userId: currentUser._id,
+                chatId: selectedChat?._id,
+                userId: currentUser?._id,
             });
         }
 
@@ -264,8 +264,8 @@ const ChatWindow = ({
         typingTimeoutRef.current = setTimeout(() => {
             typingStartedRef.current = false;
             socket.emit('stop typing', {
-                chatId: selectedChat._id,
-                userId: currentUser._id,
+                chatId: selectedChat?._id,
+                userId: currentUser?._id,
             });
         }, 2000);
     };
