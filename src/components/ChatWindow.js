@@ -218,18 +218,21 @@ const ChatWindow = ({
     useEffect(() => {
         if (!socket) return;
 
-        const handleTyping = (typingUserId) => {
-            if (typingUserId === currentUser._id) return;
-            setTypingUsers((prev) => new Set(prev).add(typingUserId));
+        const handleTyping = ({ chatId, userId }) => {
+            if (userId === currentUser._id) return;
+            if (chatId !== selectedChat?._id) return;
+            setTypingUsers((prev) => new Set(prev).add(userId));
         };
 
-        const handleStopTyping = (typingUserId) => {
+        const handleStopTyping = ({ chatId, userId }) => {
+            if (chatId !== selectedChat?._id) return;
             setTypingUsers((prev) => {
                 const copy = new Set(prev);
-                copy.delete(typingUserId);
+                copy.delete(userId);
                 return copy;
             });
         };
+
 
         socket.on('typing', handleTyping);
         socket.on('stop typing', handleStopTyping);
@@ -238,6 +241,7 @@ const ChatWindow = ({
             socket.off('typing', handleTyping);
             socket.off('stop typing', handleStopTyping);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket, currentUser?._id]);
 
     const typingTimeoutRef = useRef(null);
@@ -248,14 +252,23 @@ const ChatWindow = ({
 
         if (!typingStartedRef.current) {
             typingStartedRef.current = true;
-            socket.emit('typing', selectedChat._id);
+
+            socket.emit('typing', {
+                chatId: selectedChat._id,
+                userId: currentUser._id,
+            });
+
         }
 
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
 
         typingTimeoutRef.current = setTimeout(() => {
             typingStartedRef.current = false;
-            socket.emit('stop typing', selectedChat._id);
+            socket.emit('stop typing', {
+                chatId: selectedChat._id,
+                userId: currentUser._id,
+            });
+
         }, 2000);
     };
 
