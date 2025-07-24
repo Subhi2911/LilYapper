@@ -66,6 +66,32 @@ const ChatWindow = ({
     const cancelReply = () => {
         setReplyTo(null);
     };
+    useEffect(() => {
+        if (selectedChat && socket) {
+            socket.emit('join chat', selectedChat._id);
+        }
+    }, [selectedChat, socket]);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleReceiveMessage = (message) => {
+            if (message.chatId === selectedChat?._id) {
+                setMessages((prev) => [...prev, {
+                    ...message,
+                    type: 'received',
+                    text: message.content,
+                }]);
+            }
+        };
+
+        socket.on('receive-message', handleReceiveMessage);
+
+        return () => {
+            socket.off('receive-message', handleReceiveMessage);
+        };
+    }, [socket, selectedChat]);
+
 
     useEffect(() => {
         if (!socket) return;
@@ -112,6 +138,24 @@ const ChatWindow = ({
     }, [selectedChat, isMobile]);
 
     useEffect(() => {
+        if (!socket) return;
+
+        socket.on('new-message', (newMsg) => {
+            // Check if it's for the currently selected chat
+            if (selectedChat && selectedChat._id === newMsg.chat._id) {
+                setMessages(prev => [...prev, newMsg]);
+            } else {
+                // Optionally show notification or unread indicator
+            }
+        });
+
+        return () => {
+            socket.off('new-message');
+        };
+    }, [socket, selectedChat]);
+
+
+    useEffect(() => {
         const loadMessages = async () => {
             if (!selectedChat?._id || !currentUser?._id) {
                 setMessages([]);
@@ -149,7 +193,7 @@ const ChatWindow = ({
         if (!socket || !selectedChat) return;
 
         const handleNewMessage = (msg) => {
-            if (msg.chat._id !== selectedChat._id) return; // Only show messages for current chat
+            if (msg.chat._id !== selectedChat._id) return;
 
             const incomingMessage = {
                 ...msg,
@@ -161,12 +205,13 @@ const ChatWindow = ({
             setMessages(prev => [...prev, incomingMessage]);
         };
 
-        socket.on('newMessage', handleNewMessage);
+        socket.on('message received', handleNewMessage);
 
         return () => {
-            socket.off('newMessage', handleNewMessage);
+            socket.off('message received', handleNewMessage);
         };
     }, [socket, selectedChat, currentUser]);
+
 
     useEffect(() => {
         if (!socket || !currentUser) return;
@@ -236,7 +281,6 @@ const ChatWindow = ({
                         sender: newMessage.replyTo.sender || { _id: '', username: 'Unknown' }
                     } : null,
                 };
-                console.log('New message returned:', newMessage);
 
 
                 setMessages((prev) => [...prev, typedMessage]);
@@ -250,6 +294,15 @@ const ChatWindow = ({
             } else {
                 console.warn('Empty or invalid message returned', newMessage);
             }
+            // Emit the message through socket after updating UI
+            if (socket) {
+                socket.emit('new message', {
+                    content: newMessage.content,
+                    senderId: currentUser._id,
+                    chatId: selectedChat._id,
+                    isGroup: selectedChat.isGroupChat,
+                });
+            }
 
             if (socket) {
                 typingStartedRef.current = false;
@@ -259,6 +312,7 @@ const ChatWindow = ({
         } catch (error) {
             console.error('Error sending message:', error);
         }
+
     };
 
     //edit messages

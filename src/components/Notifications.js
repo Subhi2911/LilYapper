@@ -81,7 +81,8 @@ const Notifications = () => {
           color: '#fff',
           padding: '10px 30px 10px 10px',
           marginBottom: '5px',
-          borderRadius: '5px'
+          borderRadius: '5px',
+          zIndex:'1021'
         }}>
           {/* ❌ Close button */}
           <span
