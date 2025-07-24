@@ -180,7 +180,7 @@ const ChatWindow = ({
         }
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedChat?._id, currentUser?._id, fetchMessages]);
+    }, [selectedChat?._id, currentUser?._id, fetchMessages,]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
@@ -213,6 +213,12 @@ const ChatWindow = ({
         if (!socket || !currentUser) return;
         socket.emit('join', currentUser._id);
     }, [socket, currentUser]);
+
+    useEffect(() => {
+        if (socket && selectedChat?._id) {
+            socket.emit("join chat", selectedChat._id);
+        }
+    }, [socket, selectedChat?._id]);
 
 
     useEffect(() => {
