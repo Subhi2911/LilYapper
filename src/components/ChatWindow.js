@@ -227,15 +227,15 @@ const ChatWindow = ({
         const handleTyping = ({ chatId, userId }) => {
             if (userId === currentUser._id) return;
             if (chatId !== selectedChat?._id) return;
-            setTypingUsers((prev) => new Set(prev).add(userId));
+            setTypingUsers(prev => new Set([...prev, userId]));
         };
 
         const handleStopTyping = ({ chatId, userId }) => {
             if (chatId !== selectedChat?._id) return;
-            setTypingUsers((prev) => {
-                const copy = new Set(prev);
-                copy.delete(userId);
-                return copy;
+            setTypingUsers(prev => {
+                const updated = new Set(prev);
+                updated.delete(userId);
+                return updated;
             });
         };
 
