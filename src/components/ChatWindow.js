@@ -310,7 +310,10 @@ const ChatWindow = ({
 
             if (socket) {
                 typingStartedRef.current = false;
-                socket.emit('stop typing', selectedChat._id);
+                socket.emit('stop typing', {
+                    chatId: selectedChat._id,
+                    userId: currentUser._id,
+                });
                 if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
             }
         } catch (error) {
