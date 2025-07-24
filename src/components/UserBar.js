@@ -26,7 +26,7 @@ const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBord
 
     return (
         <nav
-            className="navbar navbar-expand-lg fixed-top"
+            className="navbar navbar-expand-lg "
             style={{
                 backgroundColor: '#52357B',
                 paddingBottom: '0.25rem',  // add some padding bottom for space

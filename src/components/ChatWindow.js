@@ -378,7 +378,7 @@ const ChatWindow = ({
         }
     }
 
-
+    console.log(typingUsers)
     const typingUsernames = Array.from(typingUsers)
         .filter(id => id !== currentUser._id)
         .map(id => {
