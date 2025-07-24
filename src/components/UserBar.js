@@ -3,7 +3,17 @@ import { Link, useLocation } from 'react-router-dom';
 import Avatar from './Avatar';
 import ThreeDotChatMenu from './ThreeDotChatMenu';
 
-const UserBar = ({ name, avatar, setSelectedChat, isOnline, isGroup, hideBorder, selectedChat, onDeleteChat, setShowChatInfo, onRemoveFriend, setInspectedUser, setShowWallpaperModal }) => {
+const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBorder, selectedChat, onDeleteChat, setShowChatInfo, onRemoveFriend, setInspectedUser, setShowWallpaperModal, }) => {
+    let isOnline = false;
+
+    if (!isGroup && selectedChat?.otherUserId) {
+        isOnline = onlineUsers.has(selectedChat.otherUserId);
+    }
+    const onlineCount = isGroup
+        ? selectedChat.users.filter(u => onlineUsers.has(u._id)).length
+        : 0;
+
+
     const location = useLocation();
     //const navigate= useNavigate()
     const handleClick = () => {
@@ -53,7 +63,13 @@ const UserBar = ({ name, avatar, setSelectedChat, isOnline, isGroup, hideBorder,
                 </Link>
 
                 <p className="navbar-brand my-1" style={{ color: 'white' }}>
-                    {name} {!isGroup && <span className='small' style={{ fontSize: '0.8rem', color: isOnline ? '#4CAF50' : '#E57373' }}>{isOnline ? 'Online' : 'Offline'}</span>}
+                    {name}
+                    {!isGroup && <span className='small mx-2' style={{ fontSize: '0.8rem', color: isOnline ? '#4CAF50' : '#E57373' }}>{isOnline ? 'Online' : 'Offline'}</span>}
+                    {isGroup && (
+                        <span className="small mx-2" style={{ fontSize: '0.8rem', color: '#B2D8CE' }}>
+                            {onlineCount} online
+                        </span>
+                    )}
                 </p>
 
                 <div className="d-flex align-items-center ms-auto gap-5" id="navbarSupportedContent">

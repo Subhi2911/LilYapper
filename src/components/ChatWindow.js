@@ -54,6 +54,7 @@ const ChatWindow = ({
     const [editingMessageId, setEditingMessageId] = useState(null);
     const [editingText, setEditingText] = useState('');
     const wallpaperUrl = selectedChat?.wallpaper?.url;
+    const [onlineUsers, setOnlineUsers] = useState(new Set());
     // eslint-disable-next-line no-unused-vars
     const [showWallpaperModal, setShowWallpaperModal] = useState(false);
     const navigate = useNavigate();
@@ -66,6 +67,19 @@ const ChatWindow = ({
         setReplyTo(null);
     };
 
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleUserOnlineStatus = (onlineUserIds) => {
+            setOnlineUsers(new Set(onlineUserIds));
+        };
+
+        socket.on('user-online-status', handleUserOnlineStatus);
+
+        return () => {
+            socket.off('user-online-status', handleUserOnlineStatus);
+        };
+    }, [socket]);
 
     useEffect(() => {
         console.log('hgdg', selectedChat)
@@ -153,7 +167,7 @@ const ChatWindow = ({
             socket.off('newMessage', handleNewMessage);
         };
     }, [socket, selectedChat, currentUser]);
-    
+
     useEffect(() => {
         if (!socket || !currentUser) return;
         socket.emit('join', currentUser._id);
@@ -363,6 +377,8 @@ const ChatWindow = ({
                             onRemoveFriend={onRemoveFriend}
                             setInspectedUser={setInspectedUser}
                             setShowWallpaperModal={setShowWallpaperModal}
+                            currentUser={currentUser}
+                            onlineUsers={onlineUsers}
                         />
 
                         <div
