@@ -88,8 +88,10 @@ const ChatLayout = ({ chatList }) => {
     };
 
     const updateGroupLatestMessage = (chatId, newMessage) => {
+        const unreadIncrement = chatId === newMessage.chat? 0 : 1;
         setGroups(prevGroups =>
             prevGroups.map(group =>
+                
                 group._id === chatId
                     ? {
                         ...group,
@@ -98,7 +100,7 @@ const ChatLayout = ({ chatList }) => {
                             createdAt: newMessage.createdAt || new Date().toISOString(),
                             sender: newMessage.sender || {},
                         },
-                        unreadCount: 0, // reset or keep as needed
+                        unreadCount: (group.unreadCount || 0) + unreadIncrement, // reset or keep as needed
                     }
                     : group
             )
@@ -355,6 +357,7 @@ const ChatLayout = ({ chatList }) => {
             setPendingRequests(new Set(pendingData.pendingRequests?.map((u) => u._id) || []));
             setSentRequests(new Set(sentData.sentRequests || []));
             setFriends(new Set(userData?.user?.friends?.map((id) => id.toString()) || []));
+            
         } catch (error) {
             console.error('Error fetching request data:', error);
         }
@@ -497,6 +500,8 @@ const ChatLayout = ({ chatList }) => {
                         refreshGroups={fetchGroups}
                         onGroupCreated={handleGroupCreated}
                         setShowChatInfo={setShowChatInfo}
+                        setGroups={setGroups}
+                        setLocalChats={setLocalChatList}
                     />
                     <ChatWindow
                         selectedChat={selectedChat}
@@ -517,6 +522,8 @@ const ChatLayout = ({ chatList }) => {
                         handleAddMembers={handleAddMembers}
                         onAddSystemMessage={onAddSystemMessage}
                         updateGroupLatestMessage={updateGroupLatestMessage}
+                        setGroups={setGroups}
+                        setLocalChatList={setLocalChatList}
                     />
                 </>
             )}

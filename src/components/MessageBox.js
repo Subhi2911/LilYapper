@@ -2,10 +2,12 @@ import React, { useEffect, useRef } from 'react';
 import moment from 'moment';
 import Avatar from './Avatar';
 
-const MessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage, onEditMessage, setEditingMessageId, setEditingText, selectedChat }) => {
+const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, onEditMessage, setEditingMessageId, setEditingText, selectedChat, onlineUsers }) => {
   const containerRef = useRef(null);
   const receiverbubble = selectedChat?.wallpaper?.receiverbubble || 'white';
   const senderbubble = selectedChat?.wallpaper?.senderbubble || '#52357B';
+  let isOnline = false;
+  isOnline = onlineUsers.has(id);
 
   useEffect(() => {
     if (containerRef.current) {
@@ -28,6 +30,7 @@ const MessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage, onEd
         overflowY: 'auto',
       }}
     >
+
       {messages.map((msg, index) => {
         // System message
         if (msg.isSystem || msg.type === 'system') {
@@ -72,6 +75,7 @@ const MessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage, onEd
                 width="2"
                 height="2"
                 hideBorder={isSent}
+                isOnline={isOnline}
               />
 
 
@@ -121,7 +125,7 @@ const MessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage, onEd
                       right: '-30px',
                       fontSize: '14px',
                       userSelect: 'none',
-                      color:receiverbubble
+                      color: receiverbubble
                     }}
                     title="Reply to this message"
                   />
@@ -130,21 +134,21 @@ const MessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage, onEd
               </div>
               {isSent && (
                 <>
-                  <div className='d-flex align-items-center gap-3' style={{ cursor: 'pointer' ,color:receiverbubble,}}>
+                  <div className='d-flex align-items-center gap-3' style={{ cursor: 'pointer', color: receiverbubble, }}>
                     <div onClick={() => {
                       setEditingMessageId(msg._id);
                       setEditingText(msg.text); // Prefill text in Keyboard
                     }} style={{ fontSize: '0.8rem' }}>
                       <i className="fa-solid fa-pen-to-square" ></i>
                     </div>
-                    <div onClick={() => { onDeleteMessage(msg._id) }} style={{ fontSize: '0.8rem', color:receiverbubble, }}>
+                    <div onClick={() => { onDeleteMessage(msg._id) }} style={{ fontSize: '0.8rem', color: receiverbubble, }}>
                       <i className="fa-solid fa-trash" ></i>
                     </div>
 
                   </div>
                 </>
               )}
-              
+
             </div>
 
             <div

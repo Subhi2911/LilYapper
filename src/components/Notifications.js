@@ -13,6 +13,7 @@ const Notifications = () => {
     const fetchNotifications = async () => {
       try {
         const res = await fetch(`${host}/api/notifications/notifications`, {
+          method: "GET",
           headers: {
             'auth-token': token
           }
@@ -21,9 +22,11 @@ const Notifications = () => {
         if (data.success) {
           setNotifications(data.notifications.map(note => ({
             ...note,
-            _tempId: Date.now() + Math.random()
+            _tempId: Date.now() + Math.random(),
+            fromSocket: false, // ✅ this is a fetched (old) notification
           })));
-        } else {
+        }
+        else {
           console.error("Failed to fetch notifications");
         }
       } catch (err) {
@@ -41,12 +44,13 @@ const Notifications = () => {
     const handleNotification = (data) => {
       const notification = {
         ...data,
-        _tempId: Date.now() + Math.random()
+        _tempId: Date.now() + Math.random(),
+        fromSocket: true, // real-time notification
       };
 
       setNotifications(prev => [notification, ...prev]);
 
-      // ⏳ Auto-remove after 5 seconds
+      // Auto-remove only if real-time
       setTimeout(() => {
         setNotifications(prev =>
           prev.filter(n => n._tempId !== notification._tempId)
@@ -72,9 +76,9 @@ const Notifications = () => {
       top: 10,
       right: 10,
       maxWidth: 300,
-      zIndex: 1000,
+      zIndex: 1023,
     }}>
-      {notifications.map((note) => (
+      {notifications.filter(n => n.fromSocket).map((note) => (
         <div key={note._tempId} style={{
           position: 'relative',
           background: 'darkblue',
@@ -82,7 +86,7 @@ const Notifications = () => {
           padding: '10px 30px 10px 10px',
           marginBottom: '5px',
           borderRadius: '5px',
-          zIndex:'1021'
+          zIndex: '1021'
         }}>
           {/* ❌ Close button */}
           <span
@@ -99,7 +103,7 @@ const Notifications = () => {
           >
             X
           </span>
-
+            {console.log(note)}
           {note.type === 'friend_request' && (
             <>👤 Friend request from <b>{note.senderUsername}</b></>
           )}
@@ -107,7 +111,10 @@ const Notifications = () => {
             <>✅ <b>{note.senderUsername}</b> accepted your friend request</>
           )}
           {note.type === 'message' && (
-            <>💬 New message from <b>{note.senderUsername}</b>: {note.message}</>
+            <>💬 New message from <b>{note.senderUsername}</b>: <i>{note.message}</i></>
+          )}
+          {note.type === 'group_added' && (
+            <>{note.message}<b></b> by <b>{note.senderUsername}</b></>
           )}
         </div>
       ))}

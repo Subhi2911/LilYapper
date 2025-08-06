@@ -10,6 +10,7 @@ const NotificationProvider = ({ children }) => {
     const fetchNotifications = async () => {
         try {
             const res = await fetch(`${host}/api/notifications/notifications`, {
+                method:'GET',
                 headers: { 'auth-token': localStorage.getItem('token') }
             });
             const data = await res.json();

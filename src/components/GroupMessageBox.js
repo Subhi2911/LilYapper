@@ -55,10 +55,10 @@ const GroupMessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage,
                     setEditingMessageId(msg._id);
                     setEditingText(msg.text); // Prefill text in Keyboard
                   }} style={{ fontSize: '0.8rem' }}>
-                    <i class="fa-solid fa-pen-to-square"></i>
+                    <i className="fa-solid fa-pen-to-square"></i>
                   </div>
                   <div onClick={() => { onDeleteMessage(msg._id) }} style={{ fontSize: '0.8rem' }}>
-                    <i class="fa-solid fa-trash"></i>
+                    <i className="fa-solid fa-trash"></i>
                   </div>
 
                 </div>

@@ -25,7 +25,7 @@ function App() {
         <>
             <ChatState>
                 <Router>
-                    
+                    <Notifications/>
                     <Routes>
                         <Route path='/' element={<Home/>}/>
                         <Route path='/groups' element={<Home/>}/>
@@ -42,7 +42,7 @@ function App() {
                         <Route path='/profile' element={<Profile/>}/> 
                         
                     </Routes>
-                    <Notifications/>
+                    
                 </Router>
             </ChatState>
         </>

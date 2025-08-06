@@ -15,9 +15,9 @@ const ChatReceiver = ({
 }) => {
   let isOnline = false;
 
-    if (!isGroup && id) {
-        isOnline = onlineUsers.has(id);
-    }
+  if (!isGroup && id) {
+    isOnline = onlineUsers.has(id);
+  }
   return (
     <div className="p-2 border-bottom" >
       <div className="d-flex justify-content-between align-items-center mb-1" >

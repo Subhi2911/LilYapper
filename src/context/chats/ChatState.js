@@ -42,20 +42,30 @@ const ChatState = (props) => {
             const token = localStorage.getItem('token');
             if (token) {
                 try {
-                    const res = await fetch('/api/auth/getuser', {
-                        headers: { 'auth-token': token }
+                    const res = await fetch(`${host}/api/auth/getuser`, {
+                        method: 'POST', 
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'auth-token': token,
+                        },
                     });
                     const data = await res.json();
-                    setCurrentUser(data);
+                    if (data.success) {
+                        setCurrentUser(data.user);
+                    } else {
+                        console.error('Fetch user failed', data.error);
+                    }
                 } catch (err) {
                     console.error('Failed to fetch user', err);
                 }
             }
-            setLoadingUser(false); // ✅ After fetch completes
+            setLoadingUser(false);
         };
 
         fetchCurrentUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
 
 
     // Create new chat

@@ -43,43 +43,71 @@ const BellIcon = () => {
                     <span className="visually-hidden">unread messages</span>
                 </span>
             )}
-
+            
             {open && (
                 <div
-                    className="dropdown-menu show mt-2 p-2"
+                    className="dropdown-menu show mt-2 p-3"
                     style={{
-                        minWidth: '300px',
+                        minWidth: '320px',
+                        maxWidth: '90vw',
                         position: 'absolute',
                         top: '100%',
                         right: 0,
                         zIndex: 1050,
                         maxHeight: '400px',
                         overflowY: 'auto',
-                        boxShadow: '0 0.5rem 1rem rgb(0 0 0 / 0.15)',
                         backgroundImage: `url(${LoginBg})`,
                         backgroundSize: 'cover',
-                        backgroundPosition: 'center'
+                        backgroundPosition: 'center',
+                        backdropFilter: 'blur(6px)',
+                        borderRadius: '10px',
+                        color: 'white',
                     }}
                 >
-                    <h6 className="dropdown-header" style={{ color: 'white' }}>Notifications</h6>
+                    <h6 className="dropdown-header text-white">Notifications</h6>
                     {notifications.length === 0 ? (
-                        <span className="dropdown-item " style={{ color: 'white' }}>No notifications</span>
+                        <div className="dropdown-item text-info">No notifications</div>
                     ) : (
+
                         notifications.map(n => (
-                            <div key={n._id} className="dropdown-item d-flex align-items-center" style={{ backgroundColor: 'white', borderRadius: 'inherit' }}>
+                            <div
+                                key={n._id || n._tempId}
+                                className="dropdown-item d-flex align-items-start"
+                                style={{
+                                    backgroundColor: n.isRead ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
+                                    borderRadius: '10px',
+                                    padding: '12px',
+                                    marginBottom: '8px',
+                                    fontSize: '1rem',
+                                    fontWeight: '500',
+                                    lineHeight: '1.4',
+                                    whiteSpace: 'normal',
+                                    wordWrap: 'break-word',
+                                    color: '#090040',
+                                    display: 'flex',
+                                    gap: '10px',
+                                    
+                                }}
+                            >
                                 {!n.isRead && (
                                     <span
-                                        className="badge bg-danger rounded-circle me-2"
-                                        style={{ width: '10px', height: '10px' }}
+                                        className="badge bg-danger rounded-circle"
+                                        style={{ width: '10px', height: '10px', flexShrink: 0 }}
                                     ></span>
                                 )}
-
-                                <span>{n.message}</span>
+                                <span>{n.type === 'friend_request' && (
+                                    <>👤 Friend request from <b>{n.senderUsername}</b></>
+                                )}
+                                    {n.type === 'request_accepted' && (
+                                        <>✅ <b>{n.senderUsername}</b> accepted your friend request</>
+                                    )}</span>
                             </div>
+
                         ))
                     )}
                 </div>
             )}
+
         </div>
     );
 };

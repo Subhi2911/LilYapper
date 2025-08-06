@@ -28,14 +28,92 @@ const ChatSidebar = ({
     handleReject,
     user,
     setShowChatInfo,
+
+    setGroups,
 }) => {
+    const [localGroups, setLocalGroups] = useState(groups);
+    const [localChats, setLocalChats] = useState(chatList);
+
     const location = useLocation();
     const [onlineUsers, setOnlineUsers] = useState(new Set());
-    const safeChatList = Array.isArray(chatList) ? chatList : [];
-    const safeGroups = Array.isArray(groups) ? groups : [];
-    const socket = useSocket(); 
+    console.log(chatList, groups)
+    const safeChatList = Array.isArray(localChats) ? localChats : [];
+    const safeGroups = Array.isArray(localGroups) ? localGroups : [];
+    const socket = useSocket();
 
     let displayChats = [];
+    useEffect(() => {
+        if (selectedChat) {
+            // Clear unread count for the selected chat
+            setLocalChats(prev =>
+                prev.map(chat =>
+                    chat._id === selectedChat._id
+                        ? { ...chat, unreadCount: 0 }
+                        : chat
+                )
+            );
+            setLocalGroups(prev =>
+                prev.map(chat =>
+                    chat._id === selectedChat._id
+                        ? { ...chat, unreadCount: 0 }
+                        : chat
+                )
+            );
+        }
+    }, [selectedChat]);
+
+
+    useEffect(() => {
+        setLocalGroups(groups);
+    }, [groups]);
+
+    useEffect(() => {
+        setLocalChats(chatList);
+    }, [chatList]);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewMessage = (newMsg) => {
+            console.log(newMsg)
+            const updateLatest = (setList) => {
+                setList(prevList => {
+                    const found = prevList.some(chat => chat._id === newMsg.chat._id);
+                    if (!found) {
+                        return [newMsg.chat, ...prevList];
+                    }
+
+                    return prevList.map(chat => {
+                        console.log('kkkk', newMsg, chat)
+                        if (String(chat._id) === String(newMsg.chat._id)) {
+                            const unreadIncrement = selectedChat?._id === newMsg.chat? 0 : 1;
+
+                            return {
+                                ...chat,
+                                latestMessage: newMsg,
+                                unreadCount: (chat.unreadCount || 0) + unreadIncrement
+                            };
+                        }
+                        return chat;
+                    });
+                });
+            };
+
+
+            if (newMsg.chat.isGroupChat) {
+                updateLatest(setLocalGroups);
+            } else {
+                updateLatest(setLocalChats);
+            }
+
+        };
+
+        socket.on('newMessage', handleNewMessage);
+
+        return () => {
+            socket.off('newMessage', handleNewMessage);
+        };
+    }, [socket, selectedChat, localGroups, localChats]);
 
     useEffect(() => {
         if (!socket) return;
@@ -56,8 +134,8 @@ const ChatSidebar = ({
         displayChats = safeGroups;
     }
 
-    if (selectedChat?.deletedFor?.includes?.(user._id)) {
-        displayChats = displayChats.filter(chat => chat._id !== selectedChat?._id);
+    if (selectedChat?.deletedFor?.includes?.(user?._id)) {
+        displayChats = displayChats.filter(chat => chat?._id !== selectedChat?._id);
     }
 
     // Sort chats by latestMessage timestamp (descending)
@@ -70,6 +148,52 @@ const ChatSidebar = ({
     const pendingRequestsArray = Array.isArray(pendingRequests)
         ? pendingRequests
         : Array.from(pendingRequests);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleChatRead = ({ chatId }) => {
+            setLocalGroups(prevGroups =>
+                prevGroups.map(chat =>
+                    chat._id === chatId ? { ...chat, unreadCount: 0 } : chat
+                )
+            );
+            setLocalChats(prevChats =>
+                prevChats.map(chat =>
+                    chat._id === chatId ? { ...chat, unreadCount: 0 } : chat
+                )
+            );
+        };
+
+        socket.on('chat-read', handleChatRead);
+
+        return () => {
+            socket.off('chat-read', handleChatRead);
+        };
+    }, [socket]);
+
+
+
+    const handleChatSelect = (chat) => {
+        setSelectedChat(chat);
+        socket.emit('mark-read', { chatId: chat._id });
+
+        // Reset unread count locally immediately
+        if (chat.isGroupChat) {
+            setLocalGroups(prevGroups =>
+                prevGroups.map(g =>
+                    g._id === chat._id ? { ...g, unreadCount: 0 } : g
+                )
+            );
+        } else {
+            setLocalChats(prevChats =>
+                prevChats.map(c =>
+                    c._id === chat._id ? { ...c, unreadCount: 0 } : c
+                )
+            );
+        }
+    };
+
 
     return (
         (!isMobile || !selectedChat) && (
@@ -115,12 +239,11 @@ const ChatSidebar = ({
                                     key={item._id}
                                     className="list-group-item my-2"
                                     onClick={() => {
-                                        setSelectedChat(item);
+                                        handleChatSelect(item);
                                         if (isMobile) setShowChatInfo(false); // <- close modal when clicking a chat
                                     }}
                                     style={{ cursor: 'pointer', borderRadius: 'inherit' }}
                                 >
-                                    
                                     <ChatReceiver
                                         isGroup={item.isGroupChat}
                                         lastMessageTime={item.latestMessage?.createdAt || ''}
