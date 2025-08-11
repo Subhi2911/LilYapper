@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Navbar from './Navbar';
 import ChatReceiver from './ChatReceiver';
 import { useLocation } from 'react-router-dom';
@@ -28,7 +28,7 @@ const ChatSidebar = ({
     handleReject,
     user,
     setShowChatInfo,
-
+    updateGroupLatestMessage,
     setGroups,
 }) => {
     const [localGroups, setLocalGroups] = useState(groups);
@@ -36,10 +36,12 @@ const ChatSidebar = ({
 
     const location = useLocation();
     const [onlineUsers, setOnlineUsers] = useState(new Set());
-    console.log(chatList, groups)
+    //console.log(chatList, groups)
     const safeChatList = Array.isArray(localChats) ? localChats : [];
     const safeGroups = Array.isArray(localGroups) ? localGroups : [];
     const socket = useSocket();
+
+    //const currentUser=localStorage.getItem('userId');
 
     let displayChats = [];
     useEffect(() => {
@@ -64,30 +66,99 @@ const ChatSidebar = ({
 
 
     useEffect(() => {
-        setLocalGroups(groups);
+        if (!groups || groups.length === 0) return;
+
+        setLocalGroups(prev => {
+            // Prevent updates if groups are exactly the same (by ID)
+            const sameLength = prev.length === groups.length;
+            const sameIds = sameLength && prev.every((p, i) => p._id === groups[i]._id);
+
+            if (sameIds) {
+                // Also check if latest messages are identical
+                const sameLatest = prev.every((p, i) =>
+                    p.latestMessage?.content === groups[i].latestMessage?.content &&
+                    p.latestMessage?.createdAt === groups[i].latestMessage?.createdAt
+                );
+                if (sameLatest) return prev;
+            }
+
+            const prevMap = new Map(prev.map(g => [g._id, g]));
+            const merged = groups.map(g => {
+                const oldGroup = prevMap.get(g._id);
+                if (!oldGroup) return g;
+
+                const newerLatest =
+                    oldGroup.latestMessage && g.latestMessage
+                        ? (new Date(oldGroup.latestMessage.createdAt) > new Date(g.latestMessage.createdAt)
+                            ? oldGroup.latestMessage
+                            : g.latestMessage)
+                        : (oldGroup.latestMessage || g.latestMessage);
+
+                return {
+                    ...g,
+                    latestMessage: newerLatest,
+                    unreadCount: oldGroup.unreadCount || g.unreadCount
+                };
+            });
+
+            const prevIds = new Set(groups.map(g => g._id));
+            const extras = prev.filter(g => !prevIds.has(g._id));
+
+            return [...merged, ...extras];
+        });
     }, [groups]);
 
+
+
     useEffect(() => {
-        setLocalChats(chatList);
+        setLocalChats((prev) => {
+            if (JSON.stringify(prev) !== JSON.stringify(chatList)) {
+                return chatList;
+            }
+            return prev;
+        });
     }, [chatList]);
 
+
+    const selectedChatRef = useRef(selectedChat);
+
+    useEffect(() => {
+        selectedChatRef.current = selectedChat;
+    }, [selectedChat]);
+
+    let times = 1;
+    //useEffect(()=>{},[])
     useEffect(() => {
         if (!socket) return;
 
+        const seenMessages = new Set();
         const handleNewMessage = (newMsg) => {
-            console.log(newMsg)
+            console.log('kfkfkfkfk', newMsg)
+            if (!newMsg?._id || newMsg.isSystem) return; // must have an ID to track
+
+            // Skip if we've already processed this message
+            if (seenMessages.has(newMsg._id)) {
+                return;
+            }
+            seenMessages.add(newMsg._id);
+            console.log('times: ', times)
+            times++
+            console.log(localGroups)
             const updateLatest = (setList) => {
                 setList(prevList => {
-                    const found = prevList.some(chat => chat._id === newMsg.chat._id);
+                    const found = prevList.some(chat => chat._id === newMsg?.chat._id);
+
                     if (!found) {
                         return [newMsg.chat, ...prevList];
                     }
 
-                    return prevList.map(chat => {
-                        console.log('kkkk', newMsg, chat)
-                        if (String(chat._id) === String(newMsg.chat._id)) {
-                            const unreadIncrement = selectedChat?._id === newMsg.chat? 0 : 1;
 
+                    return prevList.map(chat => {
+                        console.log(chat)
+                        if (chat._id === newMsg.chat._id) {
+                            console.log(newMsg)
+
+                            const unreadIncrement = selectedChatRef.current?._id === newMsg.chat?._id ? 0 : 1;
                             return {
                                 ...chat,
                                 latestMessage: newMsg,
@@ -98,14 +169,12 @@ const ChatSidebar = ({
                     });
                 });
             };
-
-
+            console.log(newMsg)
             if (newMsg.chat.isGroupChat) {
                 updateLatest(setLocalGroups);
             } else {
                 updateLatest(setLocalChats);
             }
-
         };
 
         socket.on('newMessage', handleNewMessage);
@@ -113,7 +182,9 @@ const ChatSidebar = ({
         return () => {
             socket.off('newMessage', handleNewMessage);
         };
-    }, [socket, selectedChat, localGroups, localChats]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket]);
+
 
     useEffect(() => {
         if (!socket) return;
@@ -175,6 +246,7 @@ const ChatSidebar = ({
 
 
     const handleChatSelect = (chat) => {
+        console.log(groups)
         setSelectedChat(chat);
         socket.emit('mark-read', { chatId: chat._id });
 
@@ -267,6 +339,7 @@ const ChatSidebar = ({
                                         unreadCount={item.unreadCount || 0}
                                         onlineUsers={onlineUsers}
                                         id={item.otherUserId}
+
                                     />
 
                                 </li>

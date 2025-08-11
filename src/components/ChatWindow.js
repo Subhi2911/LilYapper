@@ -42,7 +42,9 @@ const ChatWindow = ({
     onAddSystemMessage,
     updateGroupLatestMessage,
     setGroups,
-    setLocalChatList
+    setLocalChatList,
+    markMessagesAsRead,
+    handlePermissionChange
 }) => {
     const location = useLocation();
     const host = process.env.REACT_APP_BACKEND_URL;
@@ -72,18 +74,18 @@ const ChatWindow = ({
     useEffect(() => {
         if (!socket || !currentUser) return;
 
-        socket.emit('join', currentUser._id);
+        socket.emit('join', currentUser?._id);
     }, [socket, currentUser]);
 
     useEffect(() => {
         if (socket && selectedChat?._id) {
-            socket.emit("join chat", selectedChat._id);
+            socket.emit("join chat", selectedChat?._id);
         }
     }, [socket, selectedChat?._id]);
 
     useEffect(() => {
         if (selectedChat && socket) {
-            socket.emit('join chat', selectedChat._id);
+            socket.emit('join chat', selectedChat?._id);
         }
     }, [selectedChat, socket]);
 
@@ -118,7 +120,7 @@ const ChatWindow = ({
                     });
 
                     const data = await response.json();
-                    const friendIds = data.map(friend => friend._id);
+                    const friendIds = data.map(friend => friend?._id);
                     setIsFriend(friendIds.includes(selectedChat.otherUserId));
                 } catch (error) {
                     console.error('Error checking friendship:', error);
@@ -143,7 +145,7 @@ const ChatWindow = ({
 
                 const typedMessages = (fetchedMessages || []).map((msg) => ({
                     ...msg,
-                    type: msg.sender?._id === currentUser._id ? 'sent' : 'received',
+                    type: msg.sender?._id === currentUser?._id ? 'sent' : 'received',
                     text: msg?.content,
                     replyTo: msg.replyTo,
                 }));
@@ -166,159 +168,70 @@ const ChatWindow = ({
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
     }, [messages]);
 
-    // useEffect(() => {
-    //     if (!socket) return;
-
-    //     socket.on('newMessage', (newMsg) => {
-
-    //         
-    //         if (
-    //             selectedChat &&
-    //             String(selectedChat._id) === String(newMsg.chat)
-    //         ) {
-    //             setMessages(prev => [...prev, {
-    //                 ...newMsg,
-    //                 type: newMsg.sender._id === currentUser._id ? 'sent' : 'received',
-    //                 text: newMsg.content,
-    //                 replyTo: newMsg.replyTo,
-    //             }]);
-    //         } else {
-    //             // Optionally add to notification list
-    //         }
-    //     });
-
-    //     return () => {
-    //         socket.off('newMessage');
-    //     };
-    //     // eslint-disable-next-line react-hooks/exhaustive-deps
-    // }, [socket, selectedChat]);
-
+    const selectedChatRef = useRef(selectedChat);
     useEffect(() => {
-        if (!socket) return;
-
-        const handleNewMessage = (msg) => {
-            console.log(msg)
-            updateGroupLatestMessage(msg.chat._id, msg);
-            if (selectedChat && msg.chat._id === selectedChat._id) {
-                setMessages((prev) => [...prev, {
-                    ...msg,
-                    type: msg.sender._id === currentUser._id ? 'sent' : 'received',
-                    text: msg.text || msg.content,
-                    replyTo: msg.replyTo,
-                }]);
-                if (selectedChat.isGroupChat && typeof updateGroupLatestMessage === 'function') {
-                    updateGroupLatestMessage(selectedChat._id, msg);
-                }
-                setGroups(prevGroups => {
-                    return prevGroups.map(group =>
-                        group._id === msg.chat._id
-                            ? { ...group, latestMessage: msg }
-                            : group
-                    );
-                });
-
-                //Optionally, if using chatList for private chats:
-                if (!selectedChat || selectedChat._id !== msg.chat._id) {
-                    setLocalChatList(prevChats =>
-                        prevChats.map(chat =>
-                            chat._id === msg.chat._id
-                                ? {
-                                    ...chat,
-                                    unreadCount: (chat.unreadCount || 0) + 1,
-                                    latestMessage: {
-                                        ...msg,
-                                        text: msg.content,
-                                        type: msg.sender._id === currentUser._id ? 'sent' : 'received',
-                                        sender: msg.sender // optional if needed
-                                    }
-                                }
-                                : chat
-                        )
-                    );
-                }
-
-
-
-            } else {
-                // If message is from a chat NOT currently selected, update latestMessage and increment unread count
-                if (msg.chat._id !== selectedChat?._id) {
-                    setGroups(prevGroups => {
-                        const groupExists = prevGroups.some(group => group._id === msg.chat._id);
-
-                        if (!groupExists) {
-                            // Don't add new group here, just return prevGroups
-                            return prevGroups;
-                        }
-
-                        return prevGroups.map(group =>
-                            group._id === msg.chat._id
-                                ? {
-                                    ...group,
-                                    latestMessage: msg,
-                                    unreadCount: (group.unreadCount || 0) + 1,
-                                }
-                                : group
-                        );
-                    });
-
-
-                    setLocalChatList(prevChats => {
-                        const chatExists = prevChats.some(chat => chat._id === msg.chat._id);
-
-                        if (!chatExists) {
-                            return prevChats;
-                        }
-
-                        return prevChats.map(chat =>
-                            chat._id === msg.chat._id
-                                ? {
-                                    ...chat,
-                                    latestMessage: msg,
-                                    unreadCount: (chat.unreadCount || 0) + 1,
-                                }
-                                : chat
-                        );
-                    });
-
-                }
-            }
-        };
-
-        socket.on('newMessage', handleNewMessage);
-
-        return () => {
-            socket.off('newMessage', handleNewMessage);
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [socket, selectedChat, currentUser]);
-
-    useEffect(() => {
-        if (!selectedChat) return;
-
-        setGroups(prevGroups =>
-            prevGroups.map(group =>
-                group._id === selectedChat._id
-                    ? { ...group, unreadCount: 0 }
-                    : group
-            )
-        );
-
-        setLocalChatList(prevChats =>
-            prevChats.map(chat =>
-                chat._id === selectedChat._id
-                    ? { ...chat, unreadCount: 0 }
-                    : chat
-            )
-        );
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        selectedChatRef.current = selectedChat;
     }, [selectedChat]);
 
 
     useEffect(() => {
         if (!socket) return;
 
+        const handleNewMessage = (msg) => {
+            const currentSelectedChat = selectedChatRef.current;
+            if (msg.chat?._id === currentSelectedChat?._id) {
+                setMessages(prev => {
+                    if (prev.some(m => m?._id === msg?._id)) return prev;
+                    markMessagesAsRead(currentSelectedChat?._id)
+                    return [...prev, {
+                        ...msg,
+                        type: msg.sender?._id === currentUser?._id ? 'sent' : 'received',
+                        text: msg.text || msg.content,
+                        replyTo: msg.replyTo,
+                    }];
+                });
+                
+
+            }
+        };
+
+        socket.on('newMessage', handleNewMessage);
+        return () => {
+            socket.off('newMessage', handleNewMessage);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket]);
+
+
+    // useEffect(() => {
+    //     if (!selectedChat) return;
+
+    //     setGroups(prevGroups =>
+    //         prevGroups.map(chat =>
+    //             chat?._id === selectedChat?._id
+    //                 ? { ...chat, unreadCount: 0 }
+    //                 : chat)
+            
+    //     );
+        
+
+    //     setLocalChatList(prevChats =>
+    //         prevChats.map(chat =>
+    //             chat?._id === selectedChat?._id
+    //                 ? { ...chat, unreadCount: 0 }
+    //                 : chat
+    //         )
+    //     );
+    //     markMessagesAsRead(selectedChat?._id)
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, [selectedChat]);
+
+
+    useEffect(() => {
+        if (!socket) return;
+
         const handleTyping = ({ chatId, user }) => {
-            if (user === currentUser._id) return; // ignore own typing events
+            if (user === currentUser?._id) return; // ignore own typing events
             if (chatId !== selectedChat?._id) return;
 
             setTypingUsers(prev => {
@@ -358,7 +271,7 @@ const ChatWindow = ({
             typingStartedRef.current = true;
 
             socket.emit('typing', {
-                chatId: selectedChat._id,
+                chatId: selectedChat?._id,
                 // userId not sent here — server knows from socket auth
             });
 
@@ -366,14 +279,14 @@ const ChatWindow = ({
             if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
             typingTimeoutRef.current = setTimeout(() => {
                 typingStartedRef.current = false;
-                socket.emit('stop typing', { chatId: selectedChat._id });
+                socket.emit('stop typing', { chatId: selectedChat?._id });
             }, 3000);  // e.g. 3 seconds of no typing stops typing
         } else {
             // reset the timeout while user keeps typing
             if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
             typingTimeoutRef.current = setTimeout(() => {
                 typingStartedRef.current = false;
-                socket.emit('stop typing', { chatId: selectedChat._id });
+                socket.emit('stop typing', { chatId: selectedChat?._id });
             }, 3000);
         }
     };
@@ -382,21 +295,22 @@ const ChatWindow = ({
         if (!newText.trim() || !selectedChat?._id) return;
 
         try {
-            const newMessage = await sendmessage(newText, selectedChat._id, replyTo?._id || null);
+            const newMessage = await sendmessage(newText, selectedChat?._id, replyTo?._id || null);
 
             if (newMessage && newMessage.sender && newMessage.content) {
                 const typedMessage = {
                     ...newMessage,
-                    type: newMessage.sender._id === currentUser._id ? 'sent' : 'received',
+                    type: newMessage.sender?._id === currentUser?._id ? 'sent' : 'received',
                     text: newMessage.content,
                     replyTo: newMessage.replyTo ? {
-                        _id: newMessage.replyTo._id,
+                        _id: newMessage.replyTo?._id,
                         text: newMessage.replyTo.content || '[deleted]',
                         sender: newMessage.replyTo.sender || { _id: '', username: 'Unknown' }
                     } : null,
                 };
 
-                setMessages((prev) => [...prev, typedMessage]);
+                //setMessages((prev) => [...prev, typedMessage]);
+                console.log(messages)
                 setReplyTo(null);
 
                 if (selectedChat?.isGroupChat && typeof updateGroupLatestMessage === 'function') {
@@ -415,8 +329,8 @@ const ChatWindow = ({
             if (socket) {
                 typingStartedRef.current = false;
                 socket.emit('stop typing', {
-                    chatId: selectedChat._id,
-                    user: currentUser._id,
+                    chatId: selectedChat?._id,
+                    user: currentUser?._id,
                 });
                 if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
             }
@@ -445,7 +359,7 @@ const ChatWindow = ({
             // eslint-disable-next-line no-unused-vars
             const data = await res.json();
             setMessages(prev =>
-                prev.map(msg => (msg._id === id ? { ...msg, text: newText } : msg))
+                prev.map(msg => (msg?._id === id ? { ...msg, text: newText } : msg))
             );
         } catch (err) {
             console.error('Edit message error:', err.message);
@@ -465,11 +379,11 @@ const ChatWindow = ({
             const data = await response.json();
 
             if (data.success) {
-                setMessages((prevMessages) => prevMessages.filter(msg => msg._id !== messageId));
+                setMessages((prevMessages) => prevMessages.filter(msg => msg?._id !== messageId));
 
                 if (selectedChat.latestMessage?._id === messageId) {
                     const newLatestMessage = messages
-                        .filter(msg => msg._id !== messageId)
+                        .filter(msg => msg?._id !== messageId)
                         .slice(-1)[0] || null;
 
                     setSelectedChat(prevChat => ({
@@ -478,7 +392,7 @@ const ChatWindow = ({
                     }));
 
                     if (typeof updateGroupLatestMessage === 'function') {
-                        updateGroupLatestMessage(selectedChat._id, newLatestMessage);
+                        updateGroupLatestMessage(selectedChat?._id, newLatestMessage);
                     }
                 }
             } else {
@@ -490,10 +404,10 @@ const ChatWindow = ({
     };
 
     const typingUsernames = Array.from(typingUsers)
-        .filter(id => id !== currentUser._id)
+        .filter(id => id !== currentUser?._id)
         .map(id => {
             if (selectedChat?.isGroupChat) {
-                const user = selectedChat.users.find(u => u._id === id);
+                const user = selectedChat.users.find(u => u?._id === id);
                 return user?.username || 'Someone';
             } else {
                 if (id === selectedChat?.otherUserId) {
@@ -542,12 +456,14 @@ const ChatWindow = ({
                             setShowWallpaperModal={setShowWallpaperModal}
                             currentUser={currentUser}
                             onlineUsers={onlineUsers}
+                            handlePermissionChange={handlePermissionChange}
                         />
 
                         <div
                             className="flex-grow-1 overflow-auto hide-scrollbar w-100"
                             style={{ padding: '1rem', height: 'calc(100vh - 180px)' }}
                         >
+
                             <div style={{ padding: '1rem', borderRadius: '8px' }}>
                                 {selectedChat?.isGroupChat ? (
                                     <GroupMessageBox messages={messages} currentUser={currentUser} onReply={handleReply} onDeleteMessage={handleDeleteMessage} onEditMessage={handleEditMessage} setEditingMessageId={setEditingMessageId} setEditingText={setEditingText} />
@@ -674,17 +590,18 @@ const ChatWindow = ({
                                                         setInspectedUser={setInspectedUser}
                                                         removeFromGroup={removeFromGroup}
                                                         onAddMembers={() => setShowAddMembersModal(true)}
-                                                        currentUserId={currentUser._id}
+                                                        currentUserId={currentUser?._id}
                                                         addToGroup={addToGroup}
                                                         onlineUsers={onlineUsers}
+                                                        handlePermissionChange={handlePermissionChange}
                                                     />
                                                     {showAddMembersModal && (
                                                         <AddMembersModal
                                                             show={showAddMembersModal}
                                                             onClose={() => setShowAddMembersModal(false)}
                                                             friendsList={[...friends]}
-                                                            existingUserIds={selectedChat?.users?.map(u => u._id) || []}
-                                                            chatId={selectedChat._id}
+                                                            existingUserIds={selectedChat?.users?.map(u => u?._id) || []}
+                                                            chatId={selectedChat?._id}
                                                             friends={friends}
                                                             onSubmit={addToGroup}
                                                             onAddSystemMessage={onAddSystemMessage}
@@ -704,7 +621,7 @@ const ChatWindow = ({
                         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
                             <div className="bg-white p-4 rounded shadow-lg max-w-md w-full">
                                 <WallpaperSelectorModal
-                                    chatId={selectedChat._id}
+                                    chatId={selectedChat?._id}
                                     onClose={() => setShowWallpaperModal(false)}
                                     selectedChat={selectedChat}
                                     setSelectedChat={setSelectedChat}

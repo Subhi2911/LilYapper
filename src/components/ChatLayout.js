@@ -3,8 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import ChatSidebar from './ChatSidebar';
 import ChatWindow from './ChatWindow';
 import ChatContext from '../context/chats/ChatContext';
+import { useSocket } from '../context/chats/socket/SocketContext';
 
-const ChatLayout = ({ chatList }) => {
+const ChatLayout = ({ chatList, selectedChat, setSelectedChat }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { fetchGroups } = useContext(ChatContext);
@@ -12,6 +13,8 @@ const ChatLayout = ({ chatList }) => {
     const token = localStorage.getItem('token');
     const host = process.env.REACT_APP_BACKEND_URL;
     const [inspectedUser, setInspectedUser] = useState(null);
+    const currentUser = localStorage.getItem('userId');
+    const socket = useSocket();
     // eslint-disable-next-line no-unused-vars
     const [showAddMembersModal, setShowAddMembersModal] = useState(false);
 
@@ -33,7 +36,7 @@ const ChatLayout = ({ chatList }) => {
 
     // Other states
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-    const [selectedChat, setSelectedChat] = useState(null);
+
     const [selectedUser, setSelectedUser] = useState(null);
     // eslint-disable-next-line no-unused-vars
     const [localChatList, setLocalChatList] = useState(chatList || []);
@@ -68,6 +71,35 @@ const ChatLayout = ({ chatList }) => {
         setMessages((prev) => [...prev, systemMessage]);
     };
 
+    // Mark messages as read after viewed by the user & update badge immediately
+    const markMessagesAsRead = async (chatId) => {
+        if (!chatId) return;
+        try {
+            await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/message/markRead/${chatId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'auth-token': localStorage.getItem('token'),
+                },
+            });
+
+            // Immediately update unreadCount for the group/chat to 0 to hide badge
+            setGroups((prevGroups) =>
+                prevGroups.map((group) =>
+                    group._id === chatId
+                        ? { ...group, unreadCount: 0 }
+                        : group
+                )
+            );
+
+            // If you want to update chatList (non-groups), do it here similarly (not shown)
+
+        } catch (error) {
+            console.error('Failed to mark messages as read:', error);
+        }
+    };
+
+
     //update localchatlist what chat is selected
     const handleSelectChat = (chat) => {
         setSelectedChat(chat);
@@ -88,10 +120,12 @@ const ChatLayout = ({ chatList }) => {
     };
 
     const updateGroupLatestMessage = (chatId, newMessage) => {
-        const unreadIncrement = chatId === newMessage.chat? 0 : 1;
+        console.log('d', newMessage)
+        console.log('ddweded', newMessage.sender._id === currentUser)
+        const unreadIncrement = (chatId === newMessage.chat._id && newMessage.sender._id === currentUser) ? 0 : 1;
         setGroups(prevGroups =>
             prevGroups.map(group =>
-                
+
                 group._id === chatId
                     ? {
                         ...group,
@@ -107,6 +141,38 @@ const ChatLayout = ({ chatList }) => {
         );
     };
 
+    //permission to change group settings
+    const handlePermissionChange = async (permKey, newValue) => {
+        try {
+            const res = await fetch(`${host}/api/chat/group-permissions/${selectedChat._id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
+                },
+                body: JSON.stringify({
+                    permissions: { [permKey]: newValue }
+                })
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || "Failed to update");
+            }
+
+            const data = await res.json();
+
+            // Update local chat object so UI reflects change instantly
+            setSelectedChat((prev) => ({
+                ...prev,
+                permissions: data.permissions
+            }));
+
+        } catch (err) {
+            console.error("Permission update error:", err);
+            alert(err.message);
+        }
+    };
 
     // eslint-disable-next-line no-unused-vars
     const [chats, setChats] = useState([]); // your chats state
@@ -135,10 +201,39 @@ const ChatLayout = ({ chatList }) => {
         }
     }
 
+    useEffect(() => {
+        if (!socket || !selectedChat) return;
+
+        const handleNewSystemMessage = (msg) => {
+            console.log(msg)
+            if (msg?.chat?._id === selectedChat?._id) {
+                setMessages(prev => {
+                    if (prev.some(m => m._id === msg._id)) return prev;
+
+                    return [...prev, {
+                        ...msg,
+                        type:'system',
+                        text:msg.content,
+                        isSystem:true
+                    }];
+                });
+
+                // Call this outside setMessages to avoid side effects in render
+                markMessagesAsRead(selectedChat._id);
+            }
+        };
+
+        socket.on('newMessage', handleNewSystemMessage);
+        return () => {
+            socket.off('newMessage', handleNewSystemMessage);
+        };
+    }, [socket, selectedChat]);
+
+
     //remove from group
     const removeFromGroup = async (chatId, userIds) => {
         try {
-            const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/chat/group-remove/${chatId}`, {
+            const res = await fetch(`${host}/api/chat/group-remove/${chatId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -160,19 +255,20 @@ const ChatLayout = ({ chatList }) => {
             }
 
             // Append system message
-            if (data.systemMessage) {
-                setMessages(prev => [
-                    ...prev,
-                    {
-                        _id: Date.now().toString(),
-                        content: data.systemMessage,
-                        type: 'system',
-                        isSystem: true,
-                        createdAt: new Date().toISOString()
-                    }
-                ]);
-            }
+            if (data.populatedSystemMessage) {
+                const systemMessage = {
+                    ...data,
+                    content: data.populatedSystemMessage.content,
+                    type: 'system', // handle this in MessageBox styling
+                    createdAt: new Date().toISOString(),
+                    chat:data.populatedSystemMessage.chat
 
+                };
+                if (socket) {
+                    socket.emit('send-message', systemMessage);
+                }
+            }
+            fetchGroups(); // Optional refresh
             return data;
         } catch (error) {
             console.error('Error removing from group:', error.message);
@@ -195,6 +291,7 @@ const ChatLayout = ({ chatList }) => {
 
             const data = await res.json();
             if (res.ok) {
+                console.log(data)
                 alert('Members added successfully');
 
                 if (Array.isArray(data.users)) {
@@ -204,16 +301,19 @@ const ChatLayout = ({ chatList }) => {
                     }));
 
                     // Add system message to the messages state if applicable
-                    if (data.systemMessage) {
-                        setMessages(prev => [
-                            ...prev,
-                            {
-                                _id: Date.now().toString(), // Temporary ID
-                                content: data.systemMessage,
-                                type: 'system', // You can handle this in MessageBox styling
-                                createdAt: new Date().toISOString()
-                            }
-                        ]);
+                    if (data.populatedSystemMessage) {
+                        const systemMessage = {
+                            ...data,
+                            content: data.populatedSystemMessage.content,
+                            type: 'system', // handle this in MessageBox styling
+                            createdAt: new Date().toISOString(),
+                            chat:data.populatedSystemMessage.chat,
+                            users:data.users
+
+                        };
+                        if (socket) {
+                            socket.emit('send-message', systemMessage);
+                        }
                     }
                 }
 
@@ -224,6 +324,37 @@ const ChatLayout = ({ chatList }) => {
         } catch (err) {
             console.error(err);
             alert('Something went wrong');
+        }
+    };
+
+    //handle make admin function
+    const handleMakeAdmin = async (chatId, userId) => {
+        try {
+            const response = await fetch(`${host}/api/chat/chats/${chatId}/make-admin/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'auth-token': localStorage.getItem('token'), // or your auth header
+                },
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                // Assume data.updatedChat has updated chat info, including groupAdmin
+
+                // Update the chat state locally
+                setSelectedChat(prev => ({
+                    ...prev,
+                    groupAdmin: data.groupAdmin
+                }));
+
+                // Optionally update the chat list if you keep it separately
+                // setChats(prevChats => prevChats.map(chat => chat._id === chatId ? data.updatedChat : chat));
+            } else {
+                console.error('Failed to make admin:', data.error || data.message);
+            }
+        } catch (error) {
+            console.error('Error making admin:', error);
         }
     };
 
@@ -270,33 +401,6 @@ const ChatLayout = ({ chatList }) => {
         }
     }, [fetchGroups, groupsHasMore, groupsLoading, groupsPage]);
 
-    // Mark messages as read after viewed by the user & update badge immediately
-    const markMessagesAsRead = async (chatId) => {
-        if (!chatId) return;
-        try {
-            await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/message/markRead/${chatId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'auth-token': localStorage.getItem('token'),
-                },
-            });
-
-            // Immediately update unreadCount for the group/chat to 0 to hide badge
-            setGroups((prevGroups) =>
-                prevGroups.map((group) =>
-                    group._id === chatId
-                        ? { ...group, unreadCount: 0 }
-                        : group
-                )
-            );
-
-            // If you want to update chatList (non-groups), do it here similarly (not shown)
-
-        } catch (error) {
-            console.error('Failed to mark messages as read:', error);
-        }
-    };
 
     useEffect(() => {
         if (selectedChat?._id) {
@@ -357,7 +461,7 @@ const ChatLayout = ({ chatList }) => {
             setPendingRequests(new Set(pendingData.pendingRequests?.map((u) => u._id) || []));
             setSentRequests(new Set(sentData.sentRequests || []));
             setFriends(new Set(userData?.user?.friends?.map((id) => id.toString()) || []));
-            
+
         } catch (error) {
             console.error('Error fetching request data:', error);
         }
@@ -502,6 +606,7 @@ const ChatLayout = ({ chatList }) => {
                         setShowChatInfo={setShowChatInfo}
                         setGroups={setGroups}
                         setLocalChats={setLocalChatList}
+                        updateGroupLatestMessage={updateGroupLatestMessage}
                     />
                     <ChatWindow
                         selectedChat={selectedChat}
@@ -524,6 +629,9 @@ const ChatLayout = ({ chatList }) => {
                         updateGroupLatestMessage={updateGroupLatestMessage}
                         setGroups={setGroups}
                         setLocalChatList={setLocalChatList}
+                        markMessagesAsRead={(chatId) => { markMessagesAsRead(chatId) }}
+                        handlePermissionChange={handlePermissionChange}
+                        handleMakeAdmin={handleMakeAdmin}
                     />
                 </>
             )}

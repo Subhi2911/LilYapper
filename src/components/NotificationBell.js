@@ -43,7 +43,7 @@ const BellIcon = () => {
                     <span className="visually-hidden">unread messages</span>
                 </span>
             )}
-            
+
             {open && (
                 <div
                     className="dropdown-menu show mt-2 p-3"
@@ -86,7 +86,7 @@ const BellIcon = () => {
                                     color: '#090040',
                                     display: 'flex',
                                     gap: '10px',
-                                    
+
                                 }}
                             >
                                 {!n.isRead && (
@@ -95,12 +95,18 @@ const BellIcon = () => {
                                         style={{ width: '10px', height: '10px', flexShrink: 0 }}
                                     ></span>
                                 )}
-                                <span>{n.type === 'friend_request' && (
+                                <span>
+                                    {n.type === 'friend_request' && (
                                     <>👤 Friend request from <b>{n.senderUsername}</b></>
                                 )}
                                     {n.type === 'request_accepted' && (
                                         <>✅ <b>{n.senderUsername}</b> accepted your friend request</>
-                                    )}</span>
+                                    )}
+                                    {n.type === 'group_added' && (
+                                        <>{n.message}<b></b> by <b>{n.senderUsername}</b></>
+                                    )}
+                                </span>
+                                <small>{new Date(n.createdAt).toLocaleString()}</small>
                             </div>
 
                         ))

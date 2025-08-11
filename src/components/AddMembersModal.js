@@ -7,7 +7,8 @@ const AddMembersModal = ({
     friendsList,
     onSubmit,
     existingUserIds,
-    chatId
+    chatId,
+    onAddSystemMessage
 }) => {
     const [friendsData, setFriendsData] = useState([]);
     const [selectedUserIds, setSelectedUserIds] = useState([]);

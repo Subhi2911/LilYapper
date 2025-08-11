@@ -10,6 +10,7 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
   isOnline = onlineUsers.has(id);
 
   useEffect(() => {
+    console.log(messages)
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
@@ -44,6 +45,11 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
                 color: 'white',
                 textShadow: '1px 1px 4px rgba(0, 0, 0, 0.7)',
                 fontStyle: 'italic',
+                whiteSpace: 'normal',
+                overflowWrap: 'break-word',
+                wordWrap: 'break-word',
+                maxWidth: '300px',
+                margin: 'auto',
               }}
             >
               {msg.content || msg.text}

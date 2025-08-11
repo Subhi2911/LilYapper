@@ -1,7 +1,8 @@
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ChatContext from './ChatContext';
 import { useSocket } from './socket/SocketContext';
+import { io } from 'socket.io-client';
 
 
 const ChatState = (props) => {
@@ -11,6 +12,9 @@ const ChatState = (props) => {
     const [currentUser, setCurrentUser] = useState(null);
     const [loadingUser, setLoadingUser] = useState(true);
     const socket = useSocket()
+    const selectedChatRef = useRef(null);
+    const socketRef = useRef(null);
+    const [messages, setMessages] = useState([]);
     useEffect(() => {
         if (socket && currentUser?._id) {
             socket.emit('join', currentUser._id);
@@ -43,7 +47,7 @@ const ChatState = (props) => {
             if (token) {
                 try {
                     const res = await fetch(`${host}/api/auth/getuser`, {
-                        method: 'POST', 
+                        method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'auth-token': token,
@@ -63,10 +67,10 @@ const ChatState = (props) => {
         };
 
         fetchCurrentUser();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-
+  
 
     // Create new chat
     const createChat = async (userId) => {
@@ -139,6 +143,7 @@ const ChatState = (props) => {
                 headers: { 'auth-token': localStorage.getItem('token') }
             });
             const json = await response.json();
+            console.log(json.groups)
             return {
                 groups: json.groups || [],
                 totalPages: json.pagination?.totalPages || 1,
@@ -263,7 +268,11 @@ const ChatState = (props) => {
                 currentUser,
                 chats,
                 groups,
-                loadingUser
+                loadingUser,
+                messages, setMessages,
+                setCurrentUser,
+                selectedChatRef,
+                socket: socketRef
             }}
         >
             {props.children}

@@ -15,6 +15,7 @@ const generateColor = (username = '') => {
 const GroupMessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage, onEditMessage, setEditingMessageId, setEditingText }) => {
   return (
     <div className="d-flex flex-column gap-2">
+      {console.log(messages)}
       {messages.map((msg, index) => {
         const isSystem = msg.isSystem;
         const isCurrentUser = msg.sender?._id === currentUser?._id;
@@ -110,6 +111,11 @@ const GroupMessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage,
                 style={{
                   backgroundColor: isCurrentUser ? '#52357B' : '#f1f1f1',
                   color: isCurrentUser ? 'white' : 'black',
+                  whiteSpace: 'normal',
+                  overflowWrap: 'break-word',
+                  wordWrap: 'break-word',
+                  maxWidth: '300px',
+                  margin: 'auto',
                 }}
               >
                 {msg.text}

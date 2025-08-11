@@ -81,7 +81,6 @@ const Profile = () => {
                 className="flex-grow-1 p-4"
                 style={{ maxWidth: 600, margin: '0 auto', width: '100%' }}
             >
-                {console.log('useravatar', user.avatar)}
                 <ChooseAvatar userAvatar={user.avatar} />
                 <UserInfo />
             </div>
