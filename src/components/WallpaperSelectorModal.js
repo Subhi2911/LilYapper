@@ -1,22 +1,54 @@
 import React, { useEffect } from 'react';
+import { useSocket } from '../context/chats/socket/SocketContext';
+
+
 
 const wallpapers = [
-    { name: "ChatBg", url: '/wallpapers/ChatBg.png', senderbubble: '#52357B', receiverbubble: 'white' },
-    { name: "Blank", url: '/wallpapers/Blank.jpg', senderbubble: '#86275e', receiverbubble: 'black' },
-    { name: "ColoredSky", url: '/wallpapers/ColoredSky.jpg', senderbubble: '#52357B', receiverbubble: 'white' },
-    { name: "DancingCat", url: '/wallpapers/DancingCat.jpg', senderbubble: '#52357B', receiverbubble: 'black' },
-    { name: "IceAndCoffee", url: '/wallpapers/IceAndCoffee.jpg', senderbubble: '#52357B', receiverbubble: 'black' },
-    { name: "LittleCat", url: '/wallpapers/LittleCat.jpg', senderbubble: '#52357B', receiverbubble: 'black' },
-    { name: "InternetDark", url: '/wallpapers/InternetDark.jpg', senderbubble: '#5459AC', receiverbubble: 'white' },
-    { name: "LittlePlushie", url: '/wallpapers/LittlePlushie.jpg', senderbubble: '#471396', receiverbubble: 'white' },
-    { name: "Love1", url: '/wallpapers/Love1.jpg', senderbubble: '#D50B8B', receiverbubble: 'white' },
-    { name: "Love2", url: '/wallpapers/Love2.jpg', senderbubble: '#D50B8B', receiverbubble: 'white' },
-    { name: "Potato", url: '/wallpapers/Potato.jpg', senderbubble: '#FFDE63', receiverbubble: 'black' },
-    { name: "TomAndJerry", url: '/wallpapers/TomAndJerry.jpg', senderbubble: '#FFDE63', receiverbubble: 'white' },
+    { name: "ChatBg", url: '/wallpapers/ChatBg.png', senderbubble: '#52357B', receiverbubble: 'white', rMesColor:'black', sMesColor:'white', systemMesColor:' white' , iColor:'white' },
+    { name: "Blank", url: '/wallpapers/Blank.jpg', senderbubble: '#86275e', receiverbubble: 'black', rMesColor:'white', sMesColor:'white', systemMesColor:' black', iColor:'black'  },
+    { name: "ColoredSky", url: '/wallpapers/ColoredSky.jpg', senderbubble: '#52357B', receiverbubble: 'white' , rMesColor:'black', sMesColor:'white', systemMesColor:' white' , iColor:'white' },
+    { name: "DancingCat", url: '/wallpapers/DancingCat.jpg', senderbubble: '#52357B', receiverbubble: 'black' , rMesColor:'white', sMesColor:'white', systemMesColor:' white' , iColor:'black' },
+    { name: "IceAndCoffee", url: '/wallpapers/IceAndCoffee.jpg', senderbubble: '#52357B', receiverbubble: 'black' , rMesColor:'white', sMesColor:'white', systemMesColor:' white' , iColor:'black' },
+    { name: "LittleCat", url: '/wallpapers/LittleCat.jpg', senderbubble: '#52357B', receiverbubble: 'black' , rMesColor:'white', sMesColor:'white', systemMesColor:' white' , iColor:'black' },
+    { name: "InternetDark", url: '/wallpapers/InternetDark.jpg', senderbubble: '#5459AC', receiverbubble: 'white' , rMesColor:'black', sMesColor:'white', systemMesColor:' white' , iColor:'white' },
+    { name: "LittlePlushie", url: '/wallpapers/LittlePlushie.jpg', senderbubble: '#471396', receiverbubble: 'white' , rMesColor:'black', sMesColor:'white', systemMesColor:' white' , iColor:'white' },
+    { name: "Love1", url: '/wallpapers/Love1.jpg', senderbubble: '#D50B8B', receiverbubble: 'white' , rMesColor:'black', sMesColor:'white', systemMesColor:' white' , iColor:'white' },
+    { name: "Love2", url: '/wallpapers/Love2.jpg', senderbubble: '#D50B8B', receiverbubble: 'white' , rMesColor:'black', sMesColor:'white', systemMesColor:' white' , iColor:'white' },
+    { name: "Potato", url: '/wallpapers/Potato.jpg', senderbubble: '#FFDE63', receiverbubble: 'black' , rMesColor:'white', sMesColor:'black', systemMesColor:' black' , iColor:'black' },
+    { name: "TomAndJerry", url: '/wallpapers/TomAndJerry.jpg', senderbubble: '#FFDE63', receiverbubble: 'white' , rMesColor:'black', sMesColor:'black', systemMesColor:' white' , iColor:'white' },
 ];
 
-const WallpaperSelectorModal = ({ chatId, onClose, fetchChats, setSelectedChat, selectedChat }) => {
+
+const WallpaperSelectorModal = ({ chatId, onClose, setWallpaperUrl, setSelectedChat, selectedChat }) => {
     const host = process.env.REACT_APP_BACKEND_URL;
+    const socket = useSocket();
+    //const {fetchChats} = useContext(ChatContext)
+
+    // useEffect(() => {
+    //     if (!socket) return;
+    //     console.log('djdjjdjddj')
+
+    //     const handleWallpaperUpdated = ({ chatId, newWallpaper }) => {
+    //         console.log("wallpaper change", newWallpaper);
+    //         if (selectedChat?._id === chatId) {
+    //             setSelectedChat(prevChat => ({
+    //                 ...prevChat,
+    //                 wallpaper: newWallpaper, // Correct access
+    //                 receiverbubble: newWallpaper.receiverbubble,
+    //                 senderbubble: newWallpaper.senderbubble
+    //             }));
+    //             console.log(selectedChat)
+    //         }
+    //         if (fetchChats) fetchChats()
+            
+    //     };
+
+
+    //     socket.on('wallpaper-updated', handleWallpaperUpdated);
+    //     return () => socket.off('wallpaper-updated', handleWallpaperUpdated);
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, [socket, selectedChat?._id]);
+
     // Close modal on Escape key press
     useEffect(() => {
         const onEsc = (e) => {
@@ -27,40 +59,66 @@ const WallpaperSelectorModal = ({ chatId, onClose, fetchChats, setSelectedChat, 
     }, [onClose]);
 
     const handleWallpaperChange = async (wallpaper) => {
-  try {
-    const res = await fetch(`${host}/api/chat/${chatId}/wallpaper`, {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        'auth-token': localStorage.getItem('token') 
-      },
-      body: JSON.stringify({
-        url: wallpaper.url,
-        senderbubble: wallpaper.senderbubble,
-        receiverbubble: wallpaper.receiverbubble,
-      }),
-    });
+        console.log(wallpaper)
+        try {
+            const res = await fetch(`${host}/api/chat/${chatId}/wallpaper`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'auth-token': localStorage.getItem('token')
+                },
+                body: JSON.stringify({
+                    url: wallpaper.url,
+                    senderbubble: wallpaper.senderbubble,
+                    receiverbubble: wallpaper.receiverbubble,
+                    rMesColor: wallpaper.rMesColor,
+                    sMesColor: wallpaper.sMesColor,
+                    systemMesColor: wallpaper.systemMesColor,
+                    iColor: wallpaper.iColor
+                }),
+                
+            });
 
-    if (res.ok) {
-      const data = await res.json();
+            if (res.ok) {
+                const data = await res.json();
+                console.log(data)
 
-      // Update local selectedChat wallpaper immediately
-      setSelectedChat(prevChat => ({
-        ...prevChat,
-        wallpaper: data.wallpaper,
-        receiverbubble: data.receiverbubble,
-        senderbubble: data.senderbubble
-      }));
+                // Update local selectedChat wallpaper immediately
+                // setSelectedChat(prevChat => ({
+                //     ...prevChat,
+                //     wallpaper: data.wallpaper,
+                //     receiverbubble: data.receiverbubble,
+                //     senderbubble: data.senderbubble
+                // }));
+                const wallpaperData = {
+                    url: data.wallpaper.url,
+                    senderbubble: data.wallpaper.senderbubble,
+                    receiverbubble: data.wallpaper.receiverbubble,
+                    rMesColor: data.wallpaper.rMesColor,
+                    sMesColor: data.wallpaper.sMesColor,
+                    systemMesColor: data.wallpaper.systemMesColor,
+                    iColor: data.wallpaper.iColor
+                };
+                console.log(wallpaperData)
+                if (socket) {
+                    socket.emit('change-wallpaper', {
+                        _id:data._id,
+                        chatId: selectedChat._id,
+                        username: data.username,
+                        wallpaperData
+                    })
+                }
 
-      if (fetchChats) fetchChats();
-      onClose();
-    } else {
-      console.error('Failed to update wallpaper');
-    }
-  } catch (err) {
-    console.error('Error updating wallpaper:', err);
-  }
-};
+
+                
+                onClose();
+            } else {
+                console.error('Failed to update wallpaper');
+            }
+        } catch (err) {
+            console.error('Error updating wallpaper:', err);
+        }
+    };
 
 
 

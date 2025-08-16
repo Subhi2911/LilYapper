@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Avatar from './Avatar';
+import { FaPencilAlt } from 'react-icons/fa';
+import { useSocket } from '../context/chats/socket/SocketContext';
 
 const ChatInfo = ({
     selectedChat,
@@ -10,13 +12,22 @@ const ChatInfo = ({
     removeFromGroup,
     onAddMembers,
     onlineUsers,
-    handlePermissionChange
+    handlePermissionChange,
+    setSelectedChat,
+    setMessages,
+    setLocalChatList
 }) => {
-    if (!selectedChat) return null;
+    const socket = useSocket();
+    const { avatar, username, bio, date, isGroupChat, chatName, groupAdmin = [] } = selectedChat;
+
+    const [editingName, setEditingName] = useState(false);
+    const [newGroupName, setNewGroupName] = useState(isGroupChat ? chatName : username);
+    const [renamingLoading, setRenamingLoading] = useState(false);
+
+    const host = process.env.REACT_APP_BACKEND_URL;
+
 
     let isOnline = onlineUsers.has(selectedChat.otherUserId) ? true : false;
-
-    const { avatar, username, bio, date, isGroupChat, chatName, groupAdmin = [] } = selectedChat;
 
     const currentUserId = localStorage.getItem('userId');
     const isAdmin = groupAdmin.some(admin => admin._id === currentUserId);
@@ -31,6 +42,59 @@ const ChatInfo = ({
         });
     };
 
+    // useEffect(() => {
+    //     setNewGroupName(chatName)
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, [socket])
+
+
+    // inside ChatInfo component
+    const handleRenameGroup = async () => {
+        if (!newGroupName.trim()) return;
+
+        setRenamingLoading(true);
+        try {
+            const res = await fetch(`${host}/api/chat/rename/${selectedChat._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'auth-token': localStorage.getItem('token')
+                },
+                body: JSON.stringify({ chatName: newGroupName })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                selectedChat.chatName = data.chatName; // update locally
+                setEditingName(false);
+
+                if (data.populatedSystemMessage) {
+                    const systemMessage = {
+                        ...data,
+                        content: data.populatedSystemMessage.content,
+                        type: 'system', // handle this in MessageBox styling
+                        createdAt: new Date().toISOString(),
+                        chat: data.chat,
+                        users: data.users,
+                        isSystem: true
+
+                    };
+                    if (socket) {
+                        socket.emit('send-message', systemMessage);
+                    }
+                    console.log(data)
+                }
+            } else {
+                alert(data.error || "Failed to rename group");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Something went wrong");
+        } finally {
+            setRenamingLoading(false);
+        }
+    };
+
     const onRemoveUser = (id) => {
         removeFromGroup(selectedChat._id, [id]);
     };
@@ -41,6 +105,8 @@ const ChatInfo = ({
         if (b._id === currentUserId) return 1;
         return 0;
     });
+
+    if (!selectedChat) return null;
 
 
     return (
@@ -55,9 +121,50 @@ const ChatInfo = ({
 
             <div className="d-flex flex-column align-items-center mb-4">
                 <Avatar src={avatar} size={120} isGroup={isGroupChat} isOnline={isOnline} />
-                <h3 className="mt-3 text-center">
-                    {isGroupChat ? chatName : username}
+                <h3 className="mt-3 text-center d-flex align-items-center justify-content-center gap-2">
+                    {editingName ? (
+                        <>
+                            <div>
+                                <input
+                                    type="text"
+                                    value={newGroupName}
+                                    onChange={(e) => setNewGroupName(e.target.value)}
+                                    className="form-control form-control-sm"
+                                    disabled={renamingLoading}
+                                />
+                                <div style={{ fontSize: '1rem', color: 'black' }}>
+                                    {newGroupName.length}/30
+                                </div>
+                            </div>
+                            <button
+                                className="btn btn-sm btn-primary"
+                                onClick={handleRenameGroup}
+                                disabled={newGroupName < 3 || newGroupName > 30 || renamingLoading}
+                            >
+                                Save
+                            </button>
+                            <button
+                                className="btn btn-sm btn-secondary"
+                                onClick={() => { setEditingName(false); setNewGroupName(chatName); }}
+                                disabled={renamingLoading}
+                            >
+                                Cancel
+                            </button>
+
+                        </>
+                    ) : (
+                        <>
+                            {chatName}
+                            {(isAdmin || selectedChat?.permissions?.rename === 'all') && (
+                                <FaPencilAlt
+                                    style={{ cursor: 'pointer', fontSize: '1.5rem' }}
+                                    onClick={() => setEditingName(true)}
+                                />
+                            )}
+                        </>
+                    )}
                 </h3>
+
                 {bio && (
                     <p className="text-center mt-2" style={{ fontStyle: 'italic', opacity: 0.8 }}>
                         {bio}
@@ -68,7 +175,7 @@ const ChatInfo = ({
             <div className="flex-grow-1 overflow-auto w-100">
                 {isGroupChat ? (
                     <>
-                    {console.log(selectedChat)}
+                        {console.log(selectedChat)}
                         {isAdmin && (
                             <div className="mt-3">
                                 <h5>Group Permissions</h5>
@@ -109,7 +216,7 @@ const ChatInfo = ({
 
                         <div className="d-flex justify-content-between align-items-center">
                             <strong>Members ({selectedChat.users?.length || 0}):</strong>
-                            {isAdmin && (
+                            {(isAdmin || selectedChat?.permissions?.addUser === 'all') && (
                                 <button className="btn btn-sm btn-success" onClick={onAddMembers}>
                                     + Add Members
                                 </button>
@@ -150,7 +257,7 @@ const ChatInfo = ({
                                         </span>
                                     </div>
 
-                                    {isAdmin &&
+                                    {(isAdmin || selectedChat?.permissions?.removeUser === 'all') &&
                                         u._id !== currentUserId && (
                                             <button
                                                 className="btn btn-sm btn-danger ms-2"

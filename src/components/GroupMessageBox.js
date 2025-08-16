@@ -12,7 +12,7 @@ const generateColor = (username = '') => {
   return `hsl(${hue}, 65%, 55%)`;
 };
 
-const GroupMessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage, onEditMessage, setEditingMessageId, setEditingText }) => {
+const GroupMessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage, onEditMessage, setEditingMessageId, setEditingText , selectedChat }) => {
   return (
     <div className="d-flex flex-column gap-2">
       {console.log(messages)}
@@ -20,13 +20,19 @@ const GroupMessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage,
         const isSystem = msg.isSystem;
         const isCurrentUser = msg.sender?._id === currentUser?._id;
         const nameColor = generateColor(msg.sender?.username);
+        const receiverbubble = selectedChat?.wallpaper?.receiverbubble || 'white';
+        const senderbubble = selectedChat?.wallpaper?.senderbubble || '#52357B';
+        const rMesColor = selectedChat?.wallpaper?.rMesColor || 'black';
+        const sMesColor = selectedChat?.wallpaper?.sMesColor || 'white';
+        const systemMesColor = selectedChat?.wallpaper?.systemMesColor || 'black';
+        const iColor = selectedChat?.wallpaper?.iColor || 'black';
 
         if (isSystem) {
           return (
             <div
               key={index}
               className="text-center text-muted my-2"
-              style={{ fontSize: '0.85rem' }}
+              style={{ fontSize: '0.85rem', color: systemMesColor }}
             >
               {msg.content}
             </div>
@@ -55,10 +61,10 @@ const GroupMessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage,
                   <div onClick={() => {
                     setEditingMessageId(msg._id);
                     setEditingText(msg.text); // Prefill text in Keyboard
-                  }} style={{ fontSize: '0.8rem' }}>
+                  }} style={{ fontSize: '0.8rem', color: iColor }}>
                     <i className="fa-solid fa-pen-to-square"></i>
                   </div>
-                  <div onClick={() => { onDeleteMessage(msg._id) }} style={{ fontSize: '0.8rem' }}>
+                  <div onClick={() => { onDeleteMessage(msg._id) }} style={{ fontSize: '0.8rem' , color:iColor }}>
                     <i className="fa-solid fa-trash"></i>
                   </div>
 
@@ -90,8 +96,8 @@ const GroupMessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage,
               {replied && (
                 <div
                   style={{
-                    backgroundColor: isCurrentUser ? '#6e4d99' : '#e0e0e0',
-                    color: isCurrentUser ? '#ddd' : '#444',
+                    backgroundColor: isCurrentUser ? senderbubble : receiverbubble,
+                    color: isCurrentUser ? sMesColor : rMesColor,
                     padding: '6px 10px',
                     borderLeft: '4px solid #888',
                     borderRadius: '8px',
@@ -109,8 +115,8 @@ const GroupMessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage,
               <div
                 className="p-2 rounded-3 shadow-sm"
                 style={{
-                  backgroundColor: isCurrentUser ? '#52357B' : '#f1f1f1',
-                  color: isCurrentUser ? 'white' : 'black',
+                  backgroundColor: isCurrentUser ? senderbubble : receiverbubble,
+                  color: isCurrentUser ? sMesColor :rMesColor,
                   whiteSpace: 'normal',
                   overflowWrap: 'break-word',
                   wordWrap: 'break-word',
@@ -133,6 +139,7 @@ const GroupMessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage,
                     right: '-25px',
                     fontSize: '14px',
                     userSelect: 'none',
+                    color: iColor
 
                   }}
                   title="Reply to this message"
@@ -140,7 +147,7 @@ const GroupMessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage,
               )}
 
               {/* Timestamp */}
-              <div className="text-end text-muted" style={{ fontSize: '0.7rem' }}>
+              <div className="text-end text-muted" style={{ fontSize: '0.7rem', color:systemMesColor }}>
                 {moment(msg.createdAt).format('h:mm A')}
               </div>
             </div>

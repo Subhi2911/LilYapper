@@ -11,10 +11,14 @@ const ThreeDotChatMenu = ({
   onLeaveGroup,
   onGroupInfo,
   selectedChat,
-  setShowWallpaperModal
+  setShowWallpaperModal,
+  
 }) => {
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
+  const currentUser=localStorage.getItem('userId');
+  const isAdmin = selectedChat?.groupAdmin?.some(adminId => adminId?._id?.toString() === currentUser?.toString());
+  console.log(isAdmin,'kskskksks',selectedChat)
 
 
   // Close menu on outside click
@@ -104,6 +108,14 @@ const ThreeDotChatMenu = ({
             </>
           ) : (
             <>
+            {isAdmin && <li
+                onClick={() => { setOpen(false); setShowWallpaperModal(true) }}
+                style={menuItemStyle}
+                tabIndex={0}
+                onKeyDown={e => {if (e.key === 'Enter' || e.key === ' ') {setShowWallpaperModal(true);setOpen(false);}}}
+              >
+                Change Wallpaper
+              </li>}
               <li
                 onClick={() => { onDeleteGroup(selectedChat._id); setOpen(false); }}
                 style={{ ...menuItemStyle, color: 'red' }}

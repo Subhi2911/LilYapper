@@ -6,6 +6,10 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
   const containerRef = useRef(null);
   const receiverbubble = selectedChat?.wallpaper?.receiverbubble || 'white';
   const senderbubble = selectedChat?.wallpaper?.senderbubble || '#52357B';
+  const rMesColor = selectedChat?.wallpaper?.rMesColor || 'black';
+  const sMesColor = selectedChat?.wallpaper?.sMesColor || 'white';
+  const systemMesColor = selectedChat?.wallpaper?.systemMesColor || 'black';
+  const iColor = selectedChat?.wallpaper?.iColor || 'black';
   let isOnline = false;
   isOnline = onlineUsers.has(id);
 
@@ -42,7 +46,7 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
               style={{
                 textAlign: 'center',
                 fontSize: '0.85rem',
-                color: 'white',
+                color: systemMesColor,
                 textShadow: '1px 1px 4px rgba(0, 0, 0, 0.7)',
                 fontStyle: 'italic',
                 whiteSpace: 'normal',
@@ -88,7 +92,7 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
               <div
                 style={{
                   backgroundColor: isSent ? senderbubble : receiverbubble,
-                  color: isSent ? '#fff' : '#000',
+                  color: isSent ? sMesColor : rMesColor,
                   textShadow: '1px 1px 4px rgba(0, 0, 0, 0.7)',
                   padding: '10px 14px',
                   borderRadius: '18px',
@@ -104,7 +108,7 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
                   <div
                     style={{
                       backgroundColor: isSent ? senderbubble : receiverbubble,
-                      color: isSent ? '#ddd' : '#444',
+                      color: isSent ? sMesColor :rMesColor,
                       padding: '6px 10px',
                       borderLeft: '4px solid #888',
                       borderRadius: '8px',
@@ -131,7 +135,7 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
                       right: '-30px',
                       fontSize: '14px',
                       userSelect: 'none',
-                      color: receiverbubble
+                      color: iColor
                     }}
                     title="Reply to this message"
                   />
@@ -140,14 +144,14 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
               </div>
               {isSent && (
                 <>
-                  <div className='d-flex align-items-center gap-3' style={{ cursor: 'pointer', color: receiverbubble, }}>
+                  <div className='d-flex align-items-center gap-3' style={{ cursor: 'pointer', color: iColor, }}>
                     <div onClick={() => {
                       setEditingMessageId(msg._id);
                       setEditingText(msg.text); // Prefill text in Keyboard
                     }} style={{ fontSize: '0.8rem' }}>
                       <i className="fa-solid fa-pen-to-square" ></i>
                     </div>
-                    <div onClick={() => { onDeleteMessage(msg._id) }} style={{ fontSize: '0.8rem', color: receiverbubble, }}>
+                    <div onClick={() => { onDeleteMessage(msg._id) }} style={{ fontSize: '0.8rem', color: iColor, }}>
                       <i className="fa-solid fa-trash" ></i>
                     </div>
 
@@ -160,7 +164,7 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
             <div
               style={{
                 fontSize: '0.72rem',
-                color: 'white',
+                color: systemMesColor,
                 textShadow: '1px 1px 4px rgba(0, 0, 0, 0.7)',
                 marginTop: '4px',
                 paddingLeft: isSent ? '0' : '40px',

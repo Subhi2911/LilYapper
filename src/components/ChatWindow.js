@@ -44,20 +44,23 @@ const ChatWindow = ({
     setGroups,
     setLocalChatList,
     markMessagesAsRead,
-    handlePermissionChange
+    handlePermissionChange,
+    messages,
+    setMessages,
+    getConnections
 }) => {
     const location = useLocation();
     const host = process.env.REACT_APP_BACKEND_URL;
-    const { fetchMessages, sendmessage, currentUser, loadingUser } = useContext(ChatContext);
+    const { fetchMessages, sendmessage, currentUser, loadingUser, fetchConnections, fetchGroups } = useContext(ChatContext);
     const socket = useSocket();
     const messagesEndRef = useRef(null);
-    const [messages, setMessages] = useState([]);
+    //const [messages, setMessages] = useState([]);
     const [typingUsers, setTypingUsers] = useState(new Set());
     const [isFriend, setIsFriend] = useState(true);
     const [replyTo, setReplyTo] = useState(null);
     const [editingMessageId, setEditingMessageId] = useState(null);
     const [editingText, setEditingText] = useState('');
-    const wallpaperUrl = selectedChat?.wallpaper?.url;
+    const [wallpaperUrl, setWallpaperUrl] = useState(selectedChat?.wallpaper?.url);
     const [onlineUsers, setOnlineUsers] = useState(new Set());
     // eslint-disable-next-line no-unused-vars
     const [showWallpaperModal, setShowWallpaperModal] = useState(false);
@@ -72,15 +75,27 @@ const ChatWindow = ({
     };
 
     useEffect(() => {
+        console.log(selectedChat)
+        if (selectedChat?.wallpaper?.url) {
+            console.log(selectedChat.wallpaper.url)
+            setWallpaperUrl(selectedChat.wallpaper.url);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedChat?.wallpaper?.url]);
+
+    useEffect(() => {
         if (!socket || !currentUser) return;
 
         socket.emit('join', currentUser?._id);
+
     }, [socket, currentUser]);
 
     useEffect(() => {
         if (socket && selectedChat?._id) {
+            console.log(selectedChat.wallpaper)
             socket.emit("join chat", selectedChat?._id);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket, selectedChat?._id]);
 
     useEffect(() => {
@@ -178,29 +193,76 @@ const ChatWindow = ({
         if (!socket) return;
 
         const handleNewMessage = (msg) => {
+            const msgChatId = msg?.chat?._id || msg?.chatId;
             const currentSelectedChat = selectedChatRef.current;
-            if (msg.chat?._id === currentSelectedChat?._id) {
-                setMessages(prev => {
-                    if (prev.some(m => m?._id === msg?._id)) return prev;
-                    markMessagesAsRead(currentSelectedChat?._id)
-                    return [...prev, {
+
+            // Add to messages if this chat is currently open
+            if (msgChatId === currentSelectedChat?._id) {
+                setMessages(prev => [
+                    ...prev.filter(m => m._id !== msg._id), // avoid duplicates
+                    {
                         ...msg,
                         type: msg.sender?._id === currentUser?._id ? 'sent' : 'received',
                         text: msg.text || msg.content,
                         replyTo: msg.replyTo,
-                    }];
-                });
-                
-
+                    }
+                ]);
+                markMessagesAsRead(msgChatId);
             }
-        };
+
+            // Update either private connections or groups
+            if (msg?.chat?.isGroupChat) {
+                setGroups(prevGroups => {
+                    const exists = prevGroups.find(c => c._id === msgChatId);
+                    if (exists) {
+                        return prevGroups.map(c =>
+                            c._id === msgChatId ? { ...c, latestMessage: msg } : c
+                        );
+                    } else {
+                        fetchGroups(1, 10).then(({ groups }) => {
+                            const newGroup = groups.find(g => g._id === msgChatId);
+                            if (newGroup) {
+                                setGroups(prev => {
+                                    // Deduplicate here too
+                                    if (prev.some(c => c._id === newGroup?._id)) return prev;
+                                    return [newGroup, ...prev];
+                                });
+                            }
+                        });
+
+                        return prevGroups;
+                    }
+                });
+            } else {
+                setLocalChatList(prevChats => {
+                    const exists = prevChats.find(c => c._id === msgChatId);
+                    if (exists) {
+                        return prevChats.map(c =>
+                            c._id === msgChatId ? { ...c, latestMessage: msg } : c
+                        );
+                    } else {
+                        fetchConnections().then(connections => {
+                            const newConn = connections.find(c => c._id === msgChatId);
+                            if (newConn) {
+                                setLocalChatList(prev => {
+                                    if (!prev) prev = []; // make sure prev is an array
+                                    const exists = prev.some(c => c._id === newConn._id);
+                                    if (exists) return prev;
+                                    return [newConn, ...prev]; // return new array
+                                });
+                            }
+                        });
+
+                        return prevChats;
+                    }
+                });
+            }
+        }
 
         socket.on('newMessage', handleNewMessage);
-        return () => {
-            socket.off('newMessage', handleNewMessage);
-        };
+        return () => socket.off('newMessage', handleNewMessage);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [socket]);
+    }, [socket, currentUser, host, setLocalChatList, setSelectedChat, setMessages]);
 
 
     // useEffect(() => {
@@ -211,9 +273,9 @@ const ChatWindow = ({
     //             chat?._id === selectedChat?._id
     //                 ? { ...chat, unreadCount: 0 }
     //                 : chat)
-            
+
     //     );
-        
+
 
     //     setLocalChatList(prevChats =>
     //         prevChats.map(chat =>
@@ -225,6 +287,36 @@ const ChatWindow = ({
     //     markMessagesAsRead(selectedChat?._id)
     //     // eslint-disable-next-line react-hooks/exhaustive-deps
     // }, [selectedChat]);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleWallpaperUpdated = ({ chatId, newWallpaper }) => {
+            if (selectedChat?._id === chatId) {
+                setSelectedChat(prev => ({
+                    ...prev,
+                    wallpaper: newWallpaper,
+                    receiverbubble: newWallpaper.receiverbubble,
+                    senderbubble: newWallpaper.senderbubble,
+                    rMesColor: newWallpaper.rMesColor,
+                    sMesColor: newWallpaper.sMesColor,
+                    systemMesColor: newWallpaper.systemMesColor,
+                    iColor: newWallpaper.iColor
+                }));
+                setWallpaperUrl(newWallpaper.url);
+            }
+        };
+
+        socket.on('wallpaper-updated', handleWallpaperUpdated);
+        return () => socket.off('wallpaper-updated', handleWallpaperUpdated);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket, selectedChat?._id]);
+
+    useEffect(() => {
+        if (selectedChat) fetchMessages(selectedChat._id);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedChat]);
+
 
 
     useEffect(() => {
@@ -394,6 +486,7 @@ const ChatWindow = ({
                     if (typeof updateGroupLatestMessage === 'function') {
                         updateGroupLatestMessage(selectedChat?._id, newLatestMessage);
                     }
+
                 }
             } else {
                 console.warn('Failed to delete message:', data.error);
@@ -431,7 +524,7 @@ const ChatWindow = ({
         <div
             className="flex-grow-1 d-flex flex-column"
             style={{
-                backgroundImage: wallpaperUrl ? `url(${wallpaperUrl})` : '',
+                backgroundImage: selectedChat ? (wallpaperUrl ? `url(${wallpaperUrl})` : '') : '',
                 backgroundColor: '#5459AC',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
@@ -466,7 +559,7 @@ const ChatWindow = ({
 
                             <div style={{ padding: '1rem', borderRadius: '8px' }}>
                                 {selectedChat?.isGroupChat ? (
-                                    <GroupMessageBox messages={messages} currentUser={currentUser} onReply={handleReply} onDeleteMessage={handleDeleteMessage} onEditMessage={handleEditMessage} setEditingMessageId={setEditingMessageId} setEditingText={setEditingText} />
+                                    <GroupMessageBox messages={messages} currentUser={currentUser} onReply={handleReply} onDeleteMessage={handleDeleteMessage} onEditMessage={handleEditMessage} setEditingMessageId={setEditingMessageId} setEditingText={setEditingText} selectedChat={selectedChat} />
                                 ) : (
                                     <MessageBox messages={messages} currentUser={currentUser} onReply={handleReply} onDeleteMessage={handleDeleteMessage} onEditMessage={handleEditMessage} setEditingMessageId={setEditingMessageId} setEditingText={setEditingText} selectedChat={selectedChat} onlineUsers={onlineUsers} id={selectedChat.otherUserId} />
                                 )}
@@ -480,7 +573,7 @@ const ChatWindow = ({
                             style={{
                                 minHeight: '24px',
                                 fontSize: '0.9rem',
-                                color: '#78C841',
+                                color: selectedChat?.wallpaper?.receiverbubble,
                                 fontStyle: 'italic',
                                 marginBottom: '4px',
                                 height: '24px',
@@ -594,6 +687,9 @@ const ChatWindow = ({
                                                         addToGroup={addToGroup}
                                                         onlineUsers={onlineUsers}
                                                         handlePermissionChange={handlePermissionChange}
+                                                        setSelectedChat={setSelectedChat}
+                                                        setMessages={setMessages}
+                                                        setLocalChatList={setLocalChatList}
                                                     />
                                                     {showAddMembersModal && (
                                                         <AddMembersModal
@@ -625,6 +721,7 @@ const ChatWindow = ({
                                     onClose={() => setShowWallpaperModal(false)}
                                     selectedChat={selectedChat}
                                     setSelectedChat={setSelectedChat}
+                                    setWallpaperUrl={setWallpaperUrl}
                                 />
                             </div>
                         </div>

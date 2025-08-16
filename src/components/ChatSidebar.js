@@ -108,6 +108,14 @@ const ChatSidebar = ({
         });
     }, [groups]);
 
+    useEffect(() => {
+        setLocalChats(chatList.filter(chat => !chat.deletedFor?.includes(user?._id)));
+    }, [chatList, user?._id]);
+
+    useEffect(() => {
+        setLocalGroups(groups.filter(chat => !chat.deletedFor?.includes(user?._id)));
+    }, [groups, user?._id]);
+
 
 
     useEffect(() => {
@@ -205,9 +213,10 @@ const ChatSidebar = ({
         displayChats = safeGroups;
     }
 
-    if (selectedChat?.deletedFor?.includes?.(user?._id)) {
-        displayChats = displayChats.filter(chat => chat?._id !== selectedChat?._id);
-    }
+    displayChats = [...safeChatList, ...safeGroups].filter(
+        chat => !chat.deletedFor?.includes(user?._id)
+    );
+
 
     // Sort chats by latestMessage timestamp (descending)
     displayChats.sort((a, b) => {

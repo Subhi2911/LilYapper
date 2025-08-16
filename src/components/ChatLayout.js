@@ -5,7 +5,7 @@ import ChatWindow from './ChatWindow';
 import ChatContext from '../context/chats/ChatContext';
 import { useSocket } from '../context/chats/socket/SocketContext';
 
-const ChatLayout = ({ chatList, selectedChat, setSelectedChat }) => {
+const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { fetchGroups } = useContext(ChatContext);
@@ -61,14 +61,58 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat }) => {
         }));
     };
 
+    useEffect(() => {
+        if (!socket || !selectedChat) return;
+        console.log("jhimri")
+
+        const handleNewMessage = (msg) => {
+            const msgChatId = msg?.chatId || msg?.chat
+            console.log(msg, String(msgChatId) === String(selectedChat?._id))
+            if (String(msgChatId) === String(selectedChat?._id)) {
+                setMessages(prev => {
+                    console.log(prev)
+                    if (prev.some(m =>
+                        (m._id && msg._id && String(m._id) === String(msg._id)) ||
+                        (m?.populatedSystemMessage?._id && msg?.populatedSystemMessage?._id &&
+                            String(m.populatedSystemMessage._id) === String(msg.populatedSystemMessage._id))
+                    )) {
+                        return prev; // duplicate found
+                    }
+
+                    //{console.log('musafir')}
+                    return [...prev, {
+                        ...msg,
+                        chat: msg.chat,
+                        type: 'system',
+                        text: msg.content || msg.text,
+                        isSystem: msg.isSystem,
+                    }];
+                });
+
+                // Call this outside setMessages to avoid side effects in render
+                markMessagesAsRead(selectedChat._id);
+            }
+        };
+
+        socket.on('newMessage', handleNewMessage);
+        return () => {
+            socket.off('newMessage', handleNewMessage);
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket, selectedChat]);
+
+
 
     const onAddSystemMessage = (messageText) => {
         const systemMessage = {
             isSystem: true,
             content: messageText,
-            _id: Date.now(), // dummy unique ID
+            _id: `system-${Date.now()}`, // dummy unique ID
         };
-        setMessages((prev) => [...prev, systemMessage]);
+        //setMessages((prev) => [...prev, systemMessage]);
+        if (socket) {
+            socket.emit('send-message', systemMessage);
+        }
     };
 
     // Mark messages as read after viewed by the user & update badge immediately
@@ -148,7 +192,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat }) => {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("token")}`
+                    'auth-token': localStorage.getItem("token")
                 },
                 body: JSON.stringify({
                     permissions: { [permKey]: newValue }
@@ -201,35 +245,6 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat }) => {
         }
     }
 
-    useEffect(() => {
-        if (!socket || !selectedChat) return;
-
-        const handleNewSystemMessage = (msg) => {
-            console.log(msg)
-            if (msg?.chat?._id === selectedChat?._id) {
-                setMessages(prev => {
-                    if (prev.some(m => m._id === msg._id)) return prev;
-
-                    return [...prev, {
-                        ...msg,
-                        type:'system',
-                        text:msg.content,
-                        isSystem:true
-                    }];
-                });
-
-                // Call this outside setMessages to avoid side effects in render
-                markMessagesAsRead(selectedChat._id);
-            }
-        };
-
-        socket.on('newMessage', handleNewSystemMessage);
-        return () => {
-            socket.off('newMessage', handleNewSystemMessage);
-        };
-    }, [socket, selectedChat]);
-
-
     //remove from group
     const removeFromGroup = async (chatId, userIds) => {
         try {
@@ -255,13 +270,16 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat }) => {
             }
 
             // Append system message
-            if (data.populatedSystemMessage) {
+            console.log(data)
+            if (data?.populatedSystemMessage) {
                 const systemMessage = {
                     ...data,
                     content: data.populatedSystemMessage.content,
                     type: 'system', // handle this in MessageBox styling
                     createdAt: new Date().toISOString(),
-                    chat:data.populatedSystemMessage.chat
+                    chat: data.chat,
+                    isSystem: true,
+                    users: data.users
 
                 };
                 if (socket) {
@@ -301,14 +319,16 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat }) => {
                     }));
 
                     // Add system message to the messages state if applicable
+                    console.log(data)
                     if (data.populatedSystemMessage) {
                         const systemMessage = {
                             ...data,
                             content: data.populatedSystemMessage.content,
                             type: 'system', // handle this in MessageBox styling
                             createdAt: new Date().toISOString(),
-                            chat:data.populatedSystemMessage.chat,
-                            users:data.users
+                            chat: data.chat,
+                            users: data.users,
+                            isSystem: true
 
                         };
                         if (socket) {
@@ -371,9 +391,12 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat }) => {
             if (res.ok) {
                 setSelectedChat(null); // close the chat
 
-                //  Remove from UI immediately
+                // Remove from UI immediately
                 setLocalChatList(prev => prev.filter(chat => chat._id !== chatId));
                 setGroups(prev => prev.filter(group => group._id !== chatId));
+
+                // Refresh chat list from server
+                getConnections?.();
             }
         } catch (error) {
             console.error('Error deleting chat:', error);
@@ -632,6 +655,8 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat }) => {
                         markMessagesAsRead={(chatId) => { markMessagesAsRead(chatId) }}
                         handlePermissionChange={handlePermissionChange}
                         handleMakeAdmin={handleMakeAdmin}
+                        messages={messages}
+                        setMessages={setMessages}
                     />
                 </>
             )}

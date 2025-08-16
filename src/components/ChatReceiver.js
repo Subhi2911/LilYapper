@@ -50,7 +50,7 @@ const ChatReceiver = ({
           style={{ fontSize: '0.9rem' }}
           title={latestMessage}
         >
-          {latestMessage}
+          {latestMessage.slice(0,20)+'...'}
         </p>
 
         {/* Unread badge */}
