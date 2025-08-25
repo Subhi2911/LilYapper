@@ -18,6 +18,8 @@ export default function Avatar({
     .join('')
     .toUpperCase();
 
+    
+
   const background = theme === 'light' ? '#0B1D51' : '#F1E7E7';
   const color = theme === 'light' ? '#F1E7E7' : '#0B1D51';
   
@@ -35,7 +37,7 @@ export default function Avatar({
     alignItems: 'center',
     justifyContent: 'center',
     fontWeight: 'bold',
-    fontSize: `${size}px`,
+    fontSize: `${size/5}px`,
     cursor: 'pointer',
     userSelect: 'none',
     overflow: 'hidden',
@@ -48,9 +50,10 @@ export default function Avatar({
         : `1.5px solid ${borderColor}`,
   };
 
+
   return (
     <div style={containerStyle}>
-      {src ? (
+      {(src && src !== "" && src !== "undefined" && src !== "null") ? (
         <img
           src={src}
           alt="avatar"
@@ -62,6 +65,7 @@ export default function Avatar({
           }}
         />
       ) : (
+        // if no image, show initials
         initials
       )}
     </div>

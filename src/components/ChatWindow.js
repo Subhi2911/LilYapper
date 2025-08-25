@@ -12,6 +12,7 @@ import ChatInfo from './ChatInfo';
 import UserDetails from './UserDetails';
 import AddMembersModal from './AddMembersModal';
 import WallpaperSelectorModal from './WallpaperSelectorModal';
+import ChatWinPlaceholder from './ChatWinPlaceholder';
 
 const ChatWindow = ({
     selectedChat,
@@ -41,13 +42,15 @@ const ChatWindow = ({
     handleAddMembers,
     onAddSystemMessage,
     updateGroupLatestMessage,
+    updateChatLatestMessage,
     setGroups,
     setLocalChatList,
     markMessagesAsRead,
     handlePermissionChange,
     messages,
     setMessages,
-    getConnections
+    getConnections,
+
 }) => {
     const location = useLocation();
     const host = process.env.REACT_APP_BACKEND_URL;
@@ -65,6 +68,12 @@ const ChatWindow = ({
     // eslint-disable-next-line no-unused-vars
     const [showWallpaperModal, setShowWallpaperModal] = useState(false);
     const navigate = useNavigate();
+    // eslint-disable-next-line no-unused-vars
+    const [loading, setLoading] = useState(true);
+    const [showPlaceholder, setShowPlaceholder] = useState(false);
+
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
 
     const handleReply = (msg) => {
         setReplyTo(msg);
@@ -73,6 +82,35 @@ const ChatWindow = ({
     const cancelReply = () => {
         setReplyTo(null);
     };
+
+    const formatChatDate = (dateStr) => {
+        const date = new Date(dateStr);
+        const today = new Date();
+        const yesterday = new Date();
+        yesterday.setDate(today.getDate() - 1);
+
+        const isToday = date.toDateString() === today.toDateString();
+        const isYesterday = date.toDateString() === yesterday.toDateString();
+
+        if (isToday) return "Today";
+        if (isYesterday) return "Yesterday";
+
+        return date.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
+        });
+    };
+
+    const groupMessagesByDate = (messages) => {
+        return messages.reduce((groups, msg) => {
+            const dateKey = new Date(msg.createdAt).toDateString();
+            if (!groups[dateKey]) groups[dateKey] = [];
+            groups[dateKey].push(msg);
+            return groups;
+        }, {});
+    };
+
 
     useEffect(() => {
         console.log(selectedChat)
@@ -148,6 +186,49 @@ const ChatWindow = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedChat, isMobile]);
 
+    const handleScroll = async (e) => {
+        if (e.target.scrollBottom === 0 && hasMore) {
+            const nextPage = page + 1;
+            const older = await fetchMessages(selectedChat._id, nextPage);
+
+            if (older.length > 0) {
+                // 📌 Save current scroll position
+                const scrollHeightBefore = e.target.scrollHeight;
+
+                setMessages(prev => [...older, ...prev]);
+                setPage(nextPage);
+                setHasMore(older.length === 10);
+
+                // 📌 Restore scroll position so chat doesn't jump
+                setTimeout(() => {
+                    e.target.scrollTop = e.target.scrollHeight - scrollHeightBefore;
+                }, 0);
+            }
+        }
+    };
+
+
+    useEffect(() => {
+        const loadLatest = async () => {
+            setMessages([]);
+            setPage(1);
+            setHasMore(true);
+
+            const latest = await fetchMessages(selectedChat?._id, 1);
+            setMessages(latest);
+
+            // always scroll to bottom
+            setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+            }, 0);
+        };
+
+        if (selectedChat?._id) loadLatest();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedChat?._id]);
+
+
+
     useEffect(() => {
         const loadMessages = async () => {
             if (!selectedChat?._id || !currentUser?._id) {
@@ -155,8 +236,15 @@ const ChatWindow = ({
                 return;
             }
 
+            // Reset on new chat
+            setMessages([]);
+            setLoading(true);
+            setShowPlaceholder(true);
+
+            let timeoutId;
+
             try {
-                const fetchedMessages = await fetchMessages(selectedChat?._id);
+                const fetchedMessages = await fetchMessages(selectedChat?._id, 1);
 
                 const typedMessages = (fetchedMessages || []).map((msg) => ({
                     ...msg,
@@ -166,33 +254,48 @@ const ChatWindow = ({
                 }));
 
                 setMessages(typedMessages);
+
+                // ⏳ placeholder stays for 3s even after fetch
+                timeoutId = setTimeout(() => {
+                    setShowPlaceholder(false);
+                }, 3000);
+
             } catch (err) {
-                console.error('Error loading messages:', err);
+                console.error("Error loading messages:", err);
                 setMessages([]);
+                setShowPlaceholder(false); // remove immediately on error
+            } finally {
+                setLoading(false);
             }
+
+            // Cleanup in case chat changes before timeout finishes
+            return () => clearTimeout(timeoutId);
         };
 
         if (selectedChat?._id && currentUser?._id) {
             loadMessages();
         }
-
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedChat?._id, currentUser?._id, fetchMessages]);
 
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
-    }, [messages]);
+
+    // useEffect(() => {
+    //     messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    // }, [messages]);
 
     const selectedChatRef = useRef(selectedChat);
-    useEffect(() => {
-        selectedChatRef.current = selectedChat;
-    }, [selectedChat]);
+    // useEffect(() => {
+    //     selectedChatRef.current = selectedChat;
+    // }, [selectedChat]);
+
+
 
 
     useEffect(() => {
         if (!socket) return;
 
         const handleNewMessage = (msg) => {
+            setShowPlaceholder(false);
             const msgChatId = msg?.chat?._id || msg?.chatId;
             const currentSelectedChat = selectedChatRef.current;
 
@@ -235,23 +338,24 @@ const ChatWindow = ({
                 });
             } else {
                 setLocalChatList(prevChats => {
-                    const exists = prevChats.find(c => c._id === msgChatId);
+                    const exists = prevChats.find(c => c?._id === msgChatId);
                     if (exists) {
                         return prevChats.map(c =>
-                            c._id === msgChatId ? { ...c, latestMessage: msg } : c
+                            c?._id === msgChatId ? { ...c, latestMessage: msg } : c
                         );
                     } else {
                         fetchConnections().then(connections => {
-                            const newConn = connections.find(c => c._id === msgChatId);
+                            const newConn = connections.find(c => c?._id === msgChatId);
                             if (newConn) {
                                 setLocalChatList(prev => {
                                     if (!prev) prev = []; // make sure prev is an array
-                                    const exists = prev.some(c => c._id === newConn._id);
+                                    const exists = prev.some(c => c?._id === newConn._id);
                                     if (exists) return prev;
                                     return [newConn, ...prev]; // return new array
                                 });
                             }
                         });
+                        console.log(prevChats)
 
                         return prevChats;
                     }
@@ -314,6 +418,13 @@ const ChatWindow = ({
 
     useEffect(() => {
         if (selectedChat) fetchMessages(selectedChat._id);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedChat]);
+
+    useEffect(() => {
+        setMessages([]);     // Clear previous chat messages instantly
+        setLoading(true);    // Show ChatWinPlaceholder
+        fetchMessages(selectedChat?._id);  // API call
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedChat]);
 
@@ -385,6 +496,7 @@ const ChatWindow = ({
 
     const handleSend = async (newText) => {
         if (!newText.trim() || !selectedChat?._id) return;
+        setShowPlaceholder(false);
 
         try {
             const newMessage = await sendmessage(newText, selectedChat?._id, replyTo?._id || null);
@@ -406,7 +518,9 @@ const ChatWindow = ({
                 setReplyTo(null);
 
                 if (selectedChat?.isGroupChat && typeof updateGroupLatestMessage === 'function') {
-                    updateGroupLatestMessage(selectedChat?._id, typedMessage);
+                    updateGroupLatestMessage(selectedChat?._id, typedMessage, selectedChat?._id);
+                } else {
+                    updateChatLatestMessage(selectedChat?._id, typedMessage);
                 }
 
                 if (socket) {
@@ -478,13 +592,15 @@ const ChatWindow = ({
                         .filter(msg => msg?._id !== messageId)
                         .slice(-1)[0] || null;
 
-                    setSelectedChat(prevChat => ({
-                        ...prevChat,
-                        latestMessage: newLatestMessage,
-                    }));
+                    //     setSelectedChat(prevChat => ({
+                    //         ...prevChat,
+                    //         latestMessage: newLatestMessage,
+                    //     }));
 
                     if (typeof updateGroupLatestMessage === 'function') {
                         updateGroupLatestMessage(selectedChat?._id, newLatestMessage);
+                    } else {
+                        updateChatLatestMessage(selectedChat?._id, newLatestMessage)
                     }
 
                 }
@@ -516,6 +632,8 @@ const ChatWindow = ({
 
 
     if (loadingUser) return <Spinner />;
+
+
     if (!currentUser?._id) {
         return navigate("/login");
     }
@@ -554,19 +672,48 @@ const ChatWindow = ({
 
                         <div
                             className="flex-grow-1 overflow-auto hide-scrollbar w-100"
+                            onScroll={handleScroll}
                             style={{ padding: '1rem', height: 'calc(100vh - 180px)' }}
                         >
+                            {showPlaceholder ? (
+                                <ChatWinPlaceholder length={messages?.length} />
+                            ) : (
+                                <div style={{ padding: '1rem', borderRadius: '8px' }}>
+                                    {selectedChat?.isGroupChat ? (
+                                        <GroupMessageBox
+                                            messages={messages}
+                                            currentUser={currentUser}
+                                            onReply={handleReply}
+                                            onDeleteMessage={handleDeleteMessage}
+                                            onEditMessage={handleEditMessage}
+                                            setEditingMessageId={setEditingMessageId}
+                                            setEditingText={setEditingText}
+                                            selectedChat={selectedChat}
+                                            groupMessagesByDate={groupMessagesByDate}
+                                            formatChatDate={formatChatDate}
+                                        />
+                                    ) : (
+                                        <MessageBox
+                                            messages={messages}
+                                            currentUser={currentUser}
+                                            onReply={handleReply}
+                                            onDeleteMessage={handleDeleteMessage}
+                                            onEditMessage={handleEditMessage}
+                                            setEditingMessageId={setEditingMessageId}
+                                            setEditingText={setEditingText}
+                                            selectedChat={selectedChat}
+                                            onlineUsers={onlineUsers}
+                                            id={selectedChat.otherUserId}
+                                            groupMessagesByDate={groupMessagesByDate}
+                                            formatChatDate={formatChatDate}
+                                        />
+                                    )}
 
-                            <div style={{ padding: '1rem', borderRadius: '8px' }}>
-                                {selectedChat?.isGroupChat ? (
-                                    <GroupMessageBox messages={messages} currentUser={currentUser} onReply={handleReply} onDeleteMessage={handleDeleteMessage} onEditMessage={handleEditMessage} setEditingMessageId={setEditingMessageId} setEditingText={setEditingText} selectedChat={selectedChat} />
-                                ) : (
-                                    <MessageBox messages={messages} currentUser={currentUser} onReply={handleReply} onDeleteMessage={handleDeleteMessage} onEditMessage={handleEditMessage} setEditingMessageId={setEditingMessageId} setEditingText={setEditingText} selectedChat={selectedChat} onlineUsers={onlineUsers} id={selectedChat.otherUserId} />
-                                )}
-
-                                <div ref={messagesEndRef} />
-                            </div>
+                                    <div ref={messagesEndRef} />
+                                </div>
+                            )}
                         </div>
+
 
                         <div
                             className="px-3"
@@ -690,6 +837,8 @@ const ChatWindow = ({
                                                         setSelectedChat={setSelectedChat}
                                                         setMessages={setMessages}
                                                         setLocalChatList={setLocalChatList}
+                                                        setGroups={setGroups}
+
                                                     />
                                                     {showAddMembersModal && (
                                                         <AddMembersModal

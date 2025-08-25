@@ -19,6 +19,7 @@ const Login = (props) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        props.setProgress(30);
         const response = await fetch(`${host}/api/auth/login`, {
             method: "POST",
             headers: {
@@ -26,15 +27,18 @@ const Login = (props) => {
             },
             body: JSON.stringify({ email: credentials.email, password: credentials.password }),
         });
+        props.setProgress(50);
 
         const json = await response.json();
+        props.setProgress(70);
         if (json.success) {
             localStorage.setItem('token', json.authToken);
             localStorage.setItem('userId', json.user._id);
-            localStorage.setItem('user', JSON.stringify(json.user));  
-
+            localStorage.setItem('user', JSON.stringify(json.user));
+            props.showAlert("Logged in Successfully!! ","success" )
             navigate('/');
         }
+        props.setProgress(100);
     };
 
 
@@ -87,11 +91,16 @@ const Login = (props) => {
                     <button type="submit" className="btn btn-warning w-100">
                         Submit
                     </button>
+                    <div className="d-flex justify-content-center align-items-center mt-4" >
+                        <Link to='/profile/forgot-password' style={{ textDecoration: 'underline', color: 'blue' }}>Forgot Password</Link>
+                    </div>
 
                     <div className="d-flex justify-content-center align-items-center mt-4" style={{ color: 'black' }}>
                         <p className="mb-0 me-1">Don't have an account?</p>
-                        <Link to='/signup' className="text-primary text-decoration-underline">Signup</Link>
+                        <Link to='/signup' style={{ textDecoration: 'underline', color: 'blue' }}>Signup</Link>
                     </div>
+                    
+
                 </form>
             </div>
         </div>

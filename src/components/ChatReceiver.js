@@ -2,6 +2,7 @@ import React from 'react';
 import Avatar from './Avatar';
 import moment from 'moment';
 
+
 const ChatReceiver = ({
   avatar,
   name,
@@ -12,6 +13,8 @@ const ChatReceiver = ({
   lastMessageTime,
   sent,
   id,
+  selectedChat,
+  setSelectedChat
 }) => {
   let isOnline = false;
 
@@ -22,6 +25,7 @@ const ChatReceiver = ({
     <div className="p-2 border-bottom" >
       <div className="d-flex justify-content-between align-items-center mb-1" >
         <div className="d-flex align-items-center" >
+
           <Avatar
             src={avatar}
             width="2"
@@ -29,13 +33,17 @@ const ChatReceiver = ({
             size="12"
             isOnline={isOnline}
             isGroup={isGroup}
+            name={name}
           />
+          
+
           <p className="mb-0 ms-3 fw-semibold">{name}</p>
         </div>
 
         <div className="text-muted small text-nowrap">
           {lastMessageTime ? moment(lastMessageTime).format('h:mm A') : ''}
         </div>
+
       </div>
 
       <div className="d-flex justify-content-between align-items-center">
@@ -50,7 +58,7 @@ const ChatReceiver = ({
           style={{ fontSize: '0.9rem' }}
           title={latestMessage}
         >
-          {latestMessage.slice(0,20)+'...'}
+          {`${latestMessage.slice(0, 20)} ${latestMessage.length > 20 ? '...' : ''}`}
         </p>
 
         {/* Unread badge */}

@@ -5,7 +5,7 @@ import ChatWindow from './ChatWindow';
 import ChatContext from '../context/chats/ChatContext';
 import { useSocket } from '../context/chats/socket/SocketContext';
 
-const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections }) => {
+const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, setProgress}) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { fetchGroups } = useContext(ChatContext);
@@ -14,6 +14,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections })
     const host = process.env.REACT_APP_BACKEND_URL;
     const [inspectedUser, setInspectedUser] = useState(null);
     const currentUser = localStorage.getItem('userId');
+
     const socket = useSocket();
     // eslint-disable-next-line no-unused-vars
     const [showAddMembersModal, setShowAddMembersModal] = useState(false);
@@ -98,7 +99,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections })
         return () => {
             socket.off('newMessage', handleNewMessage);
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket, selectedChat]);
 
 
@@ -148,12 +149,12 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections })
     const handleSelectChat = (chat) => {
         setSelectedChat(chat);
         // Mark messages as read
-        markMessagesAsRead(chat._id);
+        markMessagesAsRead(chat?._id);
 
         // Update unreadCount to 0 locally for this chat
         setLocalChatList(prev =>
             prev.map(c =>
-                c._id === chat._id ? { ...c, unreadCount: 0 } : c
+                c?._id === chat?._id ? { ...c, unreadCount: 0 } : c
             )
         );
     };
@@ -162,6 +163,29 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections })
     const handleGroupCreated = (newGroup) => {
         setGroups(prev => [newGroup, ...prev]);
     };
+
+    const updateChatLatestMessage = (chatId, newMessage, selectedChatId) => {
+        //const isSender = newMessage.sender?._id === currentUser?._id;
+        const unreadIncrement = (chatId === newMessage.chat._id && newMessage.sender._id === currentUser) ? 0 : 1;
+        setLocalChatList(prevChats =>
+            prevChats.map(chat =>
+                chat._id === chatId
+                    ? {
+                        ...chat,
+                        latestMessage: {
+                            content: newMessage.content || newMessage.text || '',
+                            createdAt: newMessage.createdAt || new Date().toISOString(),
+                            sender: newMessage.sender || {},
+                        },
+                        unreadCount:(chat.unreadCount || 0) + unreadIncrement, // reset or keep as needed
+
+                    }
+                    : chat
+            )
+        );
+    };
+
+
 
     const updateGroupLatestMessage = (chatId, newMessage) => {
         console.log('d', newMessage)
@@ -206,11 +230,29 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections })
 
             const data = await res.json();
 
+            console.log(data);
+            if (data.populatedSystemMessage) {
+                const systemMessage = {
+                    ...data,
+                    content: data.populatedSystemMessage.content,
+                    type: 'system',
+                    createdAt: new Date().toISOString(),
+                    chat: data.chat,
+                    users: data.users,
+                    isSystem: true
+                };
+
+                if (socket) {
+                    socket.emit('send-message', systemMessage);
+                }
+            }
             // Update local chat object so UI reflects change instantly
             setSelectedChat((prev) => ({
                 ...prev,
                 permissions: data.permissions
             }));
+
+
 
         } catch (err) {
             console.error("Permission update error:", err);
@@ -630,6 +672,8 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections })
                         setGroups={setGroups}
                         setLocalChats={setLocalChatList}
                         updateGroupLatestMessage={updateGroupLatestMessage}
+                        setProgress={setProgress}
+
                     />
                     <ChatWindow
                         selectedChat={selectedChat}
@@ -657,6 +701,8 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections })
                         handleMakeAdmin={handleMakeAdmin}
                         messages={messages}
                         setMessages={setMessages}
+                        updateChatLatestMessage={updateChatLatestMessage}
+                        setProgress={setProgress}
                     />
                 </>
             )}

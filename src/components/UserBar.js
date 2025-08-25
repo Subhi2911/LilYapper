@@ -31,8 +31,9 @@ const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBord
                 backgroundColor: '#52357B',
                 paddingBottom: '0.25rem',  // add some padding bottom for space
                 flexDirection: 'column',    // stack children vertically
-                height: '56px',
-                cursor: 'pointer'
+                height: '60px',
+                cursor: 'pointer',
+                marginBottom:'1rem'
             }}
             onClick={handleClick}
         >
@@ -58,7 +59,7 @@ const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBord
                         textDecoration: 'none',
                     }}
                 >
-                    <Avatar src={avatar} width="2" height="2" size="12" isGroup={isGroup} isOnline={isOnline} />
+                    <Avatar src={avatar} width="2" height="2" size="12" isGroup={isGroup} isOnline={isOnline} name={name} />
 
                 </Link>
 

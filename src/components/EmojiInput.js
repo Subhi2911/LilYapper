@@ -140,7 +140,7 @@ const EmojiInput = ({
         onClick={sendMessage}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        disabled={isDisabled}
+        disabled={isDisabled || value?.length>500 || value?.length<=0}
         style={{
           backgroundColor: hovered ? '#3d4189' : '#5459AC',
           border: 'none',

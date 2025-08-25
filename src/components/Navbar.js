@@ -8,7 +8,7 @@ import NewGroupModal from './NewGroupModal';
 import NotificationBell from './NotificationBell';
 import OffCanvasNavbar from './OffCanvasNavbar';
 
-const Navbar = ({refreshGroups, onGroupCreated}) => {
+const Navbar = ({refreshGroups, onGroupCreated, setSelectedChat, setProgress}) => {
     const offcanvasLeftRef = useRef();
     const location = useLocation();
     //const token = localStorage.getItem('token');
@@ -95,11 +95,11 @@ const Navbar = ({refreshGroups, onGroupCreated}) => {
 
             {/* Thin Navbar on large and medium screens */}
             <div className="d-none d-md-block d-lg-flex flex-column align-items-center">
-                <VerticalThinNavbar />
+                <VerticalThinNavbar setProgress={setProgress}/>
             </div>
 
             {/* New Chat Modal */}
-            <NewChatModal isOpen={showModal} onClose={() => setShowModal(false)} />
+            <NewChatModal isOpen={showModal} onClose={() => setShowModal(false)} setSelectedChat={setSelectedChat}/>
             <NewGroupModal
                 isOpen={showGroupModal}
                 onClose={() => setShowGroupModal(false)}

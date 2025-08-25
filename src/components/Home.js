@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import ChatContext from '../context/chats/ChatContext';
 import NewChatModal from './NewChatModal';
 
-const Home = ({ selectedChat, setSelectedChat }) => {
+const Home = ({ selectedChat, setSelectedChat, setProgress }) => {
 	const navigate = useNavigate();
 	const token = localStorage.getItem('token');
 	const { fetchConnections } = useContext(ChatContext);
@@ -33,8 +33,8 @@ const Home = ({ selectedChat, setSelectedChat }) => {
 
 	return (
 		<div>
-			<ChatLayout chatList={chatList} selectedChat={selectedChat} setSelectedChat={setSelectedChat} getConnections={getConnections}/>
-			<NewChatModal />
+			<ChatLayout chatList={chatList} selectedChat={selectedChat} setSelectedChat={setSelectedChat} getConnections={getConnections} setProgress={setProgress} />
+			<NewChatModal setSelectedChat={setSelectedChat} setProgress={setProgress} />
 		</div>
 	);
 };

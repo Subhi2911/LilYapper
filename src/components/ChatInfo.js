@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Avatar from './Avatar';
 import { FaPencilAlt } from 'react-icons/fa';
 import { useSocket } from '../context/chats/socket/SocketContext';
+import GroupAvatarEditor from './GroupAvatarEditor';
 
 const ChatInfo = ({
     selectedChat,
@@ -15,7 +16,10 @@ const ChatInfo = ({
     handlePermissionChange,
     setSelectedChat,
     setMessages,
-    setLocalChatList
+    setLocalChatList,
+    selectedAvatar,
+    setSelectedAvatar,
+    setGroups
 }) => {
     const socket = useSocket();
     const { avatar, username, bio, date, isGroupChat, chatName, groupAdmin = [] } = selectedChat;
@@ -106,6 +110,17 @@ const ChatInfo = ({
         return 0;
     });
 
+    const formatName = (str) => {
+        console.log(str)
+        return str
+            // Insert space before capital letters
+            .replace(/([A-Z])/g, ' $1')
+            // Trim leading/trailing spaces
+            .trim()
+            // Capitalize first letter of each word
+            .replace(/\b\w/g, char => char.toUpperCase());
+    }
+
     if (!selectedChat) return null;
 
 
@@ -120,7 +135,17 @@ const ChatInfo = ({
             </button>
 
             <div className="d-flex flex-column align-items-center mb-4">
-                <Avatar src={avatar} size={120} isGroup={isGroupChat} isOnline={isOnline} />
+
+                {!isGroupChat && <Avatar src={avatar} size={120} isGroup={isGroupChat} isOnline={isOnline} name={username} />}
+                {isGroupChat && <GroupAvatarEditor selectedChat={selectedChat} isOnline={isOnline} setSelectedChat={setSelectedChat} showCamera={true} selectedAvatar={selectedAvatar} onAvatarChange={(newAvatar) => {
+                    // Update the sidebar immediately
+                    setGroups(prev =>
+                        prev.map(g =>
+                            g._id === selectedChat._id ? { ...g, avatar: newAvatar } : g
+                        )
+                    );
+                }} setSelectedAvatar={setSelectedAvatar} />}
+
                 <h3 className="mt-3 text-center d-flex align-items-center justify-content-center gap-2">
                     {editingName ? (
                         <>
@@ -132,14 +157,14 @@ const ChatInfo = ({
                                     className="form-control form-control-sm"
                                     disabled={renamingLoading}
                                 />
-                                <div style={{ fontSize: '1rem', color: 'black' }}>
+                                <div style={{ fontSize: '1rem', color: (newGroupName?.length < 3 || newGroupName?.length > 30) ? 'red' : 'black' }}>
                                     {newGroupName.length}/30
                                 </div>
                             </div>
                             <button
                                 className="btn btn-sm btn-primary"
                                 onClick={handleRenameGroup}
-                                disabled={newGroupName < 3 || newGroupName > 30 || renamingLoading}
+                                disabled={renamingLoading || newGroupName?.length < 3 || newGroupName?.length > 30}
                             >
                                 Save
                             </button>
@@ -179,9 +204,9 @@ const ChatInfo = ({
                         {isAdmin && (
                             <div className="mt-3">
                                 <h5>Group Permissions</h5>
-                                {Object.keys(selectedChat.permissions || {}).map((permKey) => (
+                                {Object.keys((selectedChat.permissions) || {}).map((permKey) => (
                                     <div key={permKey} className="mb-2">
-                                        <label className="form-label">{permKey}</label>
+                                        <label className="form-label">{formatName(permKey)}</label>
                                         <select
                                             className="form-select"
                                             value={selectedChat.permissions[permKey]}
@@ -204,7 +229,7 @@ const ChatInfo = ({
                                 {groupAdmin.length > 0 ? (
                                     groupAdmin.map(admin => (
                                         <div key={admin._id} className="d-flex flex-column align-items-center gap-2">
-                                            <Avatar src={admin.avatar} width="4" height="4" size="14" isGroup={false} isOnline={onlineUsers?.has?.(admin._id) ?? false} />
+                                            <Avatar src={admin.avatar} width="4" height="4" size="14" isGroup={false} isOnline={onlineUsers?.has?.(admin._id) ?? false} name={admin?.username} />
                                             <span>{admin.username}</span>
                                         </div>
                                     ))
@@ -244,12 +269,13 @@ const ChatInfo = ({
                                         onClick={() => setInspectedUser(u)}
                                     >
                                         <Avatar
-                                            src={u.avatar}
+                                            src={u?.avatar}
                                             width="4"
                                             height="4"
                                             size="14"
                                             isGroup={false}
                                             isOnline={onlineUsers?.has?.(u._id) ?? false}
+                                            name={u?.username}
                                         />
                                         <span>
                                             {u.username}

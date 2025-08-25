@@ -11,7 +11,7 @@ const UserDetails = ({ user, currentUser, groupAdmin, onMakeAdmin, onRemove, onC
         <div className="p-3 text-white" style={{ borderLeft: '1px solid #ccc', height: '100%' }}>
             <button className="btn btn-light mb-3" onClick={onClose}>← Back</button>
             <div className="d-flex flex-column align-items-center">
-                <Avatar src={user.avatar} size={100} isGroup={false} />
+                <Avatar src={user.avatar} size={100} isGroup={false} name={user?.username} />
                 <h5 className="mt-2">{user.username}</h5>
                 <p className="text-muted text-center">{user.bio || "No bio"}</p>
             </div>

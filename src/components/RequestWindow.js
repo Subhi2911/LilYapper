@@ -50,7 +50,7 @@ const RequestWindow = ({
             {selectedUser ? (
                 <>
                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
-                        <Avatar src={selectedUser.avatar} height="6" width="6" />
+                        <Avatar src={selectedUser.avatar} height="6" width="6" name={selectedUser?.username} />
                     </div>
 
                     <div style={{ marginBottom: '0.5rem' }}>

@@ -70,7 +70,7 @@ const ChatState = (props) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-  
+
 
     // Create new chat
     const createChat = async (userId) => {
@@ -86,9 +86,9 @@ const ChatState = (props) => {
             const chat = await response.json();
 
             setChats((prev) => {
-                const exists = prev.some((c) => c._id === chat._id);
+                const exists = prev.some((c) => c?._id === chat?._id);
                 if (exists) {
-                    return prev.map((c) => (c._id === chat._id ? chat : c));
+                    return prev.map((c) => (c?._id === chat?._id ? chat : c));
                 } else {
                     return [...prev, chat];
                 }
@@ -176,46 +176,30 @@ const ChatState = (props) => {
     };
 
     //Fetch messages
-    const fetchMessages = async (chatId) => {
-        console.log("Calling fetchMessages with chatId:", chatId); //
+    const fetchMessages = async (chatId, page = 1, limit = 10) => {
         try {
-            const response = await fetch(`${host}/api/message/${chatId}`, {
-                method: "GET",
-                headers: {
-                    'auth-token': localStorage.getItem('token')
-                }
-            });
+            if(!chatId) return;
+            const response = await fetch(
+                `${host}/api/message/${chatId}?page=${page}&limit=${limit}`,
+                { headers: { "auth-token": localStorage.getItem("token") } }
+            );
 
             const data = await response.json();
-            const currentUserId = localStorage.getItem('userId');
+            const currentUserId = localStorage.getItem("userId");
 
-
-            const formattedMessages = data.map(msg => {
-                if (!msg.sender) {
-                    return {
-                        ...msg,
-                        type: 'system',
-                        text: msg.content,
-                        replyTo: msg.replyTo,
-                    };
-                }
-
-                return {
-                    ...msg,
-                    type: msg.sender._id === currentUserId ? 'sent' : 'received',
-                    text: msg.content,
-                };
-            });
-
-
-            console.log("formatted", formattedMessages)
-            return formattedMessages;
-
+            return data.map(msg => ({
+                ...msg,
+                type: !msg.sender
+                    ? "system"
+                    : msg.sender._id === currentUserId ? "sent" : "received",
+                text: msg.content,
+            }));
         } catch (error) {
             console.error("Error fetching messages:", error);
             return [];
         }
     };
+
 
     //Send a new msg
     const sendmessage = async (content, chatId, replyToId = null) => {

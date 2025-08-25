@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import RequestSidebar from './RequestSidebar';
 import RequestWindow from './RequestWindow';
 
-const Requests = () => {
+const Requests = (props) => {
   const host = process.env.REACT_APP_BACKEND_URL;
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -135,7 +135,11 @@ const Requests = () => {
   };
 
   const handleSkip = () => {
-    navigate('/');
+    props.setProgress(30);
+    setTimeout(() => {
+      navigate('/');
+      props.setProgress(100);
+    }, 300);
   };
 
   return (

@@ -108,7 +108,7 @@ const ThreeDotChatMenu = ({
             </>
           ) : (
             <>
-            {isAdmin && <li
+            {(isAdmin || selectedChat.permissions.rename==='all') && <li
                 onClick={() => { setOpen(false); setShowWallpaperModal(true) }}
                 style={menuItemStyle}
                 tabIndex={0}

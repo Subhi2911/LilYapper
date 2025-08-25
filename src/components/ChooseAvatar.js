@@ -17,7 +17,7 @@ const avatarList = [
     '/avatars/rude.png',
 ];
 
-const ChooseAvatar = ({ onAvatarSelect, userAvatar }) => {
+const ChooseAvatar = ({ onAvatarSelect, userAvatar, setProgress }) => {
     const host = process.env.REACT_APP_BACKEND_URL;
     const token = localStorage.getItem('token');
     const navigate = useNavigate();
@@ -43,7 +43,12 @@ const ChooseAvatar = ({ onAvatarSelect, userAvatar }) => {
     }, []);
 
     const handleNext = () => {
-        navigate('/requests');
+        setProgress(30);
+        setTimeout(() => {
+            navigate('/requests');
+            setProgress(100);
+        }, 300);
+        
     };
 
     const editAvatar = async (avatar) => {

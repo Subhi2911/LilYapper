@@ -12,13 +12,13 @@ const AcceptRequest= ({
     setSelectedChat,
 }) => {
     //const navigate = useNavigate();
-    const requestUsers = users.filter(user => receivedRequests.includes(user._id));
+    const requestUsers = users?.filter(user => receivedRequests?.includes(user?._id));
 
     const handleClick = (user) => {
-        console.log('User clicked:', user);
+        console?.log('User clicked:', user);
         setSelectedUser(user);
         if (isMobile && setSelectedChat) {
-            console.log('Setting selected chat on mobile', user);
+            console?.log('Setting selected chat on mobile', user);
             setSelectedChat(user);
         }
     };
@@ -39,13 +39,13 @@ const AcceptRequest= ({
         >
             <h3 className="text-white mb-3">Incoming Friend Requests</h3>
 
-            {requestUsers.length === 0 ? (
+            {requestUsers?.length === 0 ? (
                 <p className="text-white">No pending requests</p>
             ) : (
                 <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
-                    {requestUsers.map((user) => (
+                    {requestUsers?.map((user) => (
                         <li
-                            key={user._id}
+                            key={user?._id}
                             onClick={() => handleClick(user)}
                             style={{
                                 padding: '0.75rem',
@@ -58,8 +58,8 @@ const AcceptRequest= ({
 
                         >
                             <div className="d-flex align-items-center gap-3 mb-2">
-                                <Avatar src={user.avatar} height="2" width="2" />
-                                <strong>{user.username}</strong>
+                                <Avatar src={user?.avatar} height="2" width="2" name={user?.username}/>
+                                <strong>{user?.username}</strong>
                             </div>
                             <div
                                 style={{
@@ -72,13 +72,13 @@ const AcceptRequest= ({
                                     fontSize: '0.85rem'
                                 }}
                             >
-                                <small>{user.bio || 'No bio provided'}</small>
+                                <small>{user?.bio || 'No bio provided'}</small>
                             </div>
                             <div className="d-flex justify-content-around">
                                 <button
                                     className="btn btn-success px-3"
                                     onClick={(e) => {
-                                        e.stopPropagation();
+                                        e?.stopPropagation();
                                         handleAccept(user);
                                     }}
                                 >
@@ -87,7 +87,7 @@ const AcceptRequest= ({
                                 <button
                                     className="btn btn-danger px-3"
                                     onClick={(e) => {
-                                        e.stopPropagation();
+                                        e?.stopPropagation();
                                         handleReject(user);
                                     }}
                                 >

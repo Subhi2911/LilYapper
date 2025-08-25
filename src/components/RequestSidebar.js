@@ -101,7 +101,7 @@ const RequestSidebar = ({
                     onClick={() => setSelectedUser(user)}
                   >
                     <div className='d-flex gap-3 my-2 align-items-center'>
-                      <Avatar src={user.avatar} height='2' width='2' />
+                      <Avatar src={user.avatar} height='2' width='2' name={user?.username} />
                       <strong>{user.username}</strong>
                     </div>
                     <div className='d-flex justify-content-around'>

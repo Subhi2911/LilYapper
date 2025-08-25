@@ -18,9 +18,10 @@ const Signup = (props) => {
     };
 
     const handleSubmit = async (e) => {
+        
         e.preventDefault();
         if (credentials.password !== credentials.cpassword) return;
-
+        props.setProgress(30);
         try {
             const response = await fetch(`${host}/api/auth/register`, {
                 method: "POST",
@@ -31,9 +32,10 @@ const Signup = (props) => {
                     password: credentials.password
                 }),
             });
+            props.setProgress(50);
             let json = {};
             const text = await response.text();
-            
+            props.setProgress(70);
             try { json = JSON.parse(text); } catch { }
 
             if (response.ok && json.success) {
@@ -42,8 +44,9 @@ const Signup = (props) => {
                 localStorage.setItem('userId', json.user._id);
                 localStorage.setItem('user', JSON.stringify(json.user)); 
                 navigate("/chooseavatar");
-                //props.showAlert("Account Created Successfully!", "success");
+                props.showAlert("Account Created Successfully!", "success");
             }
+            props.setProgress(100);
         } catch (err) {
             console.error("Network error:", err);
         }

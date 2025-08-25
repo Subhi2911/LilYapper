@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import ChatContext from '../context/chats/ChatContext';
 import LoginBg from '../images/LoginBg.png';
 
-const NewChatModal = ({ isOpen, onClose }) => {
+const NewChatModal = ({ isOpen, onClose, setSelectedChat }) => {
     const host = process.env.REACT_APP_BACKEND_URL;
     const { createChat } = useContext(ChatContext);
     const [friends, setFriends] = useState([]);
@@ -30,9 +30,16 @@ const NewChatModal = ({ isOpen, onClose }) => {
     }, [isOpen, host]);
 
     const handleCreateChat = async (friendId) => {
-        console.log(friendId)
-        await createChat(friendId);
-        onClose();  // close modal after chat created
+        try {
+            const chat = await createChat(friendId); // returns chat from backend
+            if (chat) {
+                console.log(chat)
+                setSelectedChat(chat); 
+                onClose();
+            }
+        } catch (error) {
+            console.error("Error creating chat:", error);
+        }
     };
 
     if (!isOpen) return null;
@@ -46,7 +53,7 @@ const NewChatModal = ({ isOpen, onClose }) => {
                         backgroundSize: 'cover',
                         backgroundPosition: 'center'
                     }}>
-                        <h5 className="modal-title" style={{color:'white'}}>Start a New Chat</h5>
+                        <h5 className="modal-title" style={{ color: 'white' }}>Start a New Chat</h5>
                         <button
                             type="button"
                             className="btn-close"
@@ -66,14 +73,14 @@ const NewChatModal = ({ isOpen, onClose }) => {
                         ) : (
                             <div className="row">
                                 {friends.map((friend) => (
-                                    <div className="col-md-6 mb-3" key={friend._id}>
+                                    <div className="col-md-6 mb-3" key={friend?._id}>
                                         <div className="card p-3 shadow-sm">
-                                            <h5>{friend.username}</h5>
-                                            <p className="text-muted">{friend.bio}</p>
+                                            <h5>{friend?.username}</h5>
+                                            <p className="text-muted">{friend?.bio}</p>
                                             <button
                                                 className="btn btn-warning mt-2"
                                                 onClick={() => handleCreateChat(friend._id)}
-                                                
+
                                             >
                                                 Create Chat
                                             </button>

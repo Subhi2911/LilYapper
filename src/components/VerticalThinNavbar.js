@@ -2,11 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Avatar from "./Avatar";
 
-export default function VerticalThinNavbar() {
+export default function VerticalThinNavbar(props) {
     const location = useLocation();
     const token = localStorage.getItem('token');
-    const host=process.env.REACT_APP_BACKEND_URL
-    
+    const host = process.env.REACT_APP_BACKEND_URL
+
     const links = [
         { to: "/", icon: <i className="fa-solid fa-message"></i>, label: "Home" },
         { to: "/groups", icon: <i className="fa-solid fa-user-group"></i>, label: "Groups" },
@@ -14,13 +14,13 @@ export default function VerticalThinNavbar() {
         { to: "/friends", icon: <i className="fa-solid fa-handshake"></i>, label: "Friends" }
     ];
 
-     const [user, setUser] = useState({ 
-            avatar:'',
-            username: '',
-            bio: '',
-            dateOfJoining: ''
-        });
-    useEffect(()=>{
+    const [user, setUser] = useState({
+        avatar: '',
+        username: '',
+        bio: '',
+        dateOfJoining: ''
+    });
+    useEffect(() => {
         const fetchUser = async () => {
             try {
                 const res = await fetch(`${host}/api/auth/getuser`, {
@@ -30,11 +30,11 @@ export default function VerticalThinNavbar() {
                         'auth-token': localStorage.getItem('token')
                     }
                 });
-                
+
                 const data = await res.json();
-               
+
                 setUser({
-                    avatar:data.user.avatar,
+                    avatar: data.user.avatar || "/avatars/laughing.png",
                     username: data.user.username,
                     bio: data.user.bio,
                     dateOfJoining: data.user.date
@@ -45,15 +45,23 @@ export default function VerticalThinNavbar() {
                         })
                         : 'N/A'
                 });
-                
+
             } catch (error) {
                 console.error('Failed to fetch user:', error);
             }
         };
 
         fetchUser();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    },[])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
+    // useEffect(() => {
+    //     if (props.setProgress) {
+    //         props.setProgress(30);
+    //         setTimeout(() => props.setProgress(100), 300); // complete after a short delay
+    //     }
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, [location?.pathname]);
 
     if (!token) {
         links.push({
@@ -114,6 +122,12 @@ export default function VerticalThinNavbar() {
                             justifyContent: "center",
                             width: "100%",
                         }}
+                        onClick={() => {
+                            if (props.setProgress) {
+                                props.setProgress(30);
+                                setTimeout(() => props.setProgress(100), 300);
+                            }
+                        }}
                     >
                         {icon}
                     </Link>
@@ -146,7 +160,7 @@ export default function VerticalThinNavbar() {
                     textDecoration: "none",
                 }}
             >
-                <Avatar src={user.avatar} width="2" height="2" size="12" hideBorder={true}/>
+                <Avatar src={user.avatar} width="2" height="2" size="12" hideBorder={true} name={user?.username} />
             </Link>
         </nav>
     );
