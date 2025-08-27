@@ -36,9 +36,10 @@ const Login = (props) => {
             localStorage.setItem('userId', json.user._id);
             localStorage.setItem('user', JSON.stringify(json.user));
             props.showAlert("Logged in Successfully!! ","success" )
+            props.setProgress(100);
             navigate('/');
         }
-        props.setProgress(100);
+        
     };
 
 
