@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import Avatar from './Avatar';
 import ThreeDotChatMenu from './ThreeDotChatMenu';
 
-const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBorder, selectedChat, onDeleteChat, setShowChatInfo, onRemoveFriend, setInspectedUser, setShowWallpaperModal, }) => {
+const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBorder, selectedChat, onDeleteChat, setShowChatInfo, onRemoveFriend, setInspectedUser, setShowWallpaperModal, userStatus }) => {
     let isOnline = false;
 
     if (!isGroup && selectedChat?.otherUserId) {
@@ -15,6 +15,7 @@ const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBord
 
 
     const location = useLocation();
+
     //const navigate= useNavigate()
     const handleClick = () => {
         if (typeof setShowChatInfo === 'function') {
@@ -33,7 +34,7 @@ const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBord
                 flexDirection: 'column',    // stack children vertically
                 height: '60px',
                 cursor: 'pointer',
-                marginBottom:'1rem'
+                marginBottom: '1rem'
             }}
             onClick={handleClick}
         >

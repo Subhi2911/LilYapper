@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SidebarNavbar from './Sidebarnavbar';
 
-const ForgotPassword = () => {
+const ForgotPassword = ({ showAlert }) => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1); // 1: enter email, 2: verify OTP, 3: set new password
     const [email, setEmail] = useState('');
@@ -15,7 +15,7 @@ const ForgotPassword = () => {
 
     // Step 1: Send reset email
     const handleSendEmail = async () => {
-        if (!email) return alert("Enter your email");
+        if (!email) return showAlert("Enter your email", "warning");
         setLoading(true);
         try {
             const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/forgot-password`, {
@@ -25,14 +25,13 @@ const ForgotPassword = () => {
             });
             const data = await res.json();
             if (res.ok) {
-                alert(data.message || "OTP sent to your email");
+                showAlert(data.message || "OTP sent to your email", "warning");
                 setStep(2);
-            } else {
-                alert(data.error || "Failed to send OTP");
             }
+
         } catch (err) {
             console.error(err);
-            alert("Something went wrong");
+            showAlert("Something went wrong", "danger");
         } finally {
             setLoading(false);
         }
@@ -40,7 +39,7 @@ const ForgotPassword = () => {
 
     // Step 2: Verify OTP
     const handleVerifyOtp = async () => {
-        if (!otp) return alert("Enter OTP");
+        if (!otp) return showAlert("Enter OTP", "warning");
         setLoading(true);
         try {
             const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/verify-otp`, {
@@ -50,14 +49,14 @@ const ForgotPassword = () => {
             });
             const data = await res.json();
             if (res.ok) {
-                alert("OTP verified! Set your new password");
+                showAlert("OTP verified! Set your new password", "success");
                 setStep(3);
             } else {
-                alert(data.error || "Invalid OTP");
+                showAlert(data.error || "Invalid OTP", "danger");
             }
         } catch (err) {
             console.error(err);
-            alert("Something went wrong");
+            showAlert("Something went wrong", "danger");
         } finally {
             setLoading(false);
         }
@@ -65,8 +64,8 @@ const ForgotPassword = () => {
 
     // Step 3: Set new password
     const handleSetNewPassword = async () => {
-        if (!newPassword || !confirmPassword) return alert("Fill all fields");
-        if (newPassword !== confirmPassword) return alert("Passwords do not match");
+        if (!newPassword || !confirmPassword) return showAlert("Fill all fields", "warning");
+        if (newPassword !== confirmPassword) return showAlert("Passwords do not match", "warning");
         setLoading(true);
         try {
             const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/reset-password`, {
@@ -76,14 +75,14 @@ const ForgotPassword = () => {
             });
             const data = await res.json();
             if (res.ok) {
-                alert("Password changed successfully!");
+                showAlert("Password changed successfully!", "success");
                 navigate('/login');
             } else {
-                alert(data.error || "Failed to reset password");
+                showAlert(data.error || "Failed to reset password", "danger");
             }
         } catch (err) {
             console.error(err);
-            alert("Something went wrong");
+            showAlert("Something went wrong", "danger");
         } finally {
             setLoading(false);
         }

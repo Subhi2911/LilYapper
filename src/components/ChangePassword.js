@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import SidebarNavbar from "./Sidebarnavbar";
 
-const ChangePassword = () => {
+const ChangePassword = ({showAlert}) => {
     const navigate = useNavigate();
     const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
@@ -21,7 +21,7 @@ const ChangePassword = () => {
 
         setLoading(true);
         try {
-            const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/user/change-password`, {
+            const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/change-password`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -39,11 +39,13 @@ const ChangePassword = () => {
             } else {
                 setMessage(data.error || "Failed to change password.");
             }
+             showAlert(data?.message, data?.success?"success":"danger")
         } catch (err) {
             console.error(err);
             setMessage("Server error. Try again later.");
         } finally {
             setLoading(false);
+           
         }
     };
 

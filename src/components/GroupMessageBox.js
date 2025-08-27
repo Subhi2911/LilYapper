@@ -12,7 +12,7 @@ const generateColor = (username = '') => {
     return `hsl(${hue}, 65%, 55%)`;
 };
 
-const GroupMessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage, onEditMessage, setEditingMessageId, setEditingText, selectedChat, groupMessagesByDate, formatChatDate }) => {
+const GroupMessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage, onEditMessage, setEditingMessageId, setEditingText, selectedChat, groupMessagesByDate, formatChatDate, hasMore, observerRefs }) => {
     const groupedMessages = groupMessagesByDate(messages);
 
     const receiverbubble = selectedChat?.wallpaper?.receiverbubble || 'white';
@@ -24,14 +24,21 @@ const GroupMessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage,
 
     return (
         <div className="d-flex flex-column gap-2">
-            {Object.entries(groupedMessages).map(([dateKey, msgs]) => (
-                <div key={dateKey}>
-                    <div className="text-center my-3  text-sm" style={{ color: systemMesColor }}>
-                        {formatChatDate(msgs[0].createdAt)}
+            {groupedMessages.map((group, idx) => (
+                <div 
+                key={idx}
+                data-date={group.date} // always set this
+                    ref={(el) => {
+                        if (el) observerRefs.current[group.date] = el;
+                        else delete observerRefs.current[group.date]; // cleanup
+                    }}>
+                    <div className="text-center my-3 text-sm" style={{ color: systemMesColor }}>
+                        {!hasMore || idx > 0 ? formatChatDate(group.date) : ""}
+
                     </div>
 
-                    {console.log(messages)}
-                    {messages.map((msg, index) => {
+                    {console.log(messages, groupedMessages)}
+                    {group?.messages?.map((msg, index) => {
                         const isSystem = msg.isSystem;
                         const isCurrentUser = msg.sender?._id === currentUser?._id;
                         const nameColor = generateColor(msg.sender?.username);
@@ -173,7 +180,26 @@ const GroupMessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage,
                                     </div>
                                 </div>
 
-                                {isCurrentUser && (
+                                {isCurrentUser ? (
+                                    msg.status === "sending" ? (
+                                        <div style={{ color: iColor }}>
+                                            <i className="fa-solid fa-paper-plane"></i>
+                                        </div>
+                                    ) : msg.status === 'failed' ? (
+                                        <div style={{ color: "red" }}>
+                                            <i className="fa-solid fa-circle-exclamation"></i>
+                                        </div>
+                                    ) : (<Avatar
+                                        src={msg.sender?.avatar || '/avatars/laughing.png'}
+                                        width="2"
+                                        height="2"
+                                        className="ms-2"
+                                        hideBorder={true}
+
+                                    />
+                                    )
+                                ) : (
+
                                     <Avatar
                                         src={msg.sender?.avatar || '/avatars/laughing.png'}
                                         width="2"
@@ -181,7 +207,8 @@ const GroupMessageBox = ({ messages = [], currentUser, onReply, onDeleteMessage,
                                         className="ms-2"
                                         hideBorder={true}
                                     />
-                                )}
+                                )
+                                }
                             </div>
                         );
                     })}

@@ -4,18 +4,20 @@ import { useSocket } from '../context/chats/socket/SocketContext';
 
 
 const wallpapers = [
-    { name: "ChatBg", url: '/wallpapers/ChatBg.png', senderbubble: '#52357B', receiverbubble: 'white', rMesColor:'black', sMesColor:'white', systemMesColor:' white' , iColor:'white' },
-    { name: "Blank", url: '/wallpapers/Blank.jpg', senderbubble: '#86275e', receiverbubble: 'black', rMesColor:'white', sMesColor:'white', systemMesColor:' black', iColor:'black'  },
-    { name: "ColoredSky", url: '/wallpapers/ColoredSky.jpg', senderbubble: '#52357B', receiverbubble: 'white' , rMesColor:'black', sMesColor:'white', systemMesColor:' white' , iColor:'white' },
-    { name: "DancingCat", url: '/wallpapers/DancingCat.jpg', senderbubble: '#52357B', receiverbubble: 'black' , rMesColor:'white', sMesColor:'white', systemMesColor:' black' , iColor:'black' },
-    { name: "IceAndCoffee", url: '/wallpapers/IceAndCoffee.jpg', senderbubble: '#52357B', receiverbubble: 'black' , rMesColor:'white', sMesColor:'white', systemMesColor:' black' , iColor:'black' },
-    { name: "LittleCat", url: '/wallpapers/LittleCat.jpg', senderbubble: '#52357B', receiverbubble: 'black' , rMesColor:'white', sMesColor:'white', systemMesColor:' black' , iColor:'black' },
-    { name: "InternetDark", url: '/wallpapers/InternetDark.jpg', senderbubble: '#5459AC', receiverbubble: 'white' , rMesColor:'black', sMesColor:'white', systemMesColor:' white' , iColor:'white' },
-    { name: "LittlePlushie", url: '/wallpapers/LittlePlushie.jpg', senderbubble: '#471396', receiverbubble: 'white' , rMesColor:'black', sMesColor:'white', systemMesColor:' white' , iColor:'white' },
-    { name: "Love1", url: '/wallpapers/Love1.jpg', senderbubble: '#D50B8B', receiverbubble: 'white' , rMesColor:'black', sMesColor:'white', systemMesColor:' white' , iColor:'white' },
-    { name: "Love2", url: '/wallpapers/Love2.jpg', senderbubble: '#D50B8B', receiverbubble: 'white' , rMesColor:'black', sMesColor:'white', systemMesColor:' white' , iColor:'white' },
-    { name: "Potato", url: '/wallpapers/Potato.jpg', senderbubble: '#FFDE63', receiverbubble: 'black' , rMesColor:'white', sMesColor:'black', systemMesColor:' black' , iColor:'black' },
-    { name: "TomAndJerry", url: '/wallpapers/TomAndJerry.jpg', senderbubble: '#FFDE63', receiverbubble: 'white' , rMesColor:'black', sMesColor:'black', systemMesColor:' white' , iColor:'white' },
+    { name: "ChatBg", url: '/wallpapers/ChatBg.png', senderbubble: '#52357B', receiverbubble: 'white', rMesColor: 'black', sMesColor: 'white', systemMesColor: ' white', iColor: 'white' },
+    { name: "Blank", url: '/wallpapers/Blank.jpg', senderbubble: '#86275e', receiverbubble: 'black', rMesColor: 'white', sMesColor: 'white', systemMesColor: ' black', iColor: 'black' },
+    { name: "ColoredSky", url: '/wallpapers/ColoredSky.jpg', senderbubble: '#52357B', receiverbubble: 'white', rMesColor: 'black', sMesColor: 'white', systemMesColor: ' white', iColor: 'white' },
+    { name: "DancingCat", url: '/wallpapers/DancingCat.jpg', senderbubble: '#52357B', receiverbubble: 'black', rMesColor: 'white', sMesColor: 'white', systemMesColor: ' black', iColor: 'black' },
+    { name: "IceAndCoffee", url: '/wallpapers/IceAndCoffee.jpg', senderbubble: '#52357B', receiverbubble: 'black', rMesColor: 'white', sMesColor: 'white', systemMesColor: ' black', iColor: 'black' },
+    { name: "LittleCat", url: '/wallpapers/LittleCat.jpg', senderbubble: '#52357B', receiverbubble: 'black', rMesColor: 'white', sMesColor: 'white', systemMesColor: ' black', iColor: 'black' },
+    { name: "InternetDark", url: '/wallpapers/InternetDark.jpg', senderbubble: '#5459AC', receiverbubble: 'white', rMesColor: 'black', sMesColor: 'white', systemMesColor: ' white', iColor: 'white' },
+    { name: "LittlePlushie", url: '/wallpapers/LittlePlushie.jpg', senderbubble: '#471396', receiverbubble: 'white', rMesColor: 'black', sMesColor: 'white', systemMesColor: ' white', iColor: 'white' },
+    { name: "Love1", url: '/wallpapers/Love1.jpg', senderbubble: '#D50B8B', receiverbubble: 'white', rMesColor: 'black', sMesColor: 'white', systemMesColor: 'white', iColor: 'white' },
+    { name: "love2", url: '/wallpapers/love2.jpg', senderbubble: '#D50B8B', receiverbubble: 'white', rMesColor: 'black', sMesColor: 'white', systemMesColor: 'white', iColor: 'white' },
+    { name: "Potato", url: '/wallpapers/Potato.jpg', senderbubble: '#FFDE63', receiverbubble: 'black', rMesColor: 'white', sMesColor: 'black', systemMesColor: 'black', iColor: 'black' },
+    { name: "TomAndJerry", url: '/wallpapers/TomAndJerry.jpg', senderbubble: '#FFDE63', receiverbubble: 'white', rMesColor: 'black', sMesColor: 'black', systemMesColor: 'white', iColor: 'white' },
+    { name: "Dead", url: '/wallpapers/Dead.jpg', senderbubble: '#386641', receiverbubble: 'white', rMesColor: 'black', sMesColor: 'white', systemMesColor: 'white', iColor: 'white' },
+    { name: "Sleepy", url: '/wallpapers/Sleepy.jpg', senderbubble: '#471396', receiverbubble: 'black', rMesColor: 'white', sMesColor: 'white', systemMesColor: 'black', iColor: 'black' },
 ];
 
 
@@ -40,7 +42,7 @@ const WallpaperSelectorModal = ({ chatId, onClose, setWallpaperUrl, setSelectedC
     //             console.log(selectedChat)
     //         }
     //         if (fetchChats) fetchChats()
-            
+
     //     };
 
 
@@ -76,7 +78,7 @@ const WallpaperSelectorModal = ({ chatId, onClose, setWallpaperUrl, setSelectedC
                     systemMesColor: wallpaper.systemMesColor,
                     iColor: wallpaper.iColor
                 }),
-                
+
             });
 
             if (res.ok) {
@@ -102,15 +104,16 @@ const WallpaperSelectorModal = ({ chatId, onClose, setWallpaperUrl, setSelectedC
                 console.log(wallpaperData)
                 if (socket) {
                     socket.emit('change-wallpaper', {
-                        _id:data._id,
+                        _id: data._id,
                         chatId: selectedChat._id,
                         username: data.username,
-                        wallpaperData
+                        wallpaperData,
+                        chatData:data.chat
                     })
                 }
 
 
-                
+
                 onClose();
             } else {
                 console.error('Failed to update wallpaper');

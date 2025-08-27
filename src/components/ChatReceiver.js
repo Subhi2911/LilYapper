@@ -65,6 +65,7 @@ const ChatReceiver = ({
         {unreadCount > 0 && (
           <span className="badge bg-danger ms-3">{unreadCount}</span>
         )}
+        {console.log("unread",unreadCount)}
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import ChatWindow from './ChatWindow';
 import ChatContext from '../context/chats/ChatContext';
 import { useSocket } from '../context/chats/socket/SocketContext';
 
-const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, setProgress}) => {
+const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, setProgress }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { fetchGroups } = useContext(ChatContext);
@@ -20,8 +20,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
     const [showAddMembersModal, setShowAddMembersModal] = useState(false);
 
     //const [groupUsers, setGroupUsers] = useState([]);
-    // eslint-disable-next-line no-unused-vars
-    const [messages, setMessages] = useState([]);
+    const { messages = [], setMessages } = useContext(ChatContext);
 
     // States for groups
     const [groups, setGroups] = useState([]);
@@ -177,7 +176,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                             createdAt: newMessage.createdAt || new Date().toISOString(),
                             sender: newMessage.sender || {},
                         },
-                        unreadCount:(chat.unreadCount || 0) + unreadIncrement, // reset or keep as needed
+                        unreadCount: (chat.unreadCount || 0) + unreadIncrement, // reset or keep as needed
 
                     }
                     : chat
@@ -722,11 +721,15 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                         isMobile={isMobile}
                         onUsersScroll={onUsersScroll}
                         usersLoading={usersLoading}
+                        setMessages={setMessages}
+                        messages={messages}
                     />
                     <ChatWindow
                         selectedChat={selectedUser}
                         setSelectedChat={setSelectedUser}
                         isMobile={isMobile}
+                        setMessages={setMessages}
+                        messages={messages}
                     />
                 </>
             )}
@@ -740,6 +743,8 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                             handleAccept={handleAccept}
                             handleReject={handleReject}
                             setSelectedUser={setSelectedUser}
+                            setMessages={setMessages}
+                            messages={messages}
                         />
                     ) : (
                         <>
@@ -756,6 +761,8 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                                 setSelectedChat={setSelectedChat}
                                 onUsersScroll={onUsersScroll}
                                 usersLoading={usersLoading}
+                                setMessages={setMessages}
+                                messages={messages}
                             />
                             <ChatWindow
                                 selectedChat={selectedUser}
@@ -763,6 +770,8 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                                 handleAccept={handleAccept}
                                 handleReject={handleReject}
                                 setSelectedUser={setSelectedUser}
+                                messages={messages}
+                                setMessages={setMessages}
                             />
                         </>
                     )}

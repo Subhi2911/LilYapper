@@ -143,14 +143,14 @@ const ChatSidebar = ({
     }, [groups, userId]);
 
 
-    useEffect(() => {
-        setLocalChats((prev) => {
-            if (JSON.stringify(prev) !== JSON.stringify(chatList)) {
-                return chatList;
-            }
-            return prev;
-        });
-    }, [chatList]);
+    // useEffect(() => {
+    //     setLocalChats((prev) => {
+    //         if (JSON.stringify(prev) !== JSON.stringify(chatList)) {
+    //             return chatList;
+    //         }
+    //         return prev;
+    //     });
+    // }, [chatList]);
 
 
     const selectedChatRef = useRef(selectedChat);
@@ -192,14 +192,16 @@ const ChatSidebar = ({
                         if (chat?._id === newMsg?.chat?._id) {
                             const isSender = newMsg.sender?._id === currentUser?._id;
                             console.log("isSender", isSender)
+                            console.log(selectedChatRef,newMsg)
                             const unreadIncrement = isSender
                                 ? 0 //  don’t increment for my own messages
-                                : (selectedChatRef.current?._id === newMsg.chat?._id ? 0 : 1);
-
+                                : (selectedChatRef?.current?._id === newMsg.chat?._id ? 0 : 1);
+                            console.log(selectedChatRef.current?._id,newMsg.chat?._id,selectedChatRef.current?._id === newMsg.chat?._id )
+                            console.log('bukhj',unreadIncrement)
                             return {
                                 ...chat,
                                 latestMessage: newMsg,
-                                unreadCount: (chat.unreadCount || 0) + unreadIncrement
+                                unreadCount: (chat?.unreadCount || 0) + unreadIncrement
                             };
                         }
                         return chat;
@@ -390,7 +392,9 @@ const ChatSidebar = ({
                                             id={item?.otherUserId}
                                             selectedChat={selectedChat}
                                             setSelectedChat={setSelectedChat}
+                                            
                                         />
+                                        {console.log("jfjfj",item.unreadCount)}
                                     </li>
                                 ))
                             )}

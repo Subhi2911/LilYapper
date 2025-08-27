@@ -50,7 +50,7 @@ const ChatWindow = ({
     messages,
     setMessages,
     getConnections,
-
+    
 }) => {
     const location = useLocation();
     const host = process.env.REACT_APP_BACKEND_URL;
@@ -74,6 +74,17 @@ const ChatWindow = ({
 
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+
+    //const chatContainerRef = useRef(null);
+    const selectedChatRef = useRef(null);
+
+    const [currentDate, setCurrentDate] = useState(null);
+    const observerRefs = useRef({});
+    const containerRef = useRef(null);
+
+    const [showDate, setShowDate] = useState(false);
+
+    const [sent, setSent] = useState(true);
 
     const handleReply = (msg) => {
         setReplyTo(msg);
@@ -103,13 +114,27 @@ const ChatWindow = ({
     };
 
     const groupMessagesByDate = (messages) => {
-        return messages.reduce((groups, msg) => {
+        if (!Array.isArray(messages)) return {};
+        const grouped = messages?.reduce((groups, msg) => {
+            if (!msg?.createdAt) return groups;
             const dateKey = new Date(msg.createdAt).toDateString();
             if (!groups[dateKey]) groups[dateKey] = [];
             groups[dateKey].push(msg);
             return groups;
         }, {});
+
+        // ✅ sort keys in chronological order
+        const sortedKeys = Object?.keys(grouped).sort(
+            (a, b) => new Date(a) - new Date(b)
+        );
+
+        return sortedKeys.map((date) => ({
+            date,
+            messages: grouped[date].sort((m1, m2) => new Date(m1.createdAt) - new Date(m2.createdAt)), // keep messages ordered
+        }));
     };
+
+
 
 
     useEffect(() => {
@@ -141,6 +166,12 @@ const ChatWindow = ({
             socket.emit('join chat', selectedChat?._id);
         }
     }, [selectedChat, socket]);
+
+    // 📌 Scroll to bottom helper
+    const scrollToBottom = (behavior = "auto") => {
+        messagesEndRef.current?.scrollIntoView({ behavior });
+    };
+
 
     useEffect(() => {
         if (!socket) return;
@@ -186,115 +217,153 @@ const ChatWindow = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedChat, isMobile]);
 
-    const handleScroll = async (e) => {
-        if (e.target.scrollBottom === 0 && hasMore) {
-            const nextPage = page + 1;
-            const older = await fetchMessages(selectedChat._id, nextPage);
-
-            if (older.length > 0) {
-                // 📌 Save current scroll position
-                const scrollHeightBefore = e.target.scrollHeight;
-
-                setMessages(prev => [...older, ...prev]);
-                setPage(nextPage);
-                setHasMore(older.length === 10);
-
-                // 📌 Restore scroll position so chat doesn't jump
-                setTimeout(() => {
-                    e.target.scrollTop = e.target.scrollHeight - scrollHeightBefore;
-                }, 0);
-            }
-        }
-    };
-
-
+    // 📌 Initial load: fetch latest messages
     useEffect(() => {
-        const loadLatest = async () => {
-            setMessages([]);
-            setPage(1);
-            setHasMore(true);
-
-            const latest = await fetchMessages(selectedChat?._id, 1);
-            setMessages(latest);
-
-            // always scroll to bottom
-            setTimeout(() => {
-                messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-            }, 0);
-        };
-
-        if (selectedChat?._id) loadLatest();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedChat?._id]);
-
-
-
-    useEffect(() => {
-        const loadMessages = async () => {
+        const loadInitialMessages = async () => {
             if (!selectedChat?._id || !currentUser?._id) {
                 setMessages([]);
                 return;
             }
 
-            // Reset on new chat
             setMessages([]);
-            setLoading(true);
+            setPage(1);
+            setHasMore(true);
+            setLoading(false);
             setShowPlaceholder(true);
 
-            let timeoutId;
-
             try {
-                const fetchedMessages = await fetchMessages(selectedChat?._id, 1);
+                const fetched = await fetchMessages(selectedChat._id, 1, 10);
 
-                const typedMessages = (fetchedMessages || []).map((msg) => ({
+                const formatted = fetched.map((msg) => ({
                     ...msg,
-                    type: msg.sender?._id === currentUser?._id ? 'sent' : 'received',
+                    type: msg.sender?._id === currentUser?._id ? "sent" : "received",
                     text: msg?.content,
-                    replyTo: msg.replyTo,
                 }));
 
-                setMessages(typedMessages);
+                // set messages
+                setMessages(formatted?.reverse());
 
-                // ⏳ placeholder stays for 3s even after fetch
-                timeoutId = setTimeout(() => {
-                    setShowPlaceholder(false);
-                }, 3000);
-
+                // ❌ don’t scroll yet (placeholder still visible)
             } catch (err) {
                 console.error("Error loading messages:", err);
-                setMessages([]);
-                setShowPlaceholder(false); // remove immediately on error
             } finally {
                 setLoading(false);
-            }
 
-            // Cleanup in case chat changes before timeout finishes
-            return () => clearTimeout(timeoutId);
+                // ✅ after 2s hide placeholder AND then scroll to bottom
+                setTimeout(() => {
+                    setShowPlaceholder(false);
+
+                    // ✅ scroll now, after placeholder is gone
+                    setTimeout(() => scrollToBottom("auto"), 50);
+                }, 2000);
+            }
         };
 
-        if (selectedChat?._id && currentUser?._id) {
-            loadMessages();
-        }
+        loadInitialMessages();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedChat?._id, currentUser?._id, fetchMessages]);
+    }, [selectedChat?._id, currentUser?._id]);
 
 
-    // useEffect(() => {
-    //     messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
-    // }, [messages]);
+    // 2️⃣ Infinite scroll handler (yours is already correct)
+    const handleScroll = async (e) => {
+        const el = e.target;
+        if (el.scrollTop === 0 && !loading && hasMore) {
+            setLoading(true);
+            const nextPage = page + 1;
+            const older = await fetchMessages(selectedChat._id, nextPage, 10);
 
-    const selectedChatRef = useRef(selectedChat);
-    // useEffect(() => {
-    //     selectedChatRef.current = selectedChat;
-    // }, [selectedChat]);
+            if (older?.length > 0) {
+                const prevHeight = el.scrollHeight;
 
+                setMessages((prev) => [
+                    ...older.map((msg) => ({
+                        ...msg,
+                        type: msg.sender?._id === currentUser?._id ? "sent" : "received",
+                        text: msg?.content,
+                    })),
+                    ...prev,
+                ]);
 
+                setPage(nextPage);
+                setHasMore(older.length === 10);
 
+                requestAnimationFrame(() => {
+                    el.scrollTop = el.scrollHeight - prevHeight;
+                });
+            } else {
+                setHasMore(false);
+            }
+            setLoading(false);
+        }
+    };
+    // 3️⃣ Scroll when *I* send a message
+    const prevMsgCount = useRef(0);
+    const prevFirstMsgId = useRef(null);
 
     useEffect(() => {
+        if (messages.length === 0) return;
+
+        const lastMsg = messages[messages.length - 1];
+        const firstMsg = messages[0];
+
+        // CASE 1: new message at the bottom (sent/received)
+        if (
+            lastMsg.sender?._id === currentUser?._id ||  // you sent
+            (prevFirstMsgId.current === firstMsg._id && messages.length > prevMsgCount.current) // received new one
+        ) {
+            setTimeout(() => scrollToBottom("smooth"), 50);
+        }
+
+        // update trackers
+        prevMsgCount.current = messages.length;
+        prevFirstMsgId.current = firstMsg._id;
+    }, [messages, currentUser?._id]);
+
+
+    const groupedMessages = groupMessagesByDate(messages);
+
+    useEffect(() => {
+        const container = containerRef?.current;
+        console.log("container", container)
+        if (!container) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const date = entry.target.dataset.date; // safer than getAttribute
+                        if (date) setCurrentDate(date);
+                    }
+                });
+            },
+            { root: container, threshold: 0.3 } // bump threshold for more stable results
+        );
+
+        Object.values(observerRefs.current).forEach((el) => {
+            if (el) observer.observe(el);
+        });
+
+        return () => observer.disconnect();
+    }, [groupedMessages]);
+
+    useEffect(() => {
+        if (!currentDate) return;
+
+        setShowDate(true);
+
+        const timer = setTimeout(() => {
+            setShowDate(false);
+        }, 2000); // 👈 visible for 2s
+
+        return () => clearTimeout(timer);
+    }, [currentDate]);
+
+    useEffect(() => {
+        console.log('ghghghgh')
         if (!socket) return;
 
         const handleNewMessage = (msg) => {
+            console.log(msg)
             setShowPlaceholder(false);
             const msgChatId = msg?.chat?._id || msg?.chatId;
             const currentSelectedChat = selectedChatRef.current;
@@ -302,7 +371,7 @@ const ChatWindow = ({
             // Add to messages if this chat is currently open
             if (msgChatId === currentSelectedChat?._id) {
                 setMessages(prev => [
-                    ...prev.filter(m => m._id !== msg._id), // avoid duplicates
+                    ...prev.filter(m => m._id !== (msg.tempId || msg._id)), // avoid duplicates
                     {
                         ...msg,
                         type: msg.sender?._id === currentUser?._id ? 'sent' : 'received',
@@ -368,6 +437,12 @@ const ChatWindow = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket, currentUser, host, setLocalChatList, setSelectedChat, setMessages]);
 
+    useEffect(() => {
+        selectedChatRef.current = selectedChat;
+    }, [selectedChat]);
+
+
+
 
     // useEffect(() => {
     //     if (!selectedChat) return;
@@ -396,38 +471,33 @@ const ChatWindow = ({
         if (!socket) return;
 
         const handleWallpaperUpdated = ({ chatId, newWallpaper }) => {
+            // Update selected chat if it's the one updated
+            setSelectedChat(prev =>
+                prev?._id === chatId
+                    ? { ...prev, ...newWallpaper, wallpaper: newWallpaper }
+                    : prev
+            );
+
+            // Update chat list if you have one
+            setLocalChatList(prevChats =>
+                prevChats.map(chat =>
+                    chat._id === chatId
+                        ? { ...chat, ...newWallpaper, wallpaper: newWallpaper }
+                        : chat
+                )
+            );
+
+            // Optionally update wallpaper URL separately
             if (selectedChat?._id === chatId) {
-                setSelectedChat(prev => ({
-                    ...prev,
-                    wallpaper: newWallpaper,
-                    receiverbubble: newWallpaper.receiverbubble,
-                    senderbubble: newWallpaper.senderbubble,
-                    rMesColor: newWallpaper.rMesColor,
-                    sMesColor: newWallpaper.sMesColor,
-                    systemMesColor: newWallpaper.systemMesColor,
-                    iColor: newWallpaper.iColor
-                }));
                 setWallpaperUrl(newWallpaper.url);
             }
         };
 
         socket.on('wallpaper-updated', handleWallpaperUpdated);
+
         return () => socket.off('wallpaper-updated', handleWallpaperUpdated);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [socket, selectedChat?._id]);
-
-    useEffect(() => {
-        if (selectedChat) fetchMessages(selectedChat._id);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedChat]);
-
-    useEffect(() => {
-        setMessages([]);     // Clear previous chat messages instantly
-        setLoading(true);    // Show ChatWinPlaceholder
-        fetchMessages(selectedChat?._id);  // API call
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedChat]);
-
+    }, [socket, selectedChat, setLocalChatList, setSelectedChat]);
 
 
     useEffect(() => {
@@ -498,6 +568,20 @@ const ChatWindow = ({
         if (!newText.trim() || !selectedChat?._id) return;
         setShowPlaceholder(false);
 
+        // 1️⃣ Create a temporary "sending" message
+        const tempId = Date.now().toString();
+        const optimisticMessage = {
+            _id: tempId, // temp id until backend responds
+            sender: currentUser,
+            chat: selectedChat,
+            type: "sent",
+            text: newText,
+            content: newText,
+            status: "sending", // 👈 custom field
+            createdAt: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, optimisticMessage]);
+
         try {
             const newMessage = await sendmessage(newText, selectedChat?._id, replyTo?._id || null);
 
@@ -513,7 +597,10 @@ const ChatWindow = ({
                     } : null,
                 };
 
-                //setMessages((prev) => [...prev, typedMessage]);
+                setMessages((prev) =>
+                    prev.map((msg) => (msg._id === tempId ? typedMessage : msg))
+                );
+                setSent(true);
                 console.log(messages)
                 setReplyTo(null);
 
@@ -528,6 +615,12 @@ const ChatWindow = ({
                 }
             } else {
                 console.warn('Empty or invalid message returned', newMessage);
+                setMessages((prev) =>
+                    prev.map((msg) =>
+                        msg._id === tempId ? { ...msg, status: "failed" } : msg
+                    )
+                );
+                setSent("failed")
             }
 
 
@@ -631,7 +724,7 @@ const ChatWindow = ({
 
 
 
-    if (loadingUser) return <Spinner />;
+    if (loadingUser) return <Spinner color="white" />;
 
 
     if (!currentUser?._id) {
@@ -670,8 +763,20 @@ const ChatWindow = ({
                             handlePermissionChange={handlePermissionChange}
                         />
 
+                        {loading && <div className="loader"><Spinner color={selectedChat?.wallpaper?.iColor || "black"} /></div>}
+                        <div style={{ height: '3.5rem' }}>
+                            {showDate && currentDate &&
+                                <div className="text-center my-3 text-sm" style={{ color: selectedChat?.wallpaper?.systemMesColor, height: '8px' }}>
+                                    {console.log("currentDate", currentDate,)}
+                                    {currentDate ? formatChatDate(currentDate) : ""}
+
+                                </div>
+                            }
+                        </div>
+
                         <div
                             className="flex-grow-1 overflow-auto hide-scrollbar w-100"
+                            ref={containerRef}
                             onScroll={handleScroll}
                             style={{ padding: '1rem', height: 'calc(100vh - 180px)' }}
                         >
@@ -691,6 +796,9 @@ const ChatWindow = ({
                                             selectedChat={selectedChat}
                                             groupMessagesByDate={groupMessagesByDate}
                                             formatChatDate={formatChatDate}
+                                            hasMore={hasMore}
+                                            observerRefs={observerRefs}
+                                            sent={sent}
                                         />
                                     ) : (
                                         <MessageBox
@@ -706,6 +814,9 @@ const ChatWindow = ({
                                             id={selectedChat.otherUserId}
                                             groupMessagesByDate={groupMessagesByDate}
                                             formatChatDate={formatChatDate}
+                                            hasMore={hasMore}
+                                            observerRefs={observerRefs}
+                                            sent={sent}
                                         />
                                     )}
 
@@ -877,41 +988,47 @@ const ChatWindow = ({
                     )}
 
                 </>
-            )}
+            )
+            }
 
-            {(location.pathname === '/friends' || location.pathname === '/arrequest') && (
-                <RequestWindow
-                    selectedUser={selectedUser || selectedChat}
-                    setSelectedUser={setSelectedUser || setSelectedChat}
-                    users={users}
-                    sentRequests={sentRequests}
-                    pendingRequests={pendingRequests}
-                    friends={friends}
-                    handleSkip={handleSkip}
-                    handleAccept={handleAccept}
-                    handleReject={handleReject}
-                    handleBack={() => {
-                        if (setSelectedUser) setSelectedUser(null);
-                        else if (setSelectedChat) setSelectedChat(null);
-                    }}
-                    isMobile={isMobile}
-                    setSelectedChat={setSelectedChat}
-                />
-            )}
-
-            {showLilyapperWelcome && (
-                <div className="text-center mt-5">
-                    <img
-                        src={require('../images/lilyapper.png')}
-                        alt="lilyapper"
-                        style={{ maxWidth: 300, opacity: 0.8 }}
+            {
+                (location.pathname === '/friends' || location.pathname === '/arrequest') && (
+                    <RequestWindow
+                        selectedUser={selectedUser || selectedChat}
+                        setSelectedUser={setSelectedUser || setSelectedChat}
+                        users={users}
+                        sentRequests={sentRequests}
+                        pendingRequests={pendingRequests}
+                        friends={friends}
+                        handleSkip={handleSkip}
+                        handleAccept={handleAccept}
+                        handleReject={handleReject}
+                        handleBack={() => {
+                            if (setSelectedUser) setSelectedUser(null);
+                            else if (setSelectedChat) setSelectedChat(null);
+                        }}
+                        isMobile={isMobile}
+                        setSelectedChat={setSelectedChat}
+                        messages={messages}
                     />
-                    <h4 className="mt-3">LilYapper - Because Silence is Boring</h4>
-                    <p className="text-muted">A real-time chat app with private & group messaging.</p>
-                    <p className="text-muted">Select a chat to start messaging.</p>
-                </div>
-            )}
-        </div>
+                )
+            }
+
+            {
+                showLilyapperWelcome && (
+                    <div className="text-center mt-5">
+                        <img
+                            src={require('../images/lilyapper.png')}
+                            alt="lilyapper"
+                            style={{ maxWidth: 300, opacity: 0.8 }}
+                        />
+                        <h4 className="mt-3">LilYapper - Because Silence is Boring</h4>
+                        <p className="text-muted">A real-time chat app with private & group messaging.</p>
+                        <p className="text-muted">Select a chat to start messaging.</p>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 

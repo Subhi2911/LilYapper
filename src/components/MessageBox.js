@@ -2,7 +2,23 @@ import React, { useEffect, useRef } from 'react';
 import moment from 'moment';
 import Avatar from './Avatar';
 
-const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, onEditMessage, setEditingMessageId, setEditingText, selectedChat, onlineUsers, groupMessagesByDate, formatChatDate }) => {
+const MessageBox = ({
+    messages = [],
+    currentUser,
+    id,
+    onReply,
+    onDeleteMessage,
+    onEditMessage,
+    setEditingMessageId,
+    setEditingText,
+    selectedChat,
+    onlineUsers,
+    groupMessagesByDate,
+    formatChatDate,
+    hasMore,
+    observerRefs,
+    sent
+}) => {
     const containerRef = useRef(null);
     const receiverbubble = selectedChat?.wallpaper?.receiverbubble || 'white';
     const senderbubble = selectedChat?.wallpaper?.senderbubble || '#52357B';
@@ -10,19 +26,15 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
     const sMesColor = selectedChat?.wallpaper?.sMesColor || 'white';
     const systemMesColor = selectedChat?.wallpaper?.systemMesColor || 'black';
     const iColor = selectedChat?.wallpaper?.iColor || 'black';
-    let isOnline = false;
-    isOnline = onlineUsers.has(id);
+    let isOnline = onlineUsers.has(id);
 
     useEffect(() => {
-        console.log(messages)
         if (containerRef.current) {
             containerRef.current.scrollTop = containerRef.current.scrollHeight;
         }
     }, [messages]);
 
     const groupedMessages = groupMessagesByDate(messages);
-
-
 
     return (
         <div
@@ -37,18 +49,30 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
                 overflowY: 'auto',
             }}
         >
-            {Object.entries(groupedMessages).map(([dateKey, msgs]) => (
-                <div key={dateKey}>
-                    <div className="text-center my-3  text-sm" style={{color:systemMesColor}}>
-                        {formatChatDate(msgs[0].createdAt)}
-                    </div>
+            {groupedMessages?.map((group, idx) => (
+                <div
+                    key={idx}
+                    data-date={group.date} // always set this
+                    ref={(el) => {
+                        if (el) observerRefs.current[group.date] = el;
+                        else delete observerRefs.current[group.date]; // cleanup
+                    }}>
+                    {/* Date header */}
+                    <div className="text-center my-3 text-sm" style={{ color: systemMesColor }}>
+                        {console.log(hasMore)}
+                        {formatChatDate(group.date)}
 
-                    {messages.map((msg, index) => {
+                    </div>
+                    {console.log(group.date)}
+                    {console.log(group.date)}
+
+                    {/* Messages under this date */}
+                    {group.messages.map((msg, index) => {
                         // System message
-                        if (msg.isSystem || msg.type === 'system') {
+                        if (msg?.isSystem || msg?.type === 'system') {
                             return (
                                 <div
-                                    key={index}
+                                    key={msg._id || index}
                                     className="text"
                                     style={{
                                         textAlign: 'center',
@@ -58,20 +82,20 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
                                         fontStyle: 'italic',
                                         whiteSpace: 'normal',
                                         overflowWrap: 'break-word',
-                                        wordWrap: 'break-word',
                                         maxWidth: '300px',
                                         margin: 'auto',
                                     }}
                                 >
-                                    {msg.content || msg.text}
+                                    {msg?.content || msg?.text}
                                 </div>
                             );
                         }
 
-                        const isSent = msg.sender._id === currentUser._id;
+                        const isSent = msg?.sender?._id === currentUser?._id;
+
                         return (
                             <div
-                                key={index}
+                                key={msg?._id || index || `${msg.createdAt}-${index}`}
                                 style={{
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -87,14 +111,34 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
                                         gap: '8px',
                                     }}
                                 >
-                                    <Avatar
-                                        src={msg.sender.avatar || '/avatars/laughing.png'}
-                                        width="2"
-                                        height="2"
-                                        hideBorder={isSent}
-                                        isOnline={isOnline}
-                                    />
+                                    {isSent ? (
+                                        msg.status ==="sending" ? (
+                                            <div style={{ color: iColor }}>
+                                                <i className="fa-solid fa-paper-plane"></i>
+                                            </div>
+                                        ) : msg.status === 'failed' ? (
+                                            <div style={{ color: "red" }}>
+                                                <i className="fa-solid fa-circle-exclamation"></i>
+                                            </div>
+                                        ) : (<Avatar
+                                            src={msg?.sender?.avatar || '/avatars/laughing.png'}
+                                            width="2"
+                                            height="2"
+                                            hideBorder={isSent}
+                                            isOnline={isOnline}
+                                        />
+                                        )
+                                    ) : (
 
+                                        <Avatar
+                                            src={msg?.sender?.avatar || '/avatars/laughing.png'}
+                                            width="2"
+                                            height="2"
+                                            hideBorder={isSent}
+                                            isOnline={isOnline}
+                                        />
+                                    )
+                                    }
 
                                     <div
                                         style={{
@@ -111,7 +155,7 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
                                         }}
                                     >
                                         {/* Replied message preview */}
-                                        {msg.replyTo && (
+                                        {msg?.replyTo && (
                                             <div
                                                 style={{
                                                     backgroundColor: isSent ? senderbubble : receiverbubble,
@@ -123,12 +167,12 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
                                                     fontSize: '0.85rem',
                                                 }}
                                             >
-                                                <strong>{msg.replyTo.sender?.username || 'Unknown'}: </strong>
-                                                {msg.replyTo.content || msg.replyTo.text || 'Message unavailable'}
+                                                <strong>{msg?.replyTo.sender?.username || 'Unknown'}: </strong>
+                                                {msg?.replyTo?.content || msg?.replyTo?.text || 'Message unavailable'}
                                             </div>
                                         )}
 
-                                        {msg.text}
+                                        {msg?.text}
 
                                         {/* Reply icon for messages NOT sent by current user */}
                                         {!isSent && (
@@ -146,26 +190,31 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
                                                 }}
                                                 title="Reply to this message"
                                             />
-
                                         )}
                                     </div>
+
                                     {isSent && (
-                                        <>
-                                            <div className='d-flex align-items-center gap-3' style={{ cursor: 'pointer', color: iColor, }}>
-                                                <div onClick={() => {
-                                                    setEditingMessageId(msg._id);
-                                                    setEditingText(msg.text); // Prefill text in Keyboard
-                                                }} style={{ fontSize: '0.8rem' }}>
-                                                    <i className="fa-solid fa-pen-to-square" ></i>
-                                                </div>
-                                                <div onClick={() => { onDeleteMessage(msg._id) }} style={{ fontSize: '0.8rem', color: iColor, }}>
-                                                    <i className="fa-solid fa-trash" ></i>
-                                                </div>
-
+                                        <div
+                                            className="d-flex align-items-center gap-3"
+                                            style={{ cursor: 'pointer', color: iColor }}
+                                        >
+                                            <div
+                                                onClick={() => {
+                                                    setEditingMessageId(msg?._id);
+                                                    setEditingText(msg?.text);
+                                                }}
+                                                style={{ fontSize: '0.8rem' }}
+                                            >
+                                                <i className="fa-solid fa-pen-to-square"></i>
                                             </div>
-                                        </>
+                                            <div
+                                                onClick={() => onDeleteMessage(msg?._id)}
+                                                style={{ fontSize: '0.8rem', color: iColor }}
+                                            >
+                                                <i className="fa-solid fa-trash"></i>
+                                            </div>
+                                        </div>
                                     )}
-
                                 </div>
 
                                 <div
@@ -178,7 +227,7 @@ const MessageBox = ({ messages = [], currentUser, id, onReply, onDeleteMessage, 
                                         paddingRight: isSent ? '40px' : '0',
                                     }}
                                 >
-                                    {moment(msg.createdAt).format('h:mm A')}
+                                    {moment(msg?.createdAt).format('h:mm A')}
                                 </div>
                             </div>
                         );

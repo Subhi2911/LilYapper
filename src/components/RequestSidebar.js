@@ -64,7 +64,7 @@ const RequestSidebar = ({
             dataLength={users.length}
             next={fetchUsers}
             hasMore={hasMore}
-            loader={<Spinner />}
+            loader={<Spinner color="white"/>}
             scrollableTarget="scrollableDiv"
           >
             <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
