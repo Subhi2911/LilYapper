@@ -67,7 +67,7 @@ function App() {
                         <Route path='/profile' element={<Profile showAlert={showAlert} setProgress={setProgress} />} />
                         <Route path='/account' element={<Account showAlert={showAlert} setProgress={setProgress} />} />
                         <Route path='/profile/change-password' element={<ChangePassword showAlert={showAlert} setProgress={setProgress} />} />
-                        <Route path='/profile/forgot-password' element={<ForgotPassword showAlert={showAlert} setProgress={setProgress} />} />
+                        <Route path='/profile/forgot-password' element={<ForgotPassword showAlert={showAlert} setProgress={setProgress} show={false}/>} />
                         
 
                     </Routes>

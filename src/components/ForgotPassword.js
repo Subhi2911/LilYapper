@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SidebarNavbar from './Sidebarnavbar';
 
-const ForgotPassword = ({ showAlert }) => {
+const ForgotPassword = ({ showAlert, show=true }) => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1); // 1: enter email, 2: verify OTP, 3: set new password
     const [email, setEmail] = useState('');
@@ -90,10 +90,10 @@ const ForgotPassword = ({ showAlert }) => {
 
     return (
         <div className="d-flex">
-            {/* Sidebar for medium+ */}
+           { show &&
             <div className="d-none d-md-block">
                 <SidebarNavbar />
-            </div>
+            </div>}
 
             <div className="flex-grow-1 p-3 body" style={{ marginLeft: '0', marginTop: '20px' }}>
                 <div className="container" style={{ maxWidth: '500px' }}>
