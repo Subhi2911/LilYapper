@@ -62,6 +62,7 @@ const BellIcon = () => {
                         backdropFilter: 'blur(6px)',
                         borderRadius: '10px',
                         color: 'white',
+                        objectFit:'cover'
                     }}
                 >
                     <h6 className="dropdown-header text-white">Notifications</h6>

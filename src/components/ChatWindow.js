@@ -50,7 +50,7 @@ const ChatWindow = ({
     messages,
     setMessages,
     getConnections,
-    
+
 }) => {
     const location = useLocation();
     const host = process.env.REACT_APP_BACKEND_URL;
@@ -239,6 +239,7 @@ const ChatWindow = ({
                     type: msg.sender?._id === currentUser?._id ? "sent" : "received",
                     text: msg?.content,
                 }));
+                console.log(fetched)
 
                 // set messages
                 setMessages(formatted?.reverse());
@@ -377,6 +378,7 @@ const ChatWindow = ({
                         type: msg.sender?._id === currentUser?._id ? 'sent' : 'received',
                         text: msg.text || msg.content,
                         replyTo: msg.replyTo,
+                        //readBy:[currentUser._id, selectedChat?.otherUserId]
                     }
                 ]);
                 markMessagesAsRead(msgChatId);
@@ -566,12 +568,14 @@ const ChatWindow = ({
 
     const handleSend = async (newText) => {
         if (!newText.trim() || !selectedChat?._id) return;
+
         setShowPlaceholder(false);
 
         // 1️⃣ Create a temporary "sending" message
         const tempId = Date.now().toString();
         const optimisticMessage = {
-            _id: tempId, // temp id until backend responds
+            _id: null,               // reserved for real Mongo _id
+            clientId: tempId,
             sender: currentUser,
             chat: selectedChat,
             type: "sent",
@@ -588,6 +592,7 @@ const ChatWindow = ({
             if (newMessage && newMessage.sender && newMessage.content) {
                 const typedMessage = {
                     ...newMessage,
+                    clientId: tempId,
                     type: newMessage.sender?._id === currentUser?._id ? 'sent' : 'received',
                     text: newMessage.content,
                     replyTo: newMessage.replyTo ? {
@@ -595,10 +600,11 @@ const ChatWindow = ({
                         text: newMessage.replyTo.content || '[deleted]',
                         sender: newMessage.replyTo.sender || { _id: '', username: 'Unknown' }
                     } : null,
+                    status: "sent"
                 };
-
+                
                 setMessages((prev) =>
-                    prev.map((msg) => (msg._id === tempId ? typedMessage : msg))
+                    prev.map((msg) => (msg.clientId === tempId ? typedMessage : msg))
                 );
                 setSent(true);
                 console.log(messages)
@@ -637,6 +643,55 @@ const ChatWindow = ({
             console.error('Error sending message:', error);
         }
     };
+
+
+    // Track last read per chat
+    const lastReadRef = useRef({});
+
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on("message-read", ({ chatId, messageId, userId }) => {
+            if (chatId !== selectedChat?._id) return;
+
+            setMessages(prev =>
+                prev.map(msg =>
+                    msg._id === messageId
+                        ? { ...msg, readBy: [...new Set([...(msg.readBy || []), userId])] }
+                        : msg
+                )
+            );
+
+            // Mark in ref so we don't emit again
+            lastReadRef.current[chatId] = messageId;
+        });
+
+        return () => socket.off("message-read");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket, selectedChat]);
+
+    useEffect(() => {
+        if (!selectedChat || messages.length === 0) return;
+
+        const lastMsg = messages[messages.length - 1];
+        if (!lastMsg) return;
+
+        // Only emit if not read AND not already emitted for this chat
+        if (
+            !lastMsg.readBy?.includes(currentUser?._id) &&
+            lastReadRef.current[selectedChat._id] !== lastMsg._id
+        ) {
+            socket.emit("mark-read", {
+                chatId: selectedChat._id,
+                messageId: lastMsg._id,
+            });
+            lastReadRef.current[selectedChat._id] = lastMsg._id;
+        }
+        // 👇 Only depend on selectedChat + last message id
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedChat?._id, messages[messages.length - 1]?._id, currentUser, socket]);
+
+
 
     const handleEditMessage = async (id, newText) => {
         try {
@@ -740,6 +795,7 @@ const ChatWindow = ({
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 width: isMobile ? '100vw' : 'auto',
+                objectFit:'cover'
             }}
         >
             {(location.pathname === '/' || location.pathname === '/groups') && selectedChat && (

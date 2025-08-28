@@ -18,6 +18,7 @@ import ChangePassword from './components/ChangePassword';
 import ForgotPassword from './components/ForgotPassword';
 import LoadingBar from "react-top-loading-bar";
 import Alert from './components/Alert';
+import Stamp from './components/Stamp';
 
 //import ChatContext from './context/chats/ChatContext';
 //import VerticalThinNavbar from './components/VerticalThinNavbar';
@@ -68,7 +69,7 @@ function App() {
                         <Route path='/account' element={<Account showAlert={showAlert} setProgress={setProgress} />} />
                         <Route path='/profile/change-password' element={<ChangePassword showAlert={showAlert} setProgress={setProgress} />} />
                         <Route path='/profile/forgot-password' element={<ForgotPassword showAlert={showAlert} setProgress={setProgress} show={false}/>} />
-                        
+                        <Route path='/stamp' element={<Stamp/>}/>
 
                     </Routes>
 

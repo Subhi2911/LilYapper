@@ -647,7 +647,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                 position: 'absolute',
                 left: isMobile ? 0 : 50,
                 top: 0,
-                right: 0,
+                right: isMobile?0:0,
                 bottom: 0,
                 height: '100vh',
                 overflow: 'hidden',
@@ -672,6 +672,8 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                         setLocalChats={setLocalChatList}
                         updateGroupLatestMessage={updateGroupLatestMessage}
                         setProgress={setProgress}
+                        setMessages={setMessages}
+                        messages={messages}
 
                     />
                     <ChatWindow

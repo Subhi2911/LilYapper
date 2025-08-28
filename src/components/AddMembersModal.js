@@ -73,7 +73,8 @@ const AddMembersModal = ({
                         backgroundSize: 'cover',
                         backgroundRepeat: 'no-repeat',
                         backgroundPosition: 'center',
-                        backdropFilter: 'blur(4px)'
+                        backdropFilter: 'blur(4px)',
+                        objectFit:'cover'
                     }}>
                         <h5 className="modal-title text-light">Add Members</h5>
                         <button type="button" className="btn-close" onClick={onClose}></button>
@@ -83,7 +84,8 @@ const AddMembersModal = ({
                         backgroundSize: 'cover',
                         backgroundRepeat: 'no-repeat',
                         backgroundPosition: 'center',
-                        backdropFilter: 'blur(4px)'
+                        backdropFilter: 'blur(4px)',
+                        objectFit:'cover'
                     }}>
                         {friendsData.length === 0 ? (
                             <p>No friends available to add.</p>
@@ -132,7 +134,8 @@ const AddMembersModal = ({
                         backgroundSize: 'cover',
                         backgroundRepeat: 'no-repeat',
                         backgroundPosition: 'center',
-                        backdropFilter: 'blur(4px)'
+                        backdropFilter: 'blur(4px)',
+                        objectFit:'cover'
                     }}>
                         <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
                         <button className="btn btn-primary" onClick={handleSubmit}>Add Selected</button>

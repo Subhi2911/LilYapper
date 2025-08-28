@@ -31,7 +31,8 @@ const ChatSidebar = ({
     setShowChatInfo,
     updateGroupLatestMessage,
     setGroups,
-    setProgress
+    setProgress,
+    setMessages
 }) => {
     const currentUser = localStorage.getItem('userId');
     const [localGroups, setLocalGroups] = useState(groups);
@@ -192,12 +193,12 @@ const ChatSidebar = ({
                         if (chat?._id === newMsg?.chat?._id) {
                             const isSender = newMsg.sender?._id === currentUser?._id;
                             console.log("isSender", isSender)
-                            console.log(selectedChatRef,newMsg)
+                            console.log(selectedChatRef, newMsg)
                             const unreadIncrement = isSender
                                 ? 0 //  don’t increment for my own messages
                                 : (selectedChatRef?.current?._id === newMsg.chat?._id ? 0 : 1);
-                            console.log(selectedChatRef.current?._id,newMsg.chat?._id,selectedChatRef.current?._id === newMsg.chat?._id )
-                            console.log('bukhj',unreadIncrement)
+                            console.log(selectedChatRef.current?._id, newMsg.chat?._id, selectedChatRef.current?._id === newMsg.chat?._id)
+                            console.log('bukhj', unreadIncrement)
                             return {
                                 ...chat,
                                 latestMessage: newMsg,
@@ -286,9 +287,25 @@ const ChatSidebar = ({
 
 
     const handleChatSelect = (chat) => {
+        console.log(chat)
         console.log(groups)
         setSelectedChat(chat);
-        socket.emit('mark-read', { chatId: chat._id });
+        // Get the latest message id
+        if (chat?.latestMessage?._id) {
+            socket.emit("mark-read", {
+                chatId: chat?._id,
+                messageId: chat?.latestMessage._id,
+            });
+
+            // ✅ Optimistically update local messages for instant UI feedback
+            setMessages(prev =>
+                prev.map(m =>
+                    m.chat === chat._id && !m.readBy?.includes(currentUser)
+                        ? { ...m, readBy: [...(m.readBy || []), currentUser] }
+                        : m
+                )
+            );
+        }
 
         // Reset unread count locally immediately
         if (chat.isGroupChat) {
@@ -394,7 +411,7 @@ const ChatSidebar = ({
                                             setSelectedChat={setSelectedChat}
                                             
                                         />
-                                        {console.log("jfjfj",item.unreadCount)}
+                                        {console.log("jfjfj", item.unreadCount)}
                                     </li>
                                 ))
                             )}

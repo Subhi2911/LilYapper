@@ -18,6 +18,7 @@ const SidebarNavbar = ({ handleLogout }) => {
                 top: 0,
                 left: 0,
                 zIndex: 1040,
+                objectFit:'cover'
             }}
         >
             <div className="navbar-brand m-0 p-0">

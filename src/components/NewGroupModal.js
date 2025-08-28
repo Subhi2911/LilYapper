@@ -120,7 +120,8 @@ const NewGroupModal = ({ isOpen, onClose, onGroupCreated, refreshGroups }) => {
                         <div className="modal-header" style={{
                             backgroundImage: `url(${LoginBg})`,
                             backgroundSize: 'cover',
-                            backgroundPosition: 'center'
+                            backgroundPosition: 'center',
+                            objectFit:'cover'
                         }}>
                             <h5 className="modal-title" style={{ color: 'white' }}>Create New Group</h5>
                             <button
@@ -136,7 +137,8 @@ const NewGroupModal = ({ isOpen, onClose, onGroupCreated, refreshGroups }) => {
                         <div className="modal-body" style={{
                             backgroundImage: `url(${LoginBg})`,
                             backgroundSize: 'cover',
-                            backgroundPosition: 'center'
+                            backgroundPosition: 'center',
+                            objectFit:'cover'
                         }}>
                             {error && <div className="alert alert-danger">{error}</div>}
                             <ChooseAvatar onAvatarSelect={(value) => setAvatar(value)} />
@@ -182,7 +184,8 @@ const NewGroupModal = ({ isOpen, onClose, onGroupCreated, refreshGroups }) => {
                         <div className="modal-footer" style={{
                             backgroundImage: `url(${LoginBg})`,
                             backgroundSize: 'cover',
-                            backgroundPosition: 'center'
+                            backgroundPosition: 'center',
+                            objectFit:'cover'
                         }}>
                             <button
                                 type="button"

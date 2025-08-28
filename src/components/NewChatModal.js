@@ -51,7 +51,8 @@ const NewChatModal = ({ isOpen, onClose, setSelectedChat }) => {
                     <div className="modal-header" style={{
                         backgroundImage: `url(${LoginBg})`,
                         backgroundSize: 'cover',
-                        backgroundPosition: 'center'
+                        backgroundPosition: 'center',
+                        objectFit:'cover'
                     }}>
                         <h5 className="modal-title" style={{ color: 'white' }}>Start a New Chat</h5>
                         <button
@@ -64,7 +65,8 @@ const NewChatModal = ({ isOpen, onClose, setSelectedChat }) => {
                     <div className="modal-body" style={{
                         backgroundImage: `url(${LoginBg})`,
                         backgroundSize: 'cover',
-                        backgroundPosition: 'center'
+                        backgroundPosition: 'center',
+                        objectFit:'cover'
                     }}>
                         {loading ? (
                             <p className="text-center">Loading friends...</p>

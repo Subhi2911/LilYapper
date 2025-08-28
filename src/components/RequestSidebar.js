@@ -31,6 +31,7 @@ const RequestSidebar = ({
         boxShadow: '0 0 8px rgba(0,0,0,0.1)',
         padding: '1rem',
         overflow: 'hidden',
+        objectFit:'cover'
       }}
     >
       <h3 style={{ marginBottom: '1rem', color: 'white' }}>

@@ -2,15 +2,45 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import SidebarNavbar from './Sidebarnavbar';
 import Avatar from './Avatar';
+import Spinner from './Spinner';
 
 const Account = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [darkMode, setDarkMode] = useState(false);
+    const [friends, setFriends] = useState([]);
+    const host = process.env.REACT_APP_BACKEND_URL;
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId');
+
 
     useEffect(() => {
-        document.body.style.backgroundColor = location.pathname === '/profile' ? '#648DB3' : '';
+        const fetchFriends = async () => {
+            try {
+                const userRes = await fetch(`${host}/api/auth/getfriends/${userId}`, {
+                    method: 'POST',
+                    headers: { 'auth-token': token },
+                });
+
+                const userData = await userRes.json();
+                console.log(userData);
+
+                setFriends(userData?.friends || []);
+
+            } catch (error) {
+                console.error('Error fetching request data:', error);
+            }
+        };
+
+        fetchFriends();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [host, token]);
+
+
+
+    useEffect(() => {
+        document.body.style.backgroundColor = location.pathname === '/account' ? '#648DB3' : '';
         const storedUser = JSON.parse(localStorage.getItem('user'));
         if (storedUser) setUser(storedUser);
         return () => { document.body.style.backgroundColor = ''; };
@@ -50,10 +80,11 @@ const Account = () => {
 
     const handleBack = () => navigate(-1);
 
-    if (!user) return <div className="text-center mt-5">Loading...</div>;
+    if (!user) return <div className="text-center mt-5"><Spinner/></div>;
 
     return (
         <div className="d-flex">
+            {console.log(friends)}
             {/* Sidebar for medium+ */}
             <div className="d-none d-md-block">
                 <SidebarNavbar handleLogout={handleLogout} />
@@ -62,7 +93,7 @@ const Account = () => {
             {/* Main Content */}
             <div className="flex-grow-1 p-3 body" style={{ marginLeft: '0', marginTop: '20px' }}>
                 <div className="container" style={{ maxWidth: '700px' }}>
-                    
+
                     {/* Top Mobile Back */}
                     <div className="d-flex align-items-center mb-4">
                         <button
@@ -78,7 +109,7 @@ const Account = () => {
                     <div className={`bg-light p-4 rounded shadow-sm body ${darkMode ? 'bg-dark text-white' : ''}`}>
                         <div className="text-center">
                             <div className='d-flex justify-content-center'>
-                                <Avatar src={user?.avatar || "/avatars/laughing.png"} size={120} isGroup={false} isOnline={true} name={user?.username}/>
+                                <Avatar src={user?.avatar || "/avatars/laughing.png"} size={120} isGroup={false} isOnline={true} name={user?.username} />
                             </div>
                             <h3 className="mt-3">{user?.username}</h3>
                             {user.bio && <p style={{ fontStyle: 'italic', opacity: 0.8 }}>{user.bio}</p>}
@@ -115,16 +146,39 @@ const Account = () => {
 
                         {/* Recent activity */}
                         <div className="mt-4">
-                            <h5>Recent Activity</h5>
-                            <ul className="list-group" style={{ maxHeight: 150, overflowY: 'auto', paddingRight: '5px' }}>
-                                <li className="list-group-item">Joined group "Techies"</li>
-                                <li className="list-group-item">Sent a new message in "General"</li>
-                                <li className="list-group-item">Updated profile bio</li>
-                                <li className="list-group-item">Changed password</li>
-                                <li className="list-group-item">Joined group "Designers"</li>
-                                <li className="list-group-item">Edited profile picture</li>
-                                <li className="list-group-item">Updated email</li>
+                            <h5>Your Friends</h5>
+                            <ul
+                                className="list-group"
+                                style={{ maxHeight: 150, overflowY: "auto", paddingRight: "5px" }}
+                            >
+                                {friends.length > 0 ? (
+                                    friends.map((frnd) => (
+                                        <li key={frnd?._id} className="list-group-item">
+                                            <div className="d-flex align-items-center">
+                                                <Avatar
+                                                    src={frnd?.avatar || "/avatars/laughing.png"}
+                                                    height={1.5}
+                                                    width={1.5}
+                                                    size={10}
+                                                    isGroup={false}
+                                                    isOnline={false}
+                                                    hideBorder={true}
+                                                    name={frnd?.username}
+                                                />
+                                                <div className="ms-3">
+                                                    <strong>{frnd?.username}</strong>
+                                                    <div style={{ fontSize: "0.9em", opacity: 0.7 }}>
+                                                        {frnd?.bio || "No bio"}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    ))
+                                ) : (
+                                    <li className="list-group-item text-muted">No friends yet</li>
+                                )}
                             </ul>
+
                         </div>
                     </div>
                 </div>

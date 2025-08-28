@@ -1,6 +1,7 @@
 import React from 'react';
 import Avatar from './Avatar';
 import moment from 'moment';
+import Stamp from './Stamp';
 
 
 const ChatReceiver = ({
@@ -14,7 +15,8 @@ const ChatReceiver = ({
   sent,
   id,
   selectedChat,
-  setSelectedChat
+  setSelectedChat,
+  readBy
 }) => {
   let isOnline = false;
 
@@ -58,13 +60,14 @@ const ChatReceiver = ({
           style={{ fontSize: '0.9rem' }}
           title={latestMessage}
         >
-          {`${latestMessage.slice(0, 20)} ${latestMessage.length > 20 ? '...' : ''}`}
+          {`${latestMessage.slice(0, 15)} ${latestMessage.length > 15 ? '...' : ''}`}
         </p>
+        
 
         {/* Unread badge */}
-        {unreadCount > 0 && (
+        {unreadCount > 0 ? (
           <span className="badge bg-danger ms-3">{unreadCount}</span>
-        )}
+        ): <Stamp/>}
         {console.log("unread",unreadCount)}
       </div>
     </div>

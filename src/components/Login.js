@@ -35,20 +35,13 @@ const Login = (props) => {
             localStorage.setItem('token', json.authToken);
             localStorage.setItem('userId', json.user._id);
             localStorage.setItem('user', JSON.stringify(json.user));
+            navigate('/');
             props.showAlert("Logged in Successfully!! ", "success")
 
         }
         props.setProgress(100);
     };
-    const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId');
-    const user = localStorage.getItem('user');
-    useEffect(() => {
-        if (token && userId && user) navigate('/');
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [token, userId, user]);
-
-
+    
     return (
         <div className="container-fluid d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
             <div

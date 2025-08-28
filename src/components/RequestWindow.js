@@ -39,6 +39,7 @@ const RequestWindow = ({
                 flexDirection: 'column',
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
+                objectFit:'cover',
             }}
         >
             {isMobile && selectedUser && (

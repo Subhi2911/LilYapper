@@ -30,6 +30,7 @@ body {
   background-image: url('images/LoginBg.png');
   background-size: cover;
   background-position: center;
+  object-fit:cover;
 }
 
 .login-body {
@@ -44,6 +45,7 @@ body {
   background-size: cover;
   background-position: center;
   animation: fadeIn 0.6s ease-in-out;
+  object-fit:cover;
 }
 
 @keyframes fadeIn {
@@ -68,6 +70,7 @@ body {
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
+    object-fit:cover;
   }
 }
 
