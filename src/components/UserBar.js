@@ -3,9 +3,11 @@ import { Link, useLocation } from 'react-router-dom';
 import Avatar from './Avatar';
 import ThreeDotChatMenu from './ThreeDotChatMenu';
 
-const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBorder, selectedChat, onDeleteChat, setShowChatInfo, onRemoveFriend, setInspectedUser, setShowWallpaperModal, userStatus }) => {
+const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBorder, selectedChat, onDeleteChat, setShowChatInfo, onRemoveFriend, setInspectedUser, setShowWallpaperModal, userStatus ,removeFromGroup, leaveFromGroup}) => {
     let isOnline = false;
-
+    //const userId=localStorage.getItem('userId');
+    //const groupAdminId = selectedChat?.groupAdmin[0]?._id;
+    
     if (!isGroup && selectedChat?.otherUserId) {
         isOnline = onlineUsers.has(selectedChat.otherUserId);
     }
@@ -23,6 +25,11 @@ const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBord
         } else {
             console.warn('setShowChatInfo is not a function:', setShowChatInfo);
         }
+    }
+
+    const onLeaveGroup= () =>{
+        leaveFromGroup(selectedChat?._id);
+        setSelectedChat(null);
     }
 
     return (
@@ -92,7 +99,7 @@ const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBord
                         onCloseChat={() => setSelectedChat(null)}
                         onRemoveFriend={onRemoveFriend}
                         onDeleteGroup={onDeleteChat}
-                        onLeaveGroup={() => console.log('Leave group')}
+                        onLeaveGroup={()=>{onLeaveGroup()}}
                         onGroupInfo={() => setShowChatInfo(true)}
                         setInspectedUser={setInspectedUser}
                         setShowWallpaperModal={setShowWallpaperModal}

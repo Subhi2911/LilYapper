@@ -50,6 +50,7 @@ const ChatWindow = ({
     messages,
     setMessages,
     getConnections,
+    leaveFromGroup
 
 }) => {
     const location = useLocation();
@@ -854,8 +855,10 @@ const ChatWindow = ({
                             currentUser={currentUser}
                             onlineUsers={onlineUsers}
                             handlePermissionChange={handlePermissionChange}
+                            removeFromGroup={removeFromGroup}
+                            leaveFromGroup={leaveFromGroup}
                         />
-                        <div style={{height:'5px'}}>
+                        <div style={{ height: '5px' }}>
                             {loading && <div className="loader"><Spinner color={selectedChat?.wallpaper?.iColor || "black"} /></div>}
                         </div>
                         <div style={{ height: '3.5rem' }}>
@@ -918,33 +921,33 @@ const ChatWindow = ({
                                 </div>
                             )}
                         </div>
-                        {console.log("unreadCount", unreadCount)}
+
                         <div style={{ height: '2rem', }}>
                             {showDown &&
-                                <div 
-                                className="position-relative"
-                                style={{ height: '2rem', display: 'flex', justifyContent: 'center', cursor: 'pointer' }}
+                                <div
+                                    className="position-relative"
+                                    style={{ height: '2rem', display: 'flex', justifyContent: 'center', cursor: 'pointer' }}
                                     onClick={() => {
                                         setTimeout(() => {
                                             scrollToBottom("smooth")
                                         }, 300);
                                     }}>
-                                    {unreadCount?(
-                                    <span
-                                        className="position-relative top-0 translate-middle badge rounded-circle bg-danger border border-light"
-                                        style={{
-                                            width: '10px',
-                                            height: '10px',
-                                            fontSize: '0.2rem',
-                                            display: 'flex',
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            left:'5%'
-                                        }}
-                                    >
-                                        <span className="visually-hidden">unread messages</span>
-                                    </span>):
-                                    null}
+                                    {unreadCount ? (
+                                        <span
+                                            className="position-relative top-0 translate-middle badge rounded-circle bg-danger border border-light"
+                                            style={{
+                                                width: '10px',
+                                                height: '10px',
+                                                fontSize: '0.2rem',
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                                left: '5%'
+                                            }}
+                                        >
+                                            <span className="visually-hidden">unread messages</span>
+                                        </span>) :
+                                        null}
                                     <div className='d-flex justify-content-center align-items-center'
                                         style={{ color: selectedChat?.wallpaper?.iColor, height: '2rem', width: '2rem', backgroundColor: hexToRgba(selectedChat?.wallpaper?.senderbubble, 0.50), borderRadius: '50%', }}>
                                         <i className="fa-solid fa-arrow-down"></i>
@@ -1025,8 +1028,17 @@ const ChatWindow = ({
                                 setEditingText={setEditingText}
                                 isEditing={!!editingMessageId}
                                 onTyping={handleUserTyping}
-                                isDisabled={!isFriend} />
+                                isDisabled={
+                                    selectedChat?.isGroupChat
+                                        ? !selectedChat?.users?.some(user => user?._id === currentUser?._id)
+                                        : !isFriend
+                                }
+                            />
                         </div>
+                        {console.log("selectedChat", selectedChat)}
+
+                        {/* {console.log('ddds', !selectedChat?.users.some(user => user._id === currentUser._id))}
+                        {console.log('dfrews', !isFriend || !selectedChat?.users?.some(user => user._id !== currentUser._id))} */}
                     </>
 
                     {/* MODAL OVERLAY */}
@@ -1147,10 +1159,14 @@ const ChatWindow = ({
             {
                 showLilyapperWelcome && (
                     <div className="text-center mt-5">
+                        <div>
+                            <h2 className="mt-3" style={{color:'yellow'}}>LittleAalu </h2>
+                            <p className="text-muted">presents</p>
+                        </div>
                         <img
                             src={require('../images/lilyapper.png')}
                             alt="lilyapper"
-                            style={{ maxWidth: 300, opacity: 0.8 }}
+                            style={{ maxWidth: 300, opacity: 0.8, height:150, objectFit:'cover' }}
                         />
                         <h4 className="mt-3">LilYapper - Because Silence is Boring</h4>
                         <p className="text-muted">A real-time chat app with private & group messaging.</p>

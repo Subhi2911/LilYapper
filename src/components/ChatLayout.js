@@ -5,7 +5,7 @@ import ChatWindow from './ChatWindow';
 import ChatContext from '../context/chats/ChatContext';
 import { useSocket } from '../context/chats/socket/SocketContext';
 
-const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, setProgress }) => {
+const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, setProgress, showAlert }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { fetchGroups } = useContext(ChatContext);
@@ -63,14 +63,14 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
 
     useEffect(() => {
         if (!socket || !selectedChat) return;
-        
+
 
         const handleNewMessage = (msg) => {
             const msgChatId = msg?.chatId || msg?.chat
-            
+
             if (String(msgChatId) === String(selectedChat?._id)) {
                 setMessages(prev => {
-                    
+
                     if (prev.some(m =>
                         (m._id && msg._id && String(m._id) === String(msg._id)) ||
                         (m?.populatedSystemMessage?._id && msg?.populatedSystemMessage?._id &&
@@ -79,7 +79,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                         return prev; // duplicate found
                     }
 
-                    
+
                     return [...prev, {
                         ...msg,
                         chat: msg.chat,
@@ -187,7 +187,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
 
 
     const updateGroupLatestMessage = (chatId, newMessage) => {
-        
+
         const unreadIncrement = (chatId === newMessage.chat._id && newMessage.sender._id === currentUser) ? 0 : 1;
         setGroups(prevGroups =>
             prevGroups.map(group =>
@@ -228,7 +228,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
 
             const data = await res.json();
 
-            
+
             if (data.populatedSystemMessage) {
                 const systemMessage = {
                     ...data,
@@ -299,7 +299,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
 
             const data = await res.json();
 
-            if (!res.ok) throw new Error(data.error || 'Failed to remove users');
+            if (!res.ok) showAlert(data.error || 'Failed to remove users', "danger");
 
             // Update selectedChat's user list
             if (Array.isArray(data.users)) {
@@ -310,7 +310,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
             }
 
             // Append system message
-            
+
             if (data?.populatedSystemMessage) {
                 const systemMessage = {
                     ...data,
@@ -326,13 +326,67 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                     socket.emit('send-message', systemMessage);
                 }
             }
+            showAlert(data.message || 'Failed to remove users', "success")
             fetchGroups(); // Optional refresh
+
             return data;
         } catch (error) {
-            console.error('Error removing from group:', error.message);
-            throw error;
+            console.error(error);
+            alert('Something went wrong');
         }
     };
+
+    //leave from group
+    const leaveFromGroup = async (chatId, userId) => {
+        try {
+            const response = await fetch(`${host}/api/chat/group-leave/${chatId}`, {
+                method: "PUT",
+                headers: {
+                    "auth-token": localStorage.getItem('token'),
+                    "content-type": "application/json"
+                }
+            });
+            const data = await response.json();
+
+            if (!response.ok) showAlert(data.error || 'Failed to remove users', "danger");
+            if (response.ok) {
+                setSelectedChat(null); // close the chat
+
+                // Remove from UI immediately
+                setLocalChatList(prev => prev.filter(chat => chat._id !== chatId));
+                setGroups(prev => prev.filter(group => group._id !== chatId));
+
+                // Refresh chat list from server
+                getConnections?.();
+                fetchGroups();
+            }
+
+            // Append system message
+
+            if (data?.populatedSystemMessage) {
+                const systemMessage = {
+                    ...data,
+                    content: data.populatedSystemMessage.content,
+                    type: 'system', // handle this in MessageBox styling
+                    createdAt: new Date().toISOString(),
+                    chat: data.chat,
+                    isSystem: true,
+                    users: data.users
+
+                };
+                if (socket) {
+                    socket.emit('send-message', systemMessage);
+                }
+
+            }
+            showAlert(data.message || 'Failed to remove users', "success")
+            return data;
+        } catch (error) {
+            console.error(error);
+            alert('Something went wrong');
+        }
+    }
+
 
 
     //Add to group
@@ -349,7 +403,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
 
             const data = await res.json();
             if (res.ok) {
-                
+
                 alert('Members added successfully');
 
                 if (Array.isArray(data.users)) {
@@ -359,7 +413,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                     }));
 
                     // Add system message to the messages state if applicable
-                    
+
                     if (data.populatedSystemMessage) {
                         const systemMessage = {
                             ...data,
@@ -687,6 +741,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                                 setMessages={setMessages}
                                 updateChatLatestMessage={updateChatLatestMessage}
                                 setProgress={setProgress}
+                                leaveFromGroup={leaveFromGroup}
                             />
                         ) : (
                             <ChatSidebar
@@ -759,6 +814,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                                 setMessages={setMessages}
                                 updateChatLatestMessage={updateChatLatestMessage}
                                 setProgress={setProgress}
+                                leaveFromGroup={leaveFromGroup}
                             />
                         </>
                     )}

@@ -41,7 +41,7 @@ const ChatSidebar = ({
 
     const location = useLocation();
     const [onlineUsers, setOnlineUsers] = useState(new Set());
-    
+
     const safeChatList = Array.isArray(localChats) ? localChats : [];
     const safeGroups = Array.isArray(localGroups) ? localGroups : [];
     const socket = useSocket();
@@ -161,15 +161,15 @@ const ChatSidebar = ({
         selectedChatRef.current = selectedChat;
     }, [selectedChat]);
 
-    
+
     //useEffect(()=>{},[])
     useEffect(() => {
         if (!socket) return;
-        
+
 
         const seenMessages = new Set();
         const handleNewMessage = (newMsg) => {
-            
+
             if (!newMsg?._id || newMsg?.isSystem) return; // must have an ID to track
 
             // Skip if we've already processed this message
@@ -177,8 +177,8 @@ const ChatSidebar = ({
                 return;
             }
             seenMessages.add(newMsg._id);
-            
-            
+
+
             const updateLatest = (setList) => {
                 setList(prevList => {
                     const found = prevList.some(chat => chat?._id === newMsg?.chat?._id);
@@ -189,14 +189,14 @@ const ChatSidebar = ({
 
 
                     return prevList.map(chat => {
-                        
+
                         if (chat?._id === newMsg?.chat?._id) {
                             const isSender = newMsg.sender?._id === currentUser?._id;
-                            
+
                             const unreadIncrement = isSender
                                 ? 0 //  don’t increment for my own messages
                                 : (selectedChatRef?.current?._id === newMsg.chat?._id ? 0 : 1);
-                            
+
                             return {
                                 ...chat,
                                 latestMessage: newMsg,
@@ -207,7 +207,7 @@ const ChatSidebar = ({
                     });
                 });
             };
-            
+
             if (newMsg.chat.isGroupChat) {
                 updateLatest(setLocalGroups);
             } else {
@@ -246,7 +246,7 @@ const ChatSidebar = ({
             chat => !chat?.deletedFor?.includes(user?._id)
         );
     }
-    
+
     // Sort chats by latestMessage timestamp (descending)
     displayChats.sort((a, b) => {
         const timeA = new Date(a?.latestMessage?.createdAt || a?.updatedAt || 0).getTime();
@@ -284,7 +284,7 @@ const ChatSidebar = ({
 
 
     const handleChatSelect = (chat) => {
-        
+
         setSelectedChat(chat);
         // Get the latest message id
         if (chat?.latestMessage?._id) {
@@ -361,7 +361,7 @@ const ChatSidebar = ({
 
                         <h5 className="text-white mb-3">Chats</h5>
                         <ul className="list-group">
-                            {loading ? ( //show placeholders during 3 sec
+                            {loading ? ( // show placeholders during 3 sec
                                 <>
                                     {[...Array(displayChats?.length || 4)].map((_, i) => (
                                         <div key={i} className="my-3">
@@ -370,48 +370,51 @@ const ChatSidebar = ({
                                     ))}
                                 </>
                             ) : (
-                                displayChats.map((item) => (
-                                    <li
-                                        key={item?._id}
-                                        className="list-group-item my-2"
-                                        onClick={() => {
-                                            handleChatSelect(item);
-                                            if (isMobile) setShowChatInfo(false);
-                                        }}
-                                        style={{ cursor: 'pointer', borderRadius: 'inherit' }}
-                                    >
-                                        <ChatReceiver
-                                            isGroup={item?.isGroupChat}
-                                            lastMessageTime={item?.latestMessage?.createdAt || ''}
-                                            sent={
-                                                localStorage.getItem('userId') === item?.latestMessage?.sender?._id
-                                                    ? 'You :'
-                                                    : item?.latestMessage?.sender?.username
-                                                        ? `${item?.latestMessage?.sender?.username} :`
-                                                        : ''
-                                            }
-                                            avatar={
-                                                item?.isGroupChat
-                                                    ? item?.avatar || '/avatars/hugging.png'
-                                                    : item?.avatar || '/avatars/laughing.png'
-                                            }
-                                            name={item?.isGroupChat ? item?.chatName : item?.username}
-                                            latestMessage={
-                                                item?.latestMessage?.content ||
-                                                (item?.isGroupChat ? 'Group chat' : 'Tap to start chat')
-                                            }
-                                            unreadCount={item?.unreadCount || 0}
-                                            onlineUsers={onlineUsers}
-                                            id={item?.otherUserId}
-                                            selectedChat={selectedChat}
-                                            setSelectedChat={setSelectedChat}
-                                            
-                                        />
-                                        
-                                    </li>
-                                ))
+                                displayChats.length > 0 ? (
+                                    displayChats.map((item) => (
+                                        <li
+                                            key={item?._id}
+                                            className="list-group-item my-2"
+                                            onClick={() => {
+                                                handleChatSelect(item);
+                                                if (isMobile) setShowChatInfo(false);
+                                            }}
+                                            style={{ cursor: 'pointer', borderRadius: 'inherit' }}
+                                        >
+                                            <ChatReceiver
+                                                isGroup={item?.isGroupChat}
+                                                lastMessageTime={item?.latestMessage?.createdAt || ''}
+                                                sent={
+                                                    localStorage.getItem('userId') === item?.latestMessage?.sender?._id
+                                                        ? 'You :'
+                                                        : item?.latestMessage?.sender?.username
+                                                            ? `${item?.latestMessage?.sender?.username} :`
+                                                            : ''
+                                                }
+                                                avatar={
+                                                    item?.isGroupChat
+                                                        ? item?.avatar || '/avatars/hugging.png'
+                                                        : item?.avatar || '/avatars/laughing.png'
+                                                }
+                                                name={item?.isGroupChat ? item?.chatName : item?.username}
+                                                latestMessage={
+                                                    item?.latestMessage?.content ||
+                                                    (item?.isGroupChat ? 'Group chat' : 'Tap to start chat')
+                                                }
+                                                unreadCount={item?.unreadCount || 0}
+                                                onlineUsers={onlineUsers}
+                                                id={item?.otherUserId}
+                                                selectedChat={selectedChat}
+                                                setSelectedChat={setSelectedChat}
+                                            />
+                                        </li>
+                                    ))
+                                ) : (
+                                    <h4>Start Chatting with people</h4>
+                                )
                             )}
                         </ul>
+
                     </div>
                 )}
 
