@@ -39,7 +39,7 @@ const Signup = (props) => {
             try { json = JSON.parse(text); } catch { }
 
             if (response.ok && json.success) {
-                console.log(json)
+                
                 localStorage.setItem('token', json.authToken);
                 localStorage.setItem('userId', json.user._id);
                 localStorage.setItem('user', JSON.stringify(json.user)); 

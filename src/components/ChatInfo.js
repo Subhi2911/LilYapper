@@ -86,7 +86,7 @@ const ChatInfo = ({
                     if (socket) {
                         socket.emit('send-message', systemMessage);
                     }
-                    console.log(data)
+                    
                 }
             } else {
                 alert(data.error || "Failed to rename group");
@@ -111,7 +111,7 @@ const ChatInfo = ({
     });
 
     const formatName = (str) => {
-        console.log(str)
+        
         return str
             // Insert space before capital letters
             .replace(/([A-Z])/g, ' $1')
@@ -200,7 +200,7 @@ const ChatInfo = ({
             <div className="flex-grow-1 overflow-auto w-100">
                 {isGroupChat ? (
                     <>
-                        {console.log(selectedChat)}
+                        
                         {isAdmin && (
                             <div className="mt-3">
                                 <h5>Group Permissions</h5>

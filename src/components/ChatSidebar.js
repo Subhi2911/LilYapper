@@ -32,7 +32,8 @@ const ChatSidebar = ({
     updateGroupLatestMessage,
     setGroups,
     setProgress,
-    setMessages
+    setMessages,
+    selectedUser
 }) => {
     const currentUser = localStorage.getItem('userId');
     const [localGroups, setLocalGroups] = useState(groups);
@@ -40,7 +41,7 @@ const ChatSidebar = ({
 
     const location = useLocation();
     const [onlineUsers, setOnlineUsers] = useState(new Set());
-    //console.log(chatList, groups)
+    
     const safeChatList = Array.isArray(localChats) ? localChats : [];
     const safeGroups = Array.isArray(localGroups) ? localGroups : [];
     const socket = useSocket();
@@ -160,15 +161,15 @@ const ChatSidebar = ({
         selectedChatRef.current = selectedChat;
     }, [selectedChat]);
 
-    let times = 1;
+    
     //useEffect(()=>{},[])
     useEffect(() => {
         if (!socket) return;
-        console.log(selectedChat?.latestMessage)
+        
 
         const seenMessages = new Set();
         const handleNewMessage = (newMsg) => {
-            console.log('kfkfkfkfk', newMsg)
+            
             if (!newMsg?._id || newMsg?.isSystem) return; // must have an ID to track
 
             // Skip if we've already processed this message
@@ -176,9 +177,8 @@ const ChatSidebar = ({
                 return;
             }
             seenMessages.add(newMsg._id);
-            console.log('times: ', times)
-            times++
-            console.log(localGroups)
+            
+            
             const updateLatest = (setList) => {
                 setList(prevList => {
                     const found = prevList.some(chat => chat?._id === newMsg?.chat?._id);
@@ -189,16 +189,14 @@ const ChatSidebar = ({
 
 
                     return prevList.map(chat => {
-                        console.log(chat)
+                        
                         if (chat?._id === newMsg?.chat?._id) {
                             const isSender = newMsg.sender?._id === currentUser?._id;
-                            console.log("isSender", isSender)
-                            console.log(selectedChatRef, newMsg)
+                            
                             const unreadIncrement = isSender
                                 ? 0 //  don’t increment for my own messages
                                 : (selectedChatRef?.current?._id === newMsg.chat?._id ? 0 : 1);
-                            console.log(selectedChatRef.current?._id, newMsg.chat?._id, selectedChatRef.current?._id === newMsg.chat?._id)
-                            console.log('bukhj', unreadIncrement)
+                            
                             return {
                                 ...chat,
                                 latestMessage: newMsg,
@@ -209,7 +207,7 @@ const ChatSidebar = ({
                     });
                 });
             };
-            console.log(newMsg)
+            
             if (newMsg.chat.isGroupChat) {
                 updateLatest(setLocalGroups);
             } else {
@@ -248,8 +246,7 @@ const ChatSidebar = ({
             chat => !chat?.deletedFor?.includes(user?._id)
         );
     }
-    console.log(displayChats)
-
+    
     // Sort chats by latestMessage timestamp (descending)
     displayChats.sort((a, b) => {
         const timeA = new Date(a?.latestMessage?.createdAt || a?.updatedAt || 0).getTime();
@@ -287,8 +284,7 @@ const ChatSidebar = ({
 
 
     const handleChatSelect = (chat) => {
-        console.log(chat)
-        console.log(groups)
+        
         setSelectedChat(chat);
         // Get the latest message id
         if (chat?.latestMessage?._id) {
@@ -411,7 +407,7 @@ const ChatSidebar = ({
                                             setSelectedChat={setSelectedChat}
                                             
                                         />
-                                        {console.log("jfjfj", item.unreadCount)}
+                                        
                                     </li>
                                 ))
                             )}
@@ -432,6 +428,7 @@ const ChatSidebar = ({
                         hasMore={hasMore}
                         isMobile={isMobile}
                         handleSkip={handleSkip}
+                        selectedUser={selectedUser}
                     />
                 )}
 

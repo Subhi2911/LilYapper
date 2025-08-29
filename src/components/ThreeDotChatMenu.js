@@ -18,7 +18,7 @@ const ThreeDotChatMenu = ({
   const menuRef = useRef(null);
   const currentUser=localStorage.getItem('userId');
   const isAdmin = selectedChat?.groupAdmin?.some(adminId => adminId?._id?.toString() === currentUser?.toString());
-  console.log(isAdmin,'kskskksks',selectedChat)
+  
 
 
   // Close menu on outside click

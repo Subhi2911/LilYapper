@@ -33,7 +33,7 @@ const MessageBox = ({
     useEffect(() => {
         if (containerRef.current) {
             containerRef.current.scrollTop = containerRef.current.scrollHeight;
-            console.log(messages);
+            
         }
     }, [messages]);
 
@@ -62,7 +62,6 @@ const MessageBox = ({
 
     const groupedMessages = groupMessagesByDate(messages);
 
-    console.log(groupedMessages)
     return (
         <div
             ref={containerRef}
@@ -86,12 +85,10 @@ const MessageBox = ({
                     }}>
                     {/* Date header */}
                     <div className="text-center my-3 text-sm" style={{ color: systemMesColor }}>
-                        {console.log(hasMore)}
+                        
                         {formatChatDate(group.date)}
 
                     </div>
-                    {console.log(group.date)}
-                    {console.log(group.date)}
 
                     {/* Messages under this date */}
                     {group.messages.map((msg, index) => {
@@ -278,8 +275,9 @@ const MessageBox = ({
                                         display: "flex",
                                         gap: "4px",
                                         marginTop: "4px",
-                                        paddingLeft: "40px",
-                                        paddingRight: "s0px",
+                                        paddingLeft: "0px",
+                                        paddingRight: "40px",
+                                        justifyContent:"flex-end"
                                     }}
                                 >
                                     {Object.entries(lastReads).map(([userId, lastMsgId]) => {

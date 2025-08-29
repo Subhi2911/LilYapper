@@ -50,8 +50,8 @@ const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBord
                     </button>
                 </div>
 
-                <Link
-                    to="/profile"
+                <div
+
                     title="Profile"
                     className="my-1 mx-3"
                     style={{
@@ -62,7 +62,7 @@ const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBord
                 >
                     <Avatar src={avatar} width="2" height="2" size="12" isGroup={isGroup} isOnline={isOnline} name={name} />
 
-                </Link>
+                </div>
 
                 <p className="navbar-brand my-1" style={{ color: 'white' }}>
                     {name}
@@ -77,7 +77,7 @@ const UserBar = ({ name, avatar, setSelectedChat, onlineUsers, isGroup, hideBord
                 <div className="d-flex align-items-center ms-auto gap-5" id="navbarSupportedContent">
                     <Link to="/search" className="text-decoration-none" aria-label="New Chat" onClick={(e) => {
                         e.stopPropagation(); // Prevents click from reaching parent
-                        console.log('Child clicked');
+                        
                     }}>
                         <i
                             className="fa-solid fa-magnifying-glass my-1"

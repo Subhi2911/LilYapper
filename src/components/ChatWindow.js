@@ -86,6 +86,11 @@ const ChatWindow = ({
 
     const [sent, setSent] = useState(true);
 
+    const [showDown, setShowDown] = useState(false);
+    const showDownRef = useRef(showDown);
+
+    const [unreadCount, setUnreadCount] = useState(false)
+
     const handleReply = (msg) => {
         setReplyTo(msg);
     };
@@ -113,6 +118,11 @@ const ChatWindow = ({
         });
     };
 
+    // Keep ref updated whenever showDown changes
+    useEffect(() => {
+        showDownRef.current = showDown;
+    }, [showDown]);
+
     const groupMessagesByDate = (messages) => {
         if (!Array.isArray(messages)) return {};
         const grouped = messages?.reduce((groups, msg) => {
@@ -134,13 +144,19 @@ const ChatWindow = ({
         }));
     };
 
-
+    function hexToRgba(hex, alpha = 0.25) {
+        hex = hex.replace("#", "");
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
 
 
     useEffect(() => {
-        console.log(selectedChat)
+
         if (selectedChat?.wallpaper?.url) {
-            console.log(selectedChat.wallpaper.url)
+
             setWallpaperUrl(selectedChat.wallpaper.url);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -155,7 +171,7 @@ const ChatWindow = ({
 
     useEffect(() => {
         if (socket && selectedChat?._id) {
-            console.log(selectedChat.wallpaper)
+
             socket.emit("join chat", selectedChat?._id);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -204,7 +220,8 @@ const ChatWindow = ({
                     });
 
                     const data = await response.json();
-                    const friendIds = data.map(friend => friend?._id);
+
+                    const friendIds = data?.map(friend => friend?._id);
                     setIsFriend(friendIds.includes(selectedChat.otherUserId));
                 } catch (error) {
                     console.error('Error checking friendship:', error);
@@ -234,12 +251,12 @@ const ChatWindow = ({
             try {
                 const fetched = await fetchMessages(selectedChat._id, 1, 10);
 
-                const formatted = fetched.map((msg) => ({
+                const formatted = fetched?.map((msg) => ({
                     ...msg,
                     type: msg.sender?._id === currentUser?._id ? "sent" : "received",
                     text: msg?.content,
                 }));
-                console.log(fetched)
+
 
                 // set messages
                 setMessages(formatted?.reverse());
@@ -265,9 +282,11 @@ const ChatWindow = ({
     }, [selectedChat?._id, currentUser?._id]);
 
 
-    // 2️⃣ Infinite scroll handler (yours is already correct)
+    // 2️⃣ Infinite scroll handler
     const handleScroll = async (e) => {
         const el = e.target;
+
+        // 1️⃣ Infinite scroll (when at top)
         if (el.scrollTop === 0 && !loading && hasMore) {
             setLoading(true);
             const nextPage = page + 1;
@@ -275,7 +294,6 @@ const ChatWindow = ({
 
             if (older?.length > 0) {
                 const prevHeight = el.scrollHeight;
-
                 setMessages((prev) => [
                     ...older.map((msg) => ({
                         ...msg,
@@ -284,7 +302,6 @@ const ChatWindow = ({
                     })),
                     ...prev,
                 ]);
-
                 setPage(nextPage);
                 setHasMore(older.length === 10);
 
@@ -296,12 +313,25 @@ const ChatWindow = ({
             }
             setLoading(false);
         }
+
+        // 2️⃣ Check if user is at bottom
+        const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 5;
+        setShowDown(!isAtBottom);
+
+        if (isAtBottom) {
+            // Mark messages as read when at bottom
+            setUnreadCount(0);
+            if (selectedChat?._id) {
+                markMessagesAsRead(selectedChat._id);
+            }
+        }
     };
+
     // 3️⃣ Scroll when *I* send a message
     const prevMsgCount = useRef(0);
     const prevFirstMsgId = useRef(null);
 
-    useEffect(() => {
+    const handleAutoScroll = () => {
         if (messages.length === 0) return;
 
         const lastMsg = messages[messages.length - 1];
@@ -309,8 +339,7 @@ const ChatWindow = ({
 
         // CASE 1: new message at the bottom (sent/received)
         if (
-            lastMsg.sender?._id === currentUser?._id ||  // you sent
-            (prevFirstMsgId.current === firstMsg._id && messages.length > prevMsgCount.current) // received new one
+            lastMsg.sender?._id === currentUser?._id
         ) {
             setTimeout(() => scrollToBottom("smooth"), 50);
         }
@@ -318,14 +347,13 @@ const ChatWindow = ({
         // update trackers
         prevMsgCount.current = messages.length;
         prevFirstMsgId.current = firstMsg._id;
-    }, [messages, currentUser?._id]);
+    };
 
 
     const groupedMessages = groupMessagesByDate(messages);
 
     useEffect(() => {
         const container = containerRef?.current;
-        console.log("container", container)
         if (!container) return;
 
         const observer = new IntersectionObserver(
@@ -360,7 +388,7 @@ const ChatWindow = ({
     }, [currentDate]);
 
     useEffect(() => {
-        console.log('ghghghgh')
+
         if (!socket) return;
 
         const handleNewMessage = (msg) => {
@@ -381,7 +409,14 @@ const ChatWindow = ({
                         //readBy:[currentUser._id, selectedChat?.otherUserId]
                     }
                 ]);
-                markMessagesAsRead(msgChatId);
+                const isSender = msg.sender?._id === currentUser?._id;
+                console.log(isSender, unreadCount, showDown);
+                //console.log(unreadCount)
+                if (showDownRef.current && !isSender) {
+                    setUnreadCount(true);
+                } else {
+                    markMessagesAsRead(msgChatId);
+                }
             }
 
             // Update either private connections or groups
@@ -403,6 +438,7 @@ const ChatWindow = ({
                                 });
                             }
                         });
+
 
                         return prevGroups;
                     }
@@ -426,7 +462,7 @@ const ChatWindow = ({
                                 });
                             }
                         });
-                        console.log(prevChats)
+
 
                         return prevChats;
                     }
@@ -585,6 +621,7 @@ const ChatWindow = ({
             createdAt: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, optimisticMessage]);
+        handleAutoScroll();
 
         try {
             const newMessage = await sendmessage(newText, selectedChat?._id, replyTo?._id || null);
@@ -602,12 +639,12 @@ const ChatWindow = ({
                     } : null,
                     status: "sent"
                 };
-                
+
                 setMessages((prev) =>
                     prev.map((msg) => (msg.clientId === tempId ? typedMessage : msg))
                 );
                 setSent(true);
-                console.log(messages)
+
                 setReplyTo(null);
 
                 if (selectedChat?.isGroupChat && typeof updateGroupLatestMessage === 'function') {
@@ -795,7 +832,7 @@ const ChatWindow = ({
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 width: isMobile ? '100vw' : 'auto',
-                objectFit:'cover'
+                objectFit: 'cover'
             }}
         >
             {(location.pathname === '/' || location.pathname === '/groups') && selectedChat && (
@@ -823,7 +860,7 @@ const ChatWindow = ({
                         <div style={{ height: '3.5rem' }}>
                             {showDate && currentDate &&
                                 <div className="text-center my-3 text-sm" style={{ color: selectedChat?.wallpaper?.systemMesColor, height: '8px' }}>
-                                    {console.log("currentDate", currentDate,)}
+
                                     {currentDate ? formatChatDate(currentDate) : ""}
 
                                 </div>
@@ -879,6 +916,40 @@ const ChatWindow = ({
                                     <div ref={messagesEndRef} />
                                 </div>
                             )}
+                        </div>
+                        {console.log("unreadCount", unreadCount)}
+                        <div style={{ height: '2rem', }}>
+                            {showDown &&
+                                <div 
+                                className="position-relative"
+                                style={{ height: '2rem', display: 'flex', justifyContent: 'center', cursor: 'pointer' }}
+                                    onClick={() => {
+                                        setTimeout(() => {
+                                            scrollToBottom("smooth")
+                                        }, 300);
+                                    }}>
+                                    {unreadCount?(
+                                    <span
+                                        className="position-relative top-0 translate-middle badge rounded-circle bg-danger border border-light"
+                                        style={{
+                                            width: '10px',
+                                            height: '10px',
+                                            fontSize: '0.2rem',
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            left:'5%'
+                                        }}
+                                    >
+                                        <span className="visually-hidden">unread messages</span>
+                                    </span>):
+                                    null}
+                                    <div className='d-flex justify-content-center align-items-center'
+                                        style={{ color: selectedChat?.wallpaper?.iColor, height: '2rem', width: '2rem', backgroundColor: hexToRgba(selectedChat?.wallpaper?.senderbubble, 0.50), borderRadius: '50%', }}>
+                                        <i className="fa-solid fa-arrow-down"></i>
+                                    </div>
+                                </div>
+                            }
                         </div>
 
 
@@ -989,7 +1060,7 @@ const ChatWindow = ({
                                                 />
                                             ) : (
                                                 <>
-                                                    {console.log('kokoko', onlineUsers)}
+
                                                     <ChatInfo
                                                         selectedChat={selectedChat}
                                                         onBack={() => setShowChatInfo(false)}
@@ -1067,8 +1138,10 @@ const ChatWindow = ({
                         setSelectedChat={setSelectedChat}
                         messages={messages}
                     />
+
                 )
             }
+
 
             {
                 showLilyapperWelcome && (

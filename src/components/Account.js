@@ -24,7 +24,7 @@ const Account = () => {
                 });
 
                 const userData = await userRes.json();
-                console.log(userData);
+                
 
                 setFriends(userData?.friends || []);
 
@@ -84,7 +84,7 @@ const Account = () => {
 
     return (
         <div className="d-flex">
-            {console.log(friends)}
+            
             {/* Sidebar for medium+ */}
             <div className="d-none d-md-block">
                 <SidebarNavbar handleLogout={handleLogout} />

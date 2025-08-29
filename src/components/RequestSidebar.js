@@ -15,30 +15,31 @@ const RequestSidebar = ({
   fetchUsers,
   hasMore,
   isMobile,
-  handleSkip
+  handleSkip,
+  selectedUser
 }) => {
-    const location=useLocation() 
+  const location = useLocation()
   return (
     <div
       style={{
         flex: '1 1 40%',
         display: 'flex',
         flexDirection: 'column',
-        backgroundImage: location.pathname==='/requests'?`url(${require('../images/LoginBg.png')})`:'',
+        backgroundImage: location.pathname === '/requests' ? `url(${require('../images/LoginBg.png')})` : '',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         borderRadius: '1rem',
         boxShadow: '0 0 8px rgba(0,0,0,0.1)',
         padding: '1rem',
         overflow: 'hidden',
-        objectFit:'cover'
+        objectFit: 'cover'
       }}
     >
       <h3 style={{ marginBottom: '1rem', color: 'white' }}>
-        {location.pathname==='/requests'?'Send request to users':'Add Friends'}
+        {location.pathname === '/requests' ? 'Send request to users' : 'Add Friends'}
       </h3>
 
-      {isMobile && location.pathname==='/requests'&& (
+      {isMobile && location.pathname === '/requests' && (
         <button
           onClick={handleSkip}
           className="btn btn-warning mb-2"
@@ -65,7 +66,7 @@ const RequestSidebar = ({
             dataLength={users.length}
             next={fetchUsers}
             hasMore={hasMore}
-            loader={<Spinner color="white"/>}
+            loader={<Spinner color="white" />}
             scrollableTarget="scrollableDiv"
           >
             <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
@@ -101,9 +102,14 @@ const RequestSidebar = ({
                     }}
                     onClick={() => setSelectedUser(user)}
                   >
+                    
                     <div className='d-flex gap-3 my-2 align-items-center'>
                       <Avatar src={user.avatar} height='2' width='2' name={user?.username} />
                       <strong>{user.username}</strong>
+                    </div>
+                    <div
+                      style={{ padding: '3px', overfolow: 'hidden', whiteSpace: "normal", wordWrap: "break-word", fontSize: '1rem', marginBottom: '2px' }}
+                    >{user.bio}
                     </div>
                     <div className='d-flex justify-content-around'>
                       <button

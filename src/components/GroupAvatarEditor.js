@@ -72,7 +72,7 @@ const GroupAvatarEditor = ({ selectedChat, setSelectedChat, avatar, width, heigh
                     if (socket) {
                         socket.emit('send-message', systemMessage);
                     }
-                    console.log(data)
+                    
                 }
             } else {
                 console.error(data.error || "Failed to update avatar");

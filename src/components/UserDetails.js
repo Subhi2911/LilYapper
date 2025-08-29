@@ -4,9 +4,9 @@ import Avatar from './Avatar';
 const UserDetails = ({ user, currentUser, groupAdmin, onMakeAdmin, onRemove, onClose, removeFromGroup, selectedChat }) => {
     const currentUserId = localStorage.getItem('userId');
     const isAdmin = groupAdmin.some(admin => admin._id === currentUserId);
-    console.log(groupAdmin)
+    
     const canManage = isAdmin && currentUser?._id !== user?._id;
-    //console.log('hdydgydg8', currentUser)
+    
     return (
         <div className="p-3 text-white" style={{ borderLeft: '1px solid #ccc', height: '100%' }}>
             <button className="btn btn-light mb-3" onClick={onClose}>← Back</button>
@@ -15,7 +15,7 @@ const UserDetails = ({ user, currentUser, groupAdmin, onMakeAdmin, onRemove, onC
                 <h5 className="mt-2">{user.username}</h5>
                 <p className="text-muted text-center">{user.bio || "No bio"}</p>
             </div>
-        {console.log(selectedChat)}
+        
             {canManage && (
                 
                 <div className="mt-4">

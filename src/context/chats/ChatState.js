@@ -143,7 +143,7 @@ const ChatState = (props) => {
                 headers: { 'auth-token': localStorage.getItem('token') }
             });
             const json = await response.json();
-            console.log(json.groups)
+            
             return {
                 groups: json.groups || [],
                 totalPages: json.pagination?.totalPages || 1,

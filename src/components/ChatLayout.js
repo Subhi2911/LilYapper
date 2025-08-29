@@ -63,14 +63,14 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
 
     useEffect(() => {
         if (!socket || !selectedChat) return;
-        console.log("jhimri")
+        
 
         const handleNewMessage = (msg) => {
             const msgChatId = msg?.chatId || msg?.chat
-            console.log(msg, String(msgChatId) === String(selectedChat?._id))
+            
             if (String(msgChatId) === String(selectedChat?._id)) {
                 setMessages(prev => {
-                    console.log(prev)
+                    
                     if (prev.some(m =>
                         (m._id && msg._id && String(m._id) === String(msg._id)) ||
                         (m?.populatedSystemMessage?._id && msg?.populatedSystemMessage?._id &&
@@ -79,7 +79,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                         return prev; // duplicate found
                     }
 
-                    //{console.log('musafir')}
+                    
                     return [...prev, {
                         ...msg,
                         chat: msg.chat,
@@ -187,8 +187,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
 
 
     const updateGroupLatestMessage = (chatId, newMessage) => {
-        console.log('d', newMessage)
-        console.log('ddweded', newMessage.sender._id === currentUser)
+        
         const unreadIncrement = (chatId === newMessage.chat._id && newMessage.sender._id === currentUser) ? 0 : 1;
         setGroups(prevGroups =>
             prevGroups.map(group =>
@@ -229,7 +228,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
 
             const data = await res.json();
 
-            console.log(data);
+            
             if (data.populatedSystemMessage) {
                 const systemMessage = {
                     ...data,
@@ -311,7 +310,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
             }
 
             // Append system message
-            console.log(data)
+            
             if (data?.populatedSystemMessage) {
                 const systemMessage = {
                     ...data,
@@ -350,7 +349,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
 
             const data = await res.json();
             if (res.ok) {
-                console.log(data)
+                
                 alert('Members added successfully');
 
                 if (Array.isArray(data.users)) {
@@ -360,7 +359,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                     }));
 
                     // Add system message to the messages state if applicable
-                    console.log(data)
+                    
                     if (data.populatedSystemMessage) {
                         const systemMessage = {
                             ...data,
@@ -647,64 +646,122 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                 position: 'absolute',
                 left: isMobile ? 0 : 50,
                 top: 0,
-                right: isMobile?0:0,
+                right: isMobile ? 0 : 0,
                 bottom: 0,
                 height: '100vh',
                 overflow: 'hidden',
                 backgroundColor: '#f8f9fa',
+                flexDirection: isMobile ? 'column' : 'row',
             }}
         >
             {(location.pathname === '/' || location.pathname === '/groups') && (
                 <>
-                    <ChatSidebar
-                        chatList={localChatList}
-                        groups={groups}
-                        isMobile={isMobile}
-                        selectedChat={selectedChat}
-                        setSelectedChat={handleSelectChat}
-                        onGroupsScroll={onGroupsScroll}
-                        groupsLoading={groupsLoading}
-                        groupsHasMore={groupsHasMore}
-                        refreshGroups={fetchGroups}
-                        onGroupCreated={handleGroupCreated}
-                        setShowChatInfo={setShowChatInfo}
-                        setGroups={setGroups}
-                        setLocalChats={setLocalChatList}
-                        updateGroupLatestMessage={updateGroupLatestMessage}
-                        setProgress={setProgress}
-                        setMessages={setMessages}
-                        messages={messages}
-
-                    />
-                    <ChatWindow
-                        selectedChat={selectedChat}
-                        selectedUser={selectedUser}
-                        setSelectedChat={setSelectedChat}
-                        isMobile={isMobile}
-                        onDeleteChat={handleDeleteChat}
-                        showChatInfo={showChatInfo}
-                        friends={friends}
-                        setShowChatInfo={setShowChatInfo}
-                        onRemoveFriend={removeFriend}
-                        inspectedUser={inspectedUser}
-                        setInspectedUser={setInspectedUser}
-                        removeFromGroup={removeFromGroup}
-                        addToGroup={addToGroup}
-                        setShowAddMembersModal={setShowAddMembersModal}
-                        showAddMembersModal={showAddMembersModal}
-                        handleAddMembers={handleAddMembers}
-                        onAddSystemMessage={onAddSystemMessage}
-                        updateGroupLatestMessage={updateGroupLatestMessage}
-                        setGroups={setGroups}
-                        setLocalChatList={setLocalChatList}
-                        markMessagesAsRead={(chatId) => { markMessagesAsRead(chatId) }}
-                        handlePermissionChange={handlePermissionChange}
-                        handleMakeAdmin={handleMakeAdmin}
-                        messages={messages}
-                        setMessages={setMessages}
-                        updateChatLatestMessage={updateChatLatestMessage}
-                        setProgress={setProgress}
-                    />
+                    {/* Mobile: either Sidebar OR ChatWindow */}
+                    {isMobile ? (
+                        selectedChat ? (
+                            <ChatWindow
+                                selectedChat={selectedChat}
+                                selectedUser={selectedUser}
+                                setSelectedChat={setSelectedChat}
+                                isMobile={isMobile}
+                                onDeleteChat={handleDeleteChat}
+                                showChatInfo={showChatInfo}
+                                friends={friends}
+                                setShowChatInfo={setShowChatInfo}
+                                onRemoveFriend={removeFriend}
+                                inspectedUser={inspectedUser}
+                                setInspectedUser={setInspectedUser}
+                                removeFromGroup={removeFromGroup}
+                                addToGroup={addToGroup}
+                                setShowAddMembersModal={setShowAddMembersModal}
+                                showAddMembersModal={showAddMembersModal}
+                                handleAddMembers={handleAddMembers}
+                                onAddSystemMessage={onAddSystemMessage}
+                                updateGroupLatestMessage={updateGroupLatestMessage}
+                                setGroups={setGroups}
+                                setLocalChatList={setLocalChatList}
+                                markMessagesAsRead={markMessagesAsRead}
+                                handlePermissionChange={handlePermissionChange}
+                                handleMakeAdmin={handleMakeAdmin}
+                                messages={messages}
+                                setMessages={setMessages}
+                                updateChatLatestMessage={updateChatLatestMessage}
+                                setProgress={setProgress}
+                            />
+                        ) : (
+                            <ChatSidebar
+                                chatList={localChatList}
+                                groups={groups}
+                                isMobile={isMobile}
+                                selectedChat={selectedChat}
+                                setSelectedChat={handleSelectChat}
+                                onGroupsScroll={onGroupsScroll}
+                                groupsLoading={groupsLoading}
+                                groupsHasMore={groupsHasMore}
+                                refreshGroups={fetchGroups}
+                                onGroupCreated={handleGroupCreated}
+                                setShowChatInfo={setShowChatInfo}
+                                setGroups={setGroups}
+                                setLocalChats={setLocalChatList}
+                                updateGroupLatestMessage={updateGroupLatestMessage}
+                                setProgress={setProgress}
+                                setMessages={setMessages}
+                                messages={messages}
+                            />
+                        )
+                    ) : (
+                        // Desktop: show both
+                        <>
+                            <ChatSidebar
+                                chatList={localChatList}
+                                groups={groups}
+                                isMobile={isMobile}
+                                selectedChat={selectedChat}
+                                setSelectedChat={handleSelectChat}
+                                onGroupsScroll={onGroupsScroll}
+                                groupsLoading={groupsLoading}
+                                groupsHasMore={groupsHasMore}
+                                refreshGroups={fetchGroups}
+                                onGroupCreated={handleGroupCreated}
+                                setShowChatInfo={setShowChatInfo}
+                                setGroups={setGroups}
+                                setLocalChats={setLocalChatList}
+                                updateGroupLatestMessage={updateGroupLatestMessage}
+                                setProgress={setProgress}
+                                setMessages={setMessages}
+                                messages={messages}
+                            />
+                            <ChatWindow
+                                selectedChat={selectedChat}
+                                selectedUser={selectedUser}
+                                setSelectedChat={setSelectedChat}
+                                isMobile={isMobile}
+                                onDeleteChat={handleDeleteChat}
+                                showChatInfo={showChatInfo}
+                                friends={friends}
+                                setShowChatInfo={setShowChatInfo}
+                                onRemoveFriend={removeFriend}
+                                inspectedUser={inspectedUser}
+                                setInspectedUser={setInspectedUser}
+                                removeFromGroup={removeFromGroup}
+                                addToGroup={addToGroup}
+                                setShowAddMembersModal={setShowAddMembersModal}
+                                showAddMembersModal={showAddMembersModal}
+                                handleAddMembers={handleAddMembers}
+                                onAddSystemMessage={onAddSystemMessage}
+                                updateGroupLatestMessage={updateGroupLatestMessage}
+                                setGroups={setGroups}
+                                setLocalChatList={setLocalChatList}
+                                markMessagesAsRead={markMessagesAsRead}
+                                handlePermissionChange={handlePermissionChange}
+                                handleMakeAdmin={handleMakeAdmin}
+                                messages={messages}
+                                setMessages={setMessages}
+                                updateChatLatestMessage={updateChatLatestMessage}
+                                setProgress={setProgress}
+                            />
+                        </>
+                    )}
                 </>
             )}
 
@@ -725,6 +782,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                         usersLoading={usersLoading}
                         setMessages={setMessages}
                         messages={messages}
+                        selectedUser={selectedUser}
                     />
                     <ChatWindow
                         selectedChat={selectedUser}

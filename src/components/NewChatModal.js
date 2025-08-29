@@ -33,7 +33,7 @@ const NewChatModal = ({ isOpen, onClose, setSelectedChat }) => {
         try {
             const chat = await createChat(friendId); // returns chat from backend
             if (chat) {
-                console.log(chat)
+                
                 setSelectedChat(chat); 
                 onClose();
             }

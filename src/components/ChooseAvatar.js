@@ -38,7 +38,7 @@ const ChooseAvatar = ({ onAvatarSelect, userAvatar, setProgress }) => {
             document.body.classList.add('signup-body');
             return () => document.body.classList.remove('signup-body');
         }
-        console.log(userAvatar)
+        
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 

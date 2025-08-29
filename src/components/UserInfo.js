@@ -25,7 +25,7 @@ const UserInfo = () => {
                 });
                 
                 const data = await res.json();
-                console.log(data)
+                
                 setUser({
                     username: data.user.username,
                     bio: data.user.bio,

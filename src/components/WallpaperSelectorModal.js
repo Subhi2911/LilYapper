@@ -24,33 +24,7 @@ const wallpapers = [
 const WallpaperSelectorModal = ({ chatId, onClose, setWallpaperUrl, setSelectedChat, selectedChat }) => {
     const host = process.env.REACT_APP_BACKEND_URL;
     const socket = useSocket();
-    //const {fetchChats} = useContext(ChatContext)
-
-    // useEffect(() => {
-    //     if (!socket) return;
-    //     console.log('djdjjdjddj')
-
-    //     const handleWallpaperUpdated = ({ chatId, newWallpaper }) => {
-    //         console.log("wallpaper change", newWallpaper);
-    //         if (selectedChat?._id === chatId) {
-    //             setSelectedChat(prevChat => ({
-    //                 ...prevChat,
-    //                 wallpaper: newWallpaper, // Correct access
-    //                 receiverbubble: newWallpaper.receiverbubble,
-    //                 senderbubble: newWallpaper.senderbubble
-    //             }));
-    //             console.log(selectedChat)
-    //         }
-    //         if (fetchChats) fetchChats()
-
-    //     };
-
-
-    //     socket.on('wallpaper-updated', handleWallpaperUpdated);
-    //     return () => socket.off('wallpaper-updated', handleWallpaperUpdated);
-    //     // eslint-disable-next-line react-hooks/exhaustive-deps
-    // }, [socket, selectedChat?._id]);
-
+    
     // Close modal on Escape key press
     useEffect(() => {
         const onEsc = (e) => {
@@ -61,7 +35,7 @@ const WallpaperSelectorModal = ({ chatId, onClose, setWallpaperUrl, setSelectedC
     }, [onClose]);
 
     const handleWallpaperChange = async (wallpaper) => {
-        console.log(wallpaper)
+        
         try {
             const res = await fetch(`${host}/api/chat/${chatId}/wallpaper`, {
                 method: 'PUT',
@@ -83,7 +57,7 @@ const WallpaperSelectorModal = ({ chatId, onClose, setWallpaperUrl, setSelectedC
 
             if (res.ok) {
                 const data = await res.json();
-                console.log(data)
+               
 
                 // Update local selectedChat wallpaper immediately
                 // setSelectedChat(prevChat => ({
@@ -101,7 +75,7 @@ const WallpaperSelectorModal = ({ chatId, onClose, setWallpaperUrl, setSelectedC
                     systemMesColor: data.wallpaper.systemMesColor,
                     iColor: data.wallpaper.iColor
                 };
-                console.log(wallpaperData)
+                
                 if (socket) {
                     socket.emit('change-wallpaper', {
                         _id: data._id,
