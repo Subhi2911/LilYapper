@@ -25,7 +25,7 @@ const Signup = (props) => {
         if (!credentials.email) return props.showAlert("Enter your email", "warning");
         setLoading(true);
         try {
-            const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/forgot-password`, {
+            const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/emailverification/sendemailotp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: credentials?.email })
@@ -52,7 +52,7 @@ const Signup = (props) => {
         if (!otp) return props.showAlert("Enter OTP", "warning");
         setLoading(true);
         try {
-            const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/verify-otp`, {
+            const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/emailverification/verifyemailotp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: credentials.email, otp })
@@ -119,7 +119,7 @@ const Signup = (props) => {
                 <div className="d-flex justify-content-center align-items-center">
                     <p className="mx-2 my-3">powered by</p>
                     <h2 className="mt-3 text-center" style={{ color: 'yellow' }}>LittleAalu </h2>
-                    
+
                 </div>
                 <div className="d-flex justify-content-center align-items-center" >
 
@@ -143,7 +143,7 @@ const Signup = (props) => {
                                             <label htmlFor="email" className="form-label" style={{ color: "black" }}>Email address</label>
                                             <div className='d-flex justify-content-start align-items-center'>
                                                 <input type="email" className="form-control" id="email" name="email" onChange={onChange} value={credentials.email} style={{ width: '90%', marginRight: '1rem' }} />
-                                                <button type='button' className={`mx-1 btn btn-${verified ? 'success' : 'primary'}`} onClick={handleSendEmail} >
+                                                <button type='button' className={`mx-1 btn btn-${verified ? 'success' : 'primary'}`} onClick={handleSendEmail} disabled={verified==='wait' || verified}>
                                                     {verified === true
                                                         ? "verified"
                                                         : verified === "wait"
@@ -199,7 +199,7 @@ const Signup = (props) => {
                                         </div>
                                     </div>
                                 </>}
-                            <button type="submit" className="btn btn-warning w-100">Submit</button>
+                            <button type="submit" className="btn btn-warning w-100"disabled={verified==='wait'|| !verified}>Submit</button>
                             <div className="d-flex justify-content-center align-items-center mt-4" style={{ color: 'black' }}>
                                 <p className="mb-0 me-1">Already have an account?</p>
                                 <Link to='/login' className="text-primary text-decoration-underline">Login</Link>
