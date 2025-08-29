@@ -855,8 +855,9 @@ const ChatWindow = ({
                             onlineUsers={onlineUsers}
                             handlePermissionChange={handlePermissionChange}
                         />
-
-                        {loading && <div className="loader"><Spinner color={selectedChat?.wallpaper?.iColor || "black"} /></div>}
+                        <div style={{height:'5px'}}>
+                            {loading && <div className="loader"><Spinner color={selectedChat?.wallpaper?.iColor || "black"} /></div>}
+                        </div>
                         <div style={{ height: '3.5rem' }}>
                             {showDate && currentDate &&
                                 <div className="text-center my-3 text-sm" style={{ color: selectedChat?.wallpaper?.systemMesColor, height: '8px' }}>
