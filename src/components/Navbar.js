@@ -8,7 +8,7 @@ import NewGroupModal from './NewGroupModal';
 import NotificationBell from './NotificationBell';
 import OffCanvasNavbar from './OffCanvasNavbar';
 
-const Navbar = ({refreshGroups, onGroupCreated, setSelectedChat, setProgress}) => {
+const Navbar = ({refreshGroups, onGroupCreated, setSelectedChat, setProgress, onChatCreated}) => {
     const offcanvasLeftRef = useRef();
     const location = useLocation();
     //const token = localStorage.getItem('token');
@@ -99,7 +99,7 @@ const Navbar = ({refreshGroups, onGroupCreated, setSelectedChat, setProgress}) =
             </div>
 
             {/* New Chat Modal */}
-            <NewChatModal isOpen={showModal} onClose={() => setShowModal(false)} setSelectedChat={setSelectedChat}/>
+            <NewChatModal isOpen={showModal} onClose={() => setShowModal(false)} setSelectedChat={setSelectedChat} onChatCreated={onChatCreated} />
             <NewGroupModal
                 isOpen={showGroupModal}
                 onClose={() => setShowGroupModal(false)}

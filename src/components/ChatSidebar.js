@@ -33,7 +33,8 @@ const ChatSidebar = ({
     setGroups,
     setProgress,
     setMessages,
-    selectedUser
+    selectedUser,
+    onChatCreated
 }) => {
     const currentUser = localStorage.getItem('userId');
     const [localGroups, setLocalGroups] = useState(groups);
@@ -339,7 +340,8 @@ const ChatSidebar = ({
                 <Navbar refreshGroups={refreshGroups}
                     onGroupCreated={onGroupCreated}
                     setSelectedChat={setSelectedChat}
-                    setProgress={setProgress} />
+                    setProgress={setProgress}
+                    onChatCreated={onChatCreated} />
 
                 {(location.pathname === '/' || location.pathname === '/groups') && (
                     <div

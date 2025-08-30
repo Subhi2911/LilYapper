@@ -163,6 +163,11 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
         setGroups(prev => [newGroup, ...prev]);
     };
 
+    // Create chats 
+    const handleChatCreated = (newChat) => {
+        setLocalChatList(prev => [newChat, ...prev]);
+    };
+
     const updateChatLatestMessage = (chatId, newMessage, selectedChatId) => {
         //const isSender = newMessage.sender?._id === currentUser?._id;
         const unreadIncrement = (chatId === newMessage.chat._id && newMessage.sender._id === currentUser) ? 0 : 1;
@@ -755,6 +760,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                                 groupsHasMore={groupsHasMore}
                                 refreshGroups={fetchGroups}
                                 onGroupCreated={handleGroupCreated}
+                                onChatCreated={handleChatCreated}
                                 setShowChatInfo={setShowChatInfo}
                                 setGroups={setGroups}
                                 setLocalChats={setLocalChatList}
@@ -778,6 +784,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                                 groupsHasMore={groupsHasMore}
                                 refreshGroups={fetchGroups}
                                 onGroupCreated={handleGroupCreated}
+                                onChatCreated={handleChatCreated}
                                 setShowChatInfo={setShowChatInfo}
                                 setGroups={setGroups}
                                 setLocalChats={setLocalChatList}
@@ -815,6 +822,7 @@ const ChatLayout = ({ chatList, selectedChat, setSelectedChat, getConnections, s
                                 updateChatLatestMessage={updateChatLatestMessage}
                                 setProgress={setProgress}
                                 leaveFromGroup={leaveFromGroup}
+                                onChatCreated={handleChatCreated}
                             />
                         </>
                     )}

@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import ChatLayout from './ChatLayout';
 import { useNavigate } from 'react-router-dom';
 import ChatContext from '../context/chats/ChatContext';
-import NewChatModal from './NewChatModal';
+
 
 const Home = ({ selectedChat, setSelectedChat, setProgress, showAlert }) => {
 	const navigate = useNavigate();
@@ -34,7 +34,7 @@ const Home = ({ selectedChat, setSelectedChat, setProgress, showAlert }) => {
 	return (
 		<div>
 			<ChatLayout chatList={chatList} selectedChat={selectedChat} setSelectedChat={setSelectedChat} getConnections={getConnections} setProgress={setProgress} showAlert={showAlert}/>
-			<NewChatModal setSelectedChat={setSelectedChat} setProgress={setProgress} />
+			{/* <NewChatModal setSelectedChat={setSelectedChat} setProgress={setProgress} /> */}
 		</div>
 	);
 };

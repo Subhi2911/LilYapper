@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import ChatContext from '../context/chats/ChatContext';
 import LoginBg from '../images/LoginBg.png';
 
-const NewChatModal = ({ isOpen, onClose, setSelectedChat }) => {
+const NewChatModal = ({ isOpen, onClose, setSelectedChat, onChatCreated }) => {
     const host = process.env.REACT_APP_BACKEND_URL;
     const { createChat } = useContext(ChatContext);
     const [friends, setFriends] = useState([]);
@@ -33,6 +33,8 @@ const NewChatModal = ({ isOpen, onClose, setSelectedChat }) => {
         try {
             const chat = await createChat(friendId); // returns chat from backend
             if (chat) {
+                // Remove from UI immediately
+                onChatCreated(chat)
                 
                 setSelectedChat(chat); 
                 onClose();
