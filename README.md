@@ -1,70 +1,130 @@
-# Getting Started with Create React App
+# 🌸 Lilyapper-Because Silence is boring
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Lilyapper is a **real-time MERN chat application** built with **React, Node.js, Express, MongoDB, and Socket.IO**.  
+It’s designed for smooth one-on-one and group conversations with modern social features like friend requests, notifications, chat wallpapers, and typing indicators.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## ✨ Features
 
-### `npm start`
+- 🔐 **Authentication & Authorization**
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+  - Secure login & signup with JWT
+  - User profiles with username & bio editing
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- 👥 **Friendship System**
 
-### `npm test`
+  - Send, accept, or reject friend requests
+  - View pending requests in a dedicated sidebar
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- 💬 **Real-Time Messaging**
 
-### `npm run build`
+  - One-on-one and group chats
+  - Typing indicators
+  - Message editing & deletion
+  - Read receipts
+  - Online/Offline status
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- 👨‍👩‍👧‍👦 **Groups**
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+  - Create and manage groups
+  - Admin controls (remove/make admin)
+  - Add/remove members
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- 🔔 **Notifications**
 
-### `npm run eject`
+  - Friend request sent/accepted
+  - Added to a group
+  - Unread indicators (red dot system)
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- 🎨 **Customization**
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+  - Chat wallpaper selector with system message confirmation
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+- ⚡ **Performance**
+  - Infinite scrolling for chats, groups, and user lists
+  - Optimized layout to prevent unnecessary API calls
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+---
 
-## Learn More
+## 🛠️ Tech Stack
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- **Frontend:** React, Context API, React Router, TailwindCSS, shadcn/ui, Socket.IO client
+- **Backend:** Node.js, Express, Mongoose, Socket.IO
+- **Database:** MongoDB
+- **Auth:** JWT
+- **Other:** Infinite scrolling, modular component structure
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
 
-### Code Splitting
+## 🚀 Getting Started
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Prerequisites
 
-### Analyzing the Bundle Size
+- Node.js (>= 18)
+- MongoDB (local or Atlas)
+- npm / yarn
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Installation
 
-### Making a Progressive Web App
+1.  Clone the repository
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+    ```bash
+    git clone https://github.com/subhi2911/lilyapper.git
+    cd lilyapper
 
-### Advanced Configuration
+    ```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+2.  Install Dependencies
 
-### Deployment
+    # for backend
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+    cd server
+    npm install
 
-### `npm run build` fails to minify
+    # for frontend
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+    cd ../client
+    npm install
+
+3.  Setup Environment Variables
+
+    # server/.env
+
+    MONGO_URI=YOUR_MONGO_URL
+    JWT_SECRET=YOUR_JWT_SECRET
+    ENCRYPTION_SECRET=YOUR_ENCRYPTION_SECRET
+    EMAIL_USER=YOUR_EMAIL_ADDRESS
+    EMAIL_PASS=YOUR_APP_PASSWORD
+
+    # client/.env
+
+    REACT_APP_BACKEND_URL=http://localhost:5000
+
+4.  Run the app 
+    # start backend
+    cd server
+    npm run dev
+
+    # start frontend
+    cd ../client
+    npm start
+
+# 🎯 Roadmap
+
+ File sharing in chats
+
+ Voice/video calls
+
+ Message reactions
+
+ Dark mode
+
+# 🤝 Contributing
+
+Pull requests are welcome! Please open an issue first to discuss changes.
+Make sure to update tests as appropriate.
+
+# 🌸 About
+
+Lilyapper is a fun, modern chat app made for real-time conversations with friends and groups — blending social media vibes with messaging convenience.
