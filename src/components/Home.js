@@ -11,14 +11,14 @@ const Home = ({ selectedChat, setSelectedChat, setProgress, showAlert }) => {
 	const [chatList, setChatList] = useState([]);
 
 	useEffect(() => {
-		const savedToken = token;
-		if (!savedToken) {
+		
+		if (!token) {
 			navigate('/login');
 			return;
 		}
 		getConnections(); // initial fetch
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [navigate, token]);
+	}, [token]);
 
 
 	const getConnections = async () => {

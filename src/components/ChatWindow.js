@@ -416,8 +416,10 @@ const ChatWindow = ({
                 if (showDownRef.current && !isSender) {
                     setUnreadCount(true);
                 } else {
+                    handleAutoScroll();
                     markMessagesAsRead(msgChatId);
                 }
+                
             }
 
             // Update either private connections or groups
