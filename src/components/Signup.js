@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+
 const Signup = (props) => {
     const host = process.env.REACT_APP_BACKEND_URL;
     let navigate = useNavigate();
@@ -104,7 +105,7 @@ const Signup = (props) => {
                 props.showAlert("Account Created Successfully!", "success");
             }
             props.setProgress(100);
-            console.log(response)
+
             if (!response.ok)
                 props.showAlert(response.error || "Something went Wrong", "danger")
         } catch (err) {
@@ -116,21 +117,17 @@ const Signup = (props) => {
         <>
 
             <div className="vh-100 px-3" style={{ marginTop: "5rem", marginBottom: "5rem" }}>
-                <div className="d-flex justify-content-center align-items-center">
-                    <p className="mx-2 my-3">powered by</p>
-                    <h2 className="mt-3 text-center" style={{ color: 'yellow' }}>LittleAalu </h2>
-
-                </div>
-                <div className="d-flex justify-content-center align-items-center" >
+               
+                <div className="d-flex justify-content-center align-items-center flex-column" >
 
                     <div className="container p-4 rounded" style={{
-                        maxWidth: '500px',
+                        maxWidth: '20rem',
                         backgroundColor: "white",
                         border: '2px solid white',
                         color: "white",
 
                     }}>
-                        <h2 className="text-center mb-4" style={{ color: "black" }}>Create an account to continue</h2>
+                        <h2 className="text-center mb-4" style={{ color: "black" }}>Create an account </h2>
                         <form onSubmit={handleSubmit}>
                             <div className="mb-3">
                                 <label htmlFor="username" className="form-label" style={{ color: "black" }}>Username</label>
@@ -143,7 +140,7 @@ const Signup = (props) => {
                                             <label htmlFor="email" className="form-label" style={{ color: "black" }}>Email address</label>
                                             <div className='d-flex justify-content-start align-items-center'>
                                                 <input type="email" className="form-control" id="email" name="email" onChange={onChange} value={credentials.email} style={{ width: '90%', marginRight: '1rem' }} />
-                                                <button type='button' className={`mx-1 btn btn-${verified ? 'success' : 'primary'}`} onClick={handleSendEmail} disabled={verified==='wait' || verified}>
+                                                <button type='button' className={`mx-1 btn btn-${verified ? 'success' : 'primary'}`} onClick={handleSendEmail} disabled={verified === 'wait' || verified}>
                                                     {verified === true
                                                         ? "verified"
                                                         : verified === "wait"
@@ -199,12 +196,16 @@ const Signup = (props) => {
                                         </div>
                                     </div>
                                 </>}
-                            <button type="submit" className="btn btn-warning w-100"disabled={verified==='wait'|| !verified}>Submit</button>
+                            <button type="submit" className="btn btn-warning w-100" disabled={verified === 'wait' || !verified}>Submit</button>
                             <div className="d-flex justify-content-center align-items-center mt-4" style={{ color: 'black' }}>
                                 <p className="mb-0 me-1">Already have an account?</p>
                                 <Link to='/login' className="text-primary text-decoration-underline">Login</Link>
                             </div>
                         </form>
+
+                    </div>
+                    <div className="text-center mt-4" style={{ color: 'black', fontSize: '0.8rem' }}>
+                        © 2024 LittleAalu. All rights reserved.
                     </div>
                 </div >
             </div>

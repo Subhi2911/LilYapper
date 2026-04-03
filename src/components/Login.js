@@ -41,9 +41,9 @@ const Login = (props) => {
         }
         props.setProgress(100);
     };
-    
+
     return (
-        <div className="container-fluid d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
+        <div className="container-fluid d-flex justify-content-center align-items-center flex-column" style={{ minHeight: '100vh' }}>
             <div
                 className="w-100 p-4 shadow"
                 style={{
@@ -54,7 +54,7 @@ const Login = (props) => {
                 }}
             >
                 <div className='text-center mb-4' style={{ color: 'black' }}>
-                    <h2>Login to continue..</h2>
+                    <h3>Login to continue</h3>
                 </div>
 
                 <form onSubmit={handleSubmit}>
@@ -102,6 +102,9 @@ const Login = (props) => {
 
 
                 </form>
+            </div>
+            <div className="text-center mt-4" style={{ color: 'black', fontSize: '0.8rem' }}>
+                © 2024 LittleAalu. All rights reserved.
             </div>
         </div>
     );

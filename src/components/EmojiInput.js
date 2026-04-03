@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import EmojiPicker from 'emoji-picker-react';
 
-const EmojiInput = ({ 
-  onSend, 
-  onTyping, 
+const EmojiInput = ({
+  onSend,
+  onTyping,
   isDisabled,
   value = '',         // Controlled input value from parent
-  onChange = () => {}, // Change handler from parent
+  onChange = () => { }, // Change handler from parent
   isEditing = false   // Flag if editing mode
 }) => {
   const [showPicker, setShowPicker] = useState(false);
@@ -72,6 +72,19 @@ const EmojiInput = ({
     if (onTyping) onTyping(); // Notify typing on input change
   };
 
+  const btnStyle = {
+  backgroundColor: hovered ? '#3d4189' : '#5459AC',
+  border: 'none',
+  borderRadius: '50%',
+  padding: '10px',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: 'white',
+  boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+};
+
   return (
     <div
       style={{
@@ -111,10 +124,10 @@ const EmojiInput = ({
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         onClick={() => setShowPicker(false)} // Close picker when textarea clicked
-        placeholder={isDisabled 
-          ? "You must be friends first..." 
-          : isEditing 
-            ? "Edit your message..." 
+        placeholder={isDisabled
+          ? "You must be friends first..."
+          : isEditing
+            ? "Edit your message..."
             : "Type a message..."}
         style={{
           flexGrow: 1,
@@ -133,30 +146,45 @@ const EmojiInput = ({
         disabled={isDisabled}
       />
 
+      <div style={{ display: 'flex', gap: '8px' }}>
+  
+  {/*Always show when no text OR alongside send */}
+  {(!value || value.length === 0) && (
+    <button
+      type="button"
+      title="Record Audio"
+      //onClick={handleAudioRecord}
+      style={btnStyle}
+    >
+      <i className="fa-solid fa-microphone" />
+    </button>
+  )}
+
+  {/* ✈️ Show only when text exists */}
+  {value && value.length > 0 && (
+    <>
+      <button
+        type="button"
+        title="Record Audio"
+        //onClick={handleAudioRecord}
+        style={btnStyle}
+      >
+        <i className="fa-solid fa-microphone" />
+      </button>
+
       <button
         type="button"
         title={isEditing ? "Update Message" : "Send"}
-        aria-label={isEditing ? "Update Message" : "Send Message"}
         onClick={sendMessage}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        disabled={isDisabled || value?.length>500 || value?.length<=0}
-        style={{
-          backgroundColor: hovered ? '#3d4189' : '#5459AC',
-          border: 'none',
-          borderRadius: '50%',
-          padding: '10px',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-          transition: 'background-color 0.2s ease-in-out',
-        }}
+        disabled={isDisabled || value.length > 500}
+        style={btnStyle}
       >
-        <i className="fa-solid fa-paper-plane" style={{ fontSize: '1rem' }} />
+        <i className="fa-solid fa-paper-plane" />
       </button>
+    </>
+  )}
+
+</div>
 
       {showPicker && (
         <div

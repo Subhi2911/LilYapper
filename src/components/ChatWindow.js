@@ -393,7 +393,7 @@ const ChatWindow = ({
         if (!socket) return;
 
         const handleNewMessage = (msg) => {
-            console.log(msg)
+
             setShowPlaceholder(false);
             const msgChatId = msg?.chat?._id || msg?.chatId;
             const currentSelectedChat = selectedChatRef.current;
@@ -411,15 +411,13 @@ const ChatWindow = ({
                     }
                 ]);
                 const isSender = msg.sender?._id === currentUser?._id;
-                console.log(isSender, unreadCount, showDown);
-                //console.log(unreadCount)
                 if (showDownRef.current && !isSender) {
                     setUnreadCount(true);
                 } else {
                     handleAutoScroll();
                     markMessagesAsRead(msgChatId);
                 }
-                
+
             }
 
             // Update either private connections or groups
@@ -828,6 +826,7 @@ const ChatWindow = ({
 
     return (
         <div
+        // '#5459AC'
             className="flex-grow-1 d-flex flex-column"
             style={{
                 backgroundImage: selectedChat ? (wallpaperUrl ? `url(${wallpaperUrl})` : '') : '',
@@ -835,7 +834,9 @@ const ChatWindow = ({
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 width: isMobile ? '100vw' : 'auto',
-                objectFit: 'cover'
+                objectFit: 'cover',
+                
+                
             }}
         >
             {(location.pathname === '/' || location.pathname === '/groups') && selectedChat && (
@@ -1037,10 +1038,8 @@ const ChatWindow = ({
                                 }
                             />
                         </div>
-                        {console.log("selectedChat", selectedChat)}
 
-                        {/* {console.log('ddds', !selectedChat?.users.some(user => user._id === currentUser._id))}
-                        {console.log('dfrews', !isFriend || !selectedChat?.users?.some(user => user._id !== currentUser._id))} */}
+
                     </>
 
                     {/* MODAL OVERLAY */}
@@ -1162,13 +1161,13 @@ const ChatWindow = ({
                 showLilyapperWelcome && (
                     <div className="text-center mt-5">
                         <div>
-                            <h2 className="mt-3" style={{color:'yellow'}}>LittleAalu </h2>
+                            <h2 className="mt-3" style={{ color: 'yellow' }}>LittleAalu </h2>
                             <p className="text-muted">presents</p>
                         </div>
                         <img
                             src={require('../images/lilyapper.png')}
                             alt="lilyapper"
-                            style={{ maxWidth: 300, opacity: 0.8, height:150, objectFit:'cover' }}
+                            style={{ maxWidth: 300, opacity: 0.8, height: 150, objectFit: 'cover' }}
                         />
                         <h4 className="mt-3">LilYapper - Because Silence is Boring</h4>
                         <p className="text-muted">A real-time chat app with private & group messaging.</p>

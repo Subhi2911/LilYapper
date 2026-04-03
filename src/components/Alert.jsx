@@ -15,7 +15,7 @@ const Alert = (props) => {
         <div className="px-3 px-md-5" style={{
             position: 'fixed',
             top: '0',
-            left: '0',
+            right: '0',
             //width: '100%',
             zIndex: '1055', // higher than navbar
             pointerEvents: 'none'
